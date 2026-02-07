@@ -18,7 +18,7 @@
         :key="opt.value"
         @click="select(opt.value)"
         class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
-        :class="modelValue === opt.value ? 'text-hf-yellow-dark font-medium' : 'text-gray-700'"
+        :class="modelValue === opt.value ? 'text-dc-primary font-medium' : 'text-gray-700'"
       >
         {{ opt.label }}
       </button>

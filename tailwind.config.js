@@ -7,10 +7,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        hf: {
-          yellow: '#FFD21E',
-          'yellow-dark': '#E5BD1A',
-          dark: '#1a1a2e',
+        dc: {
+          primary: '#1a56db',
+          'primary-light': '#4F8EF7',
+          'primary-dark': '#1240a8',
+          accent: '#3b82f6',
+          dark: '#0f172a',
+          light: '#eff6ff',
         }
       }
     }

@@ -94,7 +94,7 @@
               </div>
             </div>
             <hr class="border-gray-200" />
-            <button class="w-full py-2 bg-hf-yellow text-gray-900 text-sm font-semibold rounded-lg hover:bg-hf-yellow-dark transition-colors">
+            <button class="w-full py-2 bg-dc-primary text-white text-sm font-semibold rounded-lg hover:bg-dc-primary-dark transition-colors">
               ❤️ Like
             </button>
             <button class="w-full py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">

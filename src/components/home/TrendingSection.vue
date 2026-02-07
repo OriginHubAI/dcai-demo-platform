@@ -1,6 +1,6 @@
 <template>
   <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <h2 class="text-2xl font-bold text-gray-900 mb-8">Trending on Hugging Face</h2>
+    <h2 class="text-2xl font-bold text-gray-900 mb-8">Trending on DCAI Platform</h2>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
       <!-- Trending Models -->
       <div>

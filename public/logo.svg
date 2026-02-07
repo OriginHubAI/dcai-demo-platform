@@ -5,7 +5,10 @@
       <stop offset="100%" style="stop-color:#1a56db;stop-opacity:1" />
     </linearGradient>
   </defs>
+  <!-- Outer circle -->
   <circle cx="100" cy="100" r="90" fill="none" stroke="url(#grad)" stroke-width="14"/>
+  <!-- D shape (left) -->
   <path d="M 65 55 L 65 145 Q 110 145 110 100 Q 110 55 65 55 Z" fill="none" stroke="url(#grad)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- C shape (right) -->
   <path d="M 145 70 Q 120 45 100 55 Q 85 65 85 100 Q 85 135 100 145 Q 120 155 145 130" fill="none" stroke="url(#grad)" stroke-width="12" stroke-linecap="round"/>
 </svg>

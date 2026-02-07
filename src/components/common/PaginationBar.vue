@@ -12,7 +12,7 @@
       :key="page"
       @click="$emit('update:modelValue', page)"
       class="px-3 py-1.5 text-sm rounded-md border"
-      :class="page === modelValue ? 'bg-hf-yellow border-hf-yellow text-gray-900 font-medium' : 'border-gray-300 hover:bg-gray-50'"
+      :class="page === modelValue ? 'bg-dc-primary border-dc-primary text-white font-medium' : 'border-gray-300 hover:bg-gray-50'"
     >
       {{ page }}
     </button>

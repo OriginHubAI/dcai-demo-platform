@@ -27,7 +27,7 @@
           <div class="flex items-center space-x-2 lg:hidden">
             <button @click="showMobileFilters = !showMobileFilters" class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 hover:bg-gray-50">
               Filters
-              <span v-if="activeFilterCount" class="ml-1 bg-hf-yellow text-gray-900 rounded-full px-1.5 text-xs">{{ activeFilterCount }}</span>
+              <span v-if="activeFilterCount" class="ml-1 bg-dc-primary text-white rounded-full px-1.5 text-xs">{{ activeFilterCount }}</span>
             </button>
           </div>
           <SortDropdown v-model="sortBy" :options="sortOptions" />

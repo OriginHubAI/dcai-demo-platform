@@ -24,7 +24,7 @@
             type="checkbox"
             :checked="isSelected(group.key, option.value)"
             @change="toggle(group.key, option.value)"
-            class="rounded border-gray-300 text-hf-yellow focus:ring-hf-yellow"
+            class="rounded border-gray-300 text-dc-primary focus:ring-dc-primary"
           />
           <span class="truncate">{{ option.label }}</span>
           <span v-if="option.count !== undefined" class="text-gray-400 text-xs ml-auto">{{ option.count }}</span>

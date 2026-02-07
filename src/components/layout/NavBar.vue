@@ -4,9 +4,9 @@
       <div class="flex items-center justify-between h-14">
         <!-- Logo -->
         <div class="flex items-center space-x-6">
-          <router-link to="/" class="flex items-center space-x-2 text-lg font-bold text-gray-900 hover:text-hf-yellow-dark">
-            <span class="text-2xl">🤗</span>
-            <span class="hidden sm:inline">Hugging Face</span>
+          <router-link to="/" class="flex items-center space-x-2 text-lg font-bold text-gray-900 hover:text-dc-primary">
+            <img src="/logo.svg" alt="DCAI" class="w-8 h-8" />
+            <span class="hidden sm:inline">DCAI Platform</span>
           </router-link>
           <!-- Nav Links -->
           <div class="hidden md:flex items-center space-x-1">
@@ -32,14 +32,14 @@
             <input
               type="text"
               placeholder="Search models, datasets, users..."
-              class="w-64 pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-hf-yellow focus:border-transparent"
+              class="w-64 pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-dc-primary focus:border-transparent"
               @keydown.enter="handleSearch"
               v-model="searchQuery"
             />
           </div>
           <!-- Auth buttons -->
           <button class="text-sm text-gray-600 hover:text-gray-900 font-medium px-3 py-1.5">Log In</button>
-          <button class="text-sm bg-gray-900 text-white font-medium px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors">Sign Up</button>
+          <button class="text-sm bg-dc-primary text-white font-medium px-3 py-1.5 rounded-lg hover:bg-dc-primary-dark transition-colors">Sign Up</button>
           <!-- Mobile menu button -->
           <button @click="mobileOpen = !mobileOpen" class="md:hidden p-1.5 rounded-md text-gray-500 hover:bg-gray-100">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
