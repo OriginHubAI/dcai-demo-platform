@@ -15,8 +15,9 @@
       </div>
     </div>
     <div class="flex items-center flex-wrap gap-2 mt-3">
-      <TagBadge :label="dataset.task" :color="taskColorMap[dataset.task] || 'gray'" />
+      <TagBadge :label="dataset.domain" :color="domainColorMap[dataset.domain] || 'gray'" />
       <TagBadge :label="dataset.modality" color="teal" />
+      <TagBadge :label="dataset.task" :color="taskColorMap[dataset.task] || 'gray'" />
       <span class="text-xs text-gray-400">{{ dataset.size }}</span>
     </div>
     <div class="flex items-center space-x-4 mt-2">
@@ -30,7 +31,7 @@
 <script setup>
 import TagBadge from '@/components/common/TagBadge.vue'
 import StatBadge from '@/components/common/StatBadge.vue'
-import { taskColorMap } from '@/data/filters.js'
+import { taskColorMap, domainColorMap } from '@/data/filters.js'
 
 defineProps({
   dataset: { type: Object, required: true }
