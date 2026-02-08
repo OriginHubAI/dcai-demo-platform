@@ -5,7 +5,7 @@
         <!-- Logo -->
         <div class="flex items-center space-x-6">
           <router-link to="/" class="flex items-center space-x-2 text-lg font-bold text-gray-900 hover:text-dc-primary">
-            <img src="/logo.svg" alt="DCAI" class="w-8 h-8" />
+            <img src="/logo.png" alt="DCAI" class="w-8 h-8" />
             <span class="hidden sm:inline">DCAI Platform</span>
           </router-link>
           <!-- Nav Links -->
