@@ -7,6 +7,7 @@ const routes = [
   { path: '/datasets', name: 'datasets', component: () => import('../views/DatasetsPage.vue') },
   { path: '/datasets/:id(.*)', name: 'dataset-detail', component: () => import('../views/DatasetDetailPage.vue') },
   { path: '/dataflow', name: 'dataflow', component: () => import('../views/DataFlowPage.vue') },
+  { path: '/dataflow/canvas', name: 'dataflow-canvas', component: () => import('../views/DataFlowCanvasPage.vue') },
   { path: '/spaces', name: 'spaces', component: () => import('../views/SpacesPage.vue') },
   { path: '/spaces/:id(.*)', name: 'space-detail', component: () => import('../views/SpaceDetailPage.vue') },
 ]
