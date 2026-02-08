@@ -77,6 +77,7 @@ const searchQuery = ref('')
 
 const navLinks = [
   { to: '/datasets', label: 'Datasets' },
+  { to: '/dataflow', label: 'DataFlow' },
   { to: '/spaces', label: 'Spaces' },
   { to: '/models', label: 'Models' },
 ]
