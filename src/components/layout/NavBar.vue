@@ -76,9 +76,9 @@ const mobileOpen = ref(false)
 const searchQuery = ref('')
 
 const navLinks = [
-  { to: '/models', label: 'Models' },
   { to: '/datasets', label: 'Datasets' },
   { to: '/spaces', label: 'Spaces' },
+  { to: '/models', label: 'Models' },
 ]
 
 function isActive(path) {
