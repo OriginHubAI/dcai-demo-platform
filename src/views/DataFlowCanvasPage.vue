@@ -307,24 +307,25 @@ const tools = [
   { id: 'connect', label: 'Connect', icon: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1' },
 ]
 
-let nodeIdCounter = 7
+let nodeIdCounter = 8
 
 const nodes = reactive([
-  { id: 1, label: 'Data Source', type: 'source', description: 'Load raw data', emoji: '\u{1F4E5}', x: 80, y: 180, width: 180, height: 68, color: '#3b82f6', hasInput: false, hasOutput: true },
-  { id: 2, label: 'Data Cleaning', type: 'transform', description: 'Clean & validate', emoji: '\u{1F9F9}', x: 340, y: 100, width: 180, height: 68, color: '#10b981', hasInput: true, hasOutput: true },
-  { id: 3, label: 'Feature Engineering', type: 'transform', description: 'Extract features', emoji: '\u2699\uFE0F', x: 340, y: 260, width: 180, height: 68, color: '#8b5cf6', hasInput: true, hasOutput: true },
-  { id: 4, label: 'Model Training', type: 'model', description: 'Train ML model', emoji: '\u{1F9E0}', x: 600, y: 180, width: 180, height: 68, color: '#f59e0b', hasInput: true, hasOutput: true },
-  { id: 5, label: 'Model Evaluation', type: 'evaluation', description: 'Evaluate metrics', emoji: '\u{1F4CA}', x: 860, y: 120, width: 180, height: 68, color: '#ef4444', hasInput: true, hasOutput: true },
-  { id: 6, label: 'Data Export', type: 'export', description: 'Export results', emoji: '\u{1F4E4}', x: 860, y: 260, width: 180, height: 68, color: '#06b6d4', hasInput: true, hasOutput: false },
+  { id: 1, label: 'Data Source', type: 'source', description: 'Load raw data', emoji: '\u{1F4E5}', x: 80, y: 120, width: 180, height: 68, color: '#3b82f6', hasInput: false, hasOutput: true },
+  { id: 2, label: 'Data Parsing', type: 'transform', description: 'UniParser', emoji: '\u{1F4C4}', x: 340, y: 120, width: 180, height: 68, color: '#10b981', hasInput: true, hasOutput: true },
+  { id: 3, label: 'Data Cleaning', type: 'transform', description: 'Clean & validate', emoji: '\u{1F9F9}', x: 600, y: 120, width: 180, height: 68, color: '#8b5cf6', hasInput: true, hasOutput: true },
+  { id: 4, label: 'Feature Extraction', type: 'transform', description: 'Extract features', emoji: '\u2699\uFE0F', x: 860, y: 120, width: 180, height: 68, color: '#f59e0b', hasInput: true, hasOutput: true },
+  { id: 5, label: 'Data Evaluation', type: 'evaluation', description: 'Evaluate quality', emoji: '\u{1F4CA}', x: 80, y: 280, width: 180, height: 68, color: '#ef4444', hasInput: true, hasOutput: true },
+  { id: 6, label: 'Data Annotation', type: 'annotation', description: 'UniMiner', emoji: '\u{1F3F7}\uFE0F', x: 340, y: 280, width: 180, height: 68, color: '#a855f7', hasInput: true, hasOutput: true },
+  { id: 7, label: 'Data Export', type: 'export', description: 'Export results', emoji: '\u{1F4E4}', x: 600, y: 280, width: 180, height: 68, color: '#06b6d4', hasInput: true, hasOutput: false },
 ])
 
 const edges = reactive([
   { id: 'e1-2', from: 1, to: 2 },
-  { id: 'e1-3', from: 1, to: 3 },
-  { id: 'e2-4', from: 2, to: 4 },
+  { id: 'e2-3', from: 2, to: 3 },
   { id: 'e3-4', from: 3, to: 4 },
   { id: 'e4-5', from: 4, to: 5 },
-  { id: 'e4-6', from: 4, to: 6 },
+  { id: 'e5-6', from: 5, to: 6 },
+  { id: 'e6-7', from: 6, to: 7 },
 ])
 
 // Dragging state
@@ -499,9 +500,11 @@ function fitView() {
 
 const nodeTemplates = [
   { label: 'Data Source', type: 'source', description: 'Load raw data', emoji: '\u{1F4E5}', color: '#3b82f6', hasInput: false, hasOutput: true },
-  { label: 'Transform', type: 'transform', description: 'Transform data', emoji: '\u2699\uFE0F', color: '#8b5cf6', hasInput: true, hasOutput: true },
-  { label: 'Model', type: 'model', description: 'ML model', emoji: '\u{1F9E0}', color: '#f59e0b', hasInput: true, hasOutput: true },
+  { label: 'Data Parsing', type: 'transform', description: 'UniParser', emoji: '\u{1F4C4}', color: '#10b981', hasInput: true, hasOutput: true },
+  { label: 'Data Cleaning', type: 'transform', description: 'Clean & validate', emoji: '\u{1F9F9}', color: '#8b5cf6', hasInput: true, hasOutput: true },
+  { label: 'Feature Extraction', type: 'transform', description: 'Extract features', emoji: '\u2699\uFE0F', color: '#f59e0b', hasInput: true, hasOutput: true },
   { label: 'Evaluation', type: 'evaluation', description: 'Evaluate results', emoji: '\u{1F4CA}', color: '#ef4444', hasInput: true, hasOutput: true },
+  { label: 'Annotation', type: 'annotation', description: 'UniMiner', emoji: '\u{1F3F7}\uFE0F', color: '#a855f7', hasInput: true, hasOutput: true },
   { label: 'Export', type: 'export', description: 'Export data', emoji: '\u{1F4E4}', color: '#06b6d4', hasInput: true, hasOutput: false },
 ]
 
