@@ -3,13 +3,13 @@
     <HeroSection />
     <TrendingSection />
     <!-- Organizations section -->
-    <section class="bg-gray-50 py-12">
+    <section class="bg-slate-50 py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-center text-sm font-semibold text-gray-500 uppercase tracking-wide mb-8">
+        <h2 class="text-center text-sm font-semibold text-slate-400 uppercase tracking-wide mb-8">
           Trusted by leading AI organizations
         </h2>
         <div class="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-          <span v-for="org in orgs" :key="org" class="text-xl font-bold text-gray-300 hover:text-gray-400 transition-colors cursor-default">
+          <span v-for="org in orgs" :key="org" class="text-xl font-bold text-slate-300 hover:text-slate-400 transition-colors cursor-default">
             {{ org }}
           </span>
         </div>
