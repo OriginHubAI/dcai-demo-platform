@@ -88,11 +88,11 @@ const props = defineProps({
   task: { type: Object, required: true }
 })
 
-const isClickable = computed(() => props.task.type === 'Model Tuning')
+const isClickable = computed(() => props.task.type === 'Model Tuning' || props.task.type === 'Data Processing')
 
 function handleClick() {
   if (isClickable.value) {
-    router.push({ name: 'model-tuning-task', params: { id: props.task.id } })
+    router.push({ name: 'task-detail', params: { id: props.task.id } })
   }
 }
 
