@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="w-full px-4 sm:px-6 lg:px-8 py-6">
     <!-- Back button -->
     <button
       @click="goBack"
@@ -35,10 +35,11 @@
       </div>
     </div>
 
-    <!-- Data Pipeline -->
-    <div class="mb-8">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Data Pipeline</h2>
-      <div class="relative" ref="pipelineContainer">
+    <!-- Data Pipeline - Separate scrollable container -->
+    <div class="mb-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-[1800px]">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Data Pipeline</h2>
+        <div class="relative overflow-x-auto" ref="pipelineContainer">
         <!-- SVG Connections Layer -->
         <svg class="absolute top-0 left-0 w-full h-full pointer-events-none z-0" :style="{ minWidth: svgMinWidth + 'px' }">
           <!-- Connection paths between nodes -->
@@ -212,13 +213,14 @@
             </div>
           </template>
         </div>
+        </div>
       </div>
     </div>
 
-    <!-- Execute Result -->
-    <div class="bg-white rounded-lg border border-gray-200 p-6">
+    <!-- Execution Result -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 max-w-full">
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-semibold text-gray-900">Execute Result</h2>
+        <h2 class="text-lg font-semibold text-gray-900">Execution Result</h2>
         <button class="text-gray-400 hover:text-gray-600">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -241,7 +243,7 @@
       </div>
 
       <!-- Sample Data and Chart -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div class="grid grid-cols-1 gap-6 mb-6">
         <!-- Execution Sampled Data -->
         <div>
           <h3 class="text-sm font-semibold text-gray-900 mb-3">Execution Sampled Data</h3>
@@ -256,22 +258,22 @@
         </div>
 
         <!-- Sample Count Chart -->
-        <div>
+        <div class="w-full">
           <h3 class="text-sm font-semibold text-gray-900 mb-3">Sample Count</h3>
-          <div class="h-64">
-            <canvas ref="sampleChart" class="w-full h-full"></canvas>
+          <div class="h-64 w-full">
+            <canvas ref="sampleChart" class="w-full h-full block"></canvas>
           </div>
         </div>
       </div>
 
       <!-- Logs Section -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 gap-6">
         <!-- Current Step Logs -->
         <div>
           <h3 class="text-sm font-semibold text-gray-900 mb-3">Current Step Logs</h3>
-          <div class="bg-gray-900 rounded-lg p-4 h-48 overflow-y-auto">
-            <div class="font-mono text-xs space-y-1">
-              <div v-for="(log, i) in currentStepLogs" :key="i" class="text-green-400">
+          <div class="bg-gray-900 rounded-lg p-4 h-48 overflow-y-auto overflow-x-hidden">
+            <div class="font-mono text-xs space-y-1 break-words">
+              <div v-for="(log, i) in currentStepLogs" :key="i" class="text-green-400 whitespace-pre-wrap">
                 {{ log }}
               </div>
             </div>
@@ -281,9 +283,9 @@
         <!-- Logs -->
         <div>
           <h3 class="text-sm font-semibold text-gray-900 mb-3">Logs</h3>
-          <div class="bg-gray-900 rounded-lg p-4 h-48 overflow-y-auto">
-            <div class="font-mono text-xs space-y-1">
-              <div v-for="(log, i) in executionLogs" :key="i" :class="logClass(log)">
+          <div class="bg-gray-900 rounded-lg p-4 h-48 overflow-y-auto overflow-x-hidden">
+            <div class="font-mono text-xs space-y-1 break-words">
+              <div v-for="(log, i) in executionLogs" :key="i" :class="logClass(log)" class="whitespace-pre-wrap">
                 {{ log }}
               </div>
             </div>
