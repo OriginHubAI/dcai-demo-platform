@@ -64,7 +64,7 @@
     <!-- Evaluation Results Visualization -->
     <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Evaluation Metrics Comparison</h2>
-      <div class="h-64 relative">
+      <div class="h-96 relative">
         <canvas ref="metricsChart" class="w-full h-full"></canvas>
       </div>
     </div>
@@ -292,7 +292,9 @@ function drawChart() {
   
   const width = canvas.width
   const height = canvas.height
-  const padding = 60
+  const centerX = width / 2
+  const centerY = height / 2 + 30  // Slightly lower to make room for top labels
+  const radius = Math.min(width, height) / 2 - 100  // Larger radius for bigger chart
   
   // Metrics data
   const labels = ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'AUC-ROC']
@@ -304,63 +306,138 @@ function drawChart() {
     parseFloat(detailedMetrics.value.auc) * 100
   ]
   
+  const numAxes = labels.length
+  const angleStep = (2 * Math.PI) / numAxes
+  
   // Clear canvas
   ctx.clearRect(0, 0, width, height)
   
-  // Draw grid
+  // Draw concentric grid circles
   ctx.strokeStyle = '#e5e7eb'
   ctx.lineWidth = 1
-  for (let i = 0; i <= 5; i++) {
-    const y = padding + (height - 2 * padding) * i / 5
+  for (let i = 1; i <= 5; i++) {
     ctx.beginPath()
-    ctx.moveTo(padding, y)
-    ctx.lineTo(width - padding, y)
+    const r = (radius * i) / 5
+    for (let j = 0; j <= numAxes; j++) {
+      const angle = j * angleStep - Math.PI / 2
+      const x = centerX + r * Math.cos(angle)
+      const y = centerY + r * Math.sin(angle)
+      if (j === 0) {
+        ctx.moveTo(x, y)
+      } else {
+        ctx.lineTo(x, y)
+      }
+    }
+    ctx.closePath()
     ctx.stroke()
   }
   
-  // Y-axis labels
+  // Draw axis lines and labels
+  ctx.strokeStyle = '#9ca3af'
   ctx.fillStyle = '#6b7280'
   ctx.font = '24px system-ui'
-  ctx.textAlign = 'right'
-  for (let i = 0; i <= 5; i++) {
-    const y = padding + (height - 2 * padding) * i / 5
-    const val = (100 - i * 20).toFixed(0)
-    ctx.fillText(val + '%', padding - 10, y + 8)
+  ctx.textAlign = 'center'
+  
+  for (let i = 0; i < numAxes; i++) {
+    const angle = i * angleStep - Math.PI / 2
+    const xEnd = centerX + radius * Math.cos(angle)
+    const yEnd = centerY + radius * Math.sin(angle)
+    
+    // Draw axis line
+    ctx.beginPath()
+    ctx.moveTo(centerX, centerY)
+    ctx.lineTo(xEnd, yEnd)
+    ctx.stroke()
+    
+    // Draw labels with adjusted positioning
+    const labelRadius = radius + 70
+    const labelX = centerX + labelRadius * Math.cos(angle)
+    const labelY = centerY + labelRadius * Math.sin(angle)
+    
+    // Adjust text alignment based on position
+    if (Math.abs(angle - (-Math.PI / 2)) < 0.1) {
+      // Top label (Accuracy)
+      ctx.textAlign = 'center'
+      ctx.fillText(labels[i], labelX, labelY)
+    } else if (angle > -Math.PI / 2 && angle < Math.PI / 2) {
+      // Right side labels
+      ctx.textAlign = 'left'
+      ctx.fillText(labels[i], labelX + 15, labelY + 8)
+    } else {
+      // Left side labels
+      ctx.textAlign = 'right'
+      ctx.fillText(labels[i], labelX - 15, labelY + 8)
+    }
   }
   
-  // X-axis labels
-  ctx.textAlign = 'center'
-  const barWidth = (width - 2 * padding) / labels.length
-  labels.forEach((label, i) => {
-    const x = padding + barWidth * i + barWidth / 2
-    ctx.fillText(label, x, height - padding + 30)
-  })
   
-  // Draw bars
-  const maxVal = 100
-  const colors = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444']
+  // Draw data polygon
+  ctx.beginPath()
+  for (let i = 0; i <= numAxes; i++) {
+    const idx = i % numAxes
+    const angle = idx * angleStep - Math.PI / 2
+    const r = (values[idx] / 100) * radius
+    const x = centerX + r * Math.cos(angle)
+    const y = centerY + r * Math.sin(angle)
+    if (i === 0) {
+      ctx.moveTo(x, y)
+    } else {
+      ctx.lineTo(x, y)
+    }
+  }
+  ctx.closePath()
   
-  labels.forEach((label, i) => {
-    const x = padding + barWidth * i + 20
-    const barHeight = (values[i] / maxVal) * (height - 2 * padding)
-    const y = height - padding - barHeight
+  // Fill the polygon
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.2)'
+  ctx.fill()
+  
+  // Stroke the polygon
+  ctx.strokeStyle = '#10b981'
+  ctx.lineWidth = 3
+  ctx.stroke()
+  
+  // Draw data points and value labels
+  for (let i = 0; i < numAxes; i++) {
+    const angle = i * angleStep - Math.PI / 2
+    const r = (values[i] / 100) * radius
+    const x = centerX + r * Math.cos(angle)
+    const y = centerY + r * Math.sin(angle)
     
-    // Draw bar
-    ctx.fillStyle = colors[i]
-    ctx.fillRect(x, y, barWidth - 40, barHeight)
+    ctx.beginPath()
+    ctx.arc(x, y, 8, 0, 2 * Math.PI)
+    ctx.fillStyle = '#10b981'
+    ctx.fill()
+    ctx.strokeStyle = '#ffffff'
+    ctx.lineWidth = 2
+    ctx.stroke()
     
-    // Draw value on top
+    // Draw value labels with better positioning
     ctx.fillStyle = '#374151'
     ctx.font = 'bold 20px system-ui'
-    ctx.textAlign = 'center'
-    ctx.fillText(values[i].toFixed(1) + '%', x + (barWidth - 40) / 2, y - 10)
-  })
-  
-  // Axis labels
-  ctx.fillStyle = '#374151'
-  ctx.font = 'bold 28px system-ui'
-  ctx.textAlign = 'center'
-  ctx.fillText('Evaluation Metrics', width / 2, height - 15)
+    
+    // Position value labels further out to avoid overlap
+    const valueOffset = 50
+    let valueX, valueY
+    
+    if (Math.abs(angle - (-Math.PI / 2)) < 0.1) {
+      // Top value (Accuracy) - position above
+      ctx.textAlign = 'center'
+      valueX = x
+      valueY = y - valueOffset
+    } else if (angle > -Math.PI / 2 && angle < Math.PI / 2) {
+      // Right side values - position to the right
+      ctx.textAlign = 'left'
+      valueX = x + valueOffset
+      valueY = y + 6
+    } else {
+      // Left side values - position to the left
+      ctx.textAlign = 'right'
+      valueX = x - valueOffset
+      valueY = y + 6
+    }
+    
+    ctx.fillText(values[i].toFixed(1) + '%', valueX, valueY)
+  }
 }
 
 onMounted(() => {
