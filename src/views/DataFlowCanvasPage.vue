@@ -234,36 +234,6 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" /></svg>
         </button>
       </div>
-
-      <!-- Minimap -->
-      <div class="absolute bottom-4 right-4 w-48 h-32 bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden z-10">
-        <svg class="w-full h-full" :viewBox="minimapViewBox">
-          <rect :x="minimapBounds.minX - 20" :y="minimapBounds.minY - 20"
-            :width="minimapBounds.width + 40" :height="minimapBounds.height + 40"
-            fill="#f9fafb" />
-          <g v-for="edge in edges" :key="'mm-' + edge.id">
-            <line
-              :x1="getNodeCenter(edge.from).x" :y1="getNodeCenter(edge.from).y"
-              :x2="getNodeCenter(edge.to).x" :y2="getNodeCenter(edge.to).y"
-              stroke="#f97316" stroke-width="2" stroke-dasharray="4 3" opacity="0.5"
-            />
-          </g>
-          <rect
-            v-for="node in nodes" :key="'mm-' + node.id"
-            :x="node.x" :y="node.y"
-            :width="node.width" :height="node.nodeHeight || 200"
-            rx="4" ry="4"
-            :fill="node.color" opacity="0.2"
-            :stroke="node.color" stroke-width="2"
-          />
-          <rect
-            :x="(-pan.x / zoom)" :y="(-pan.y / zoom)"
-            :width="viewportSize.w / zoom" :height="viewportSize.h / zoom"
-            fill="none" stroke="#1a56db" stroke-width="4" rx="2"
-            opacity="0.4"
-          />
-        </svg>
-      </div>
     </div>
   </div>
 </template>
