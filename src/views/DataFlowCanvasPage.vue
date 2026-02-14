@@ -124,6 +124,9 @@
                 <svg v-else-if="node.headerIcon === 'generate'" class="w-4 h-4" :style="{ color: node.color }" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
                 </svg>
+                <svg v-else-if="node.headerIcon === 'expert'" class="w-4 h-4" :style="{ color: node.color }" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
                 <svg v-else class="w-4 h-4" :style="{ color: node.color }" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
                 </svg>
@@ -428,6 +431,36 @@ const nodes = reactive([
       { color: '#f97316', label: 'downstream_value_grades' },
     ],
   },
+  {
+    id: 6,
+    label: 'UniMiner',
+    subtitle: 'expert',
+    headerIcon: 'expert',
+    color: '#ec4899',
+    x: 1360,
+    y: 200,
+    width: 280,
+    nodeHeight: 380,
+    initParams: [
+      { key: 'Annotation type', value: 'Quality Assessment', type: 'select', portColor: '#10b981' },
+      { key: 'Expert level', value: 'Senior', type: 'select', portColor: '#10b981' },
+      { key: 'Review mode', value: 'Multi-pass', type: 'select', portColor: '#10b981' },
+    ],
+    runtimeParams: [
+      { key: 'Input key', value: 'downstream_value_grades', type: 'text', portColor: '#3b82f6' },
+      { key: 'Output annotation key', value: 'expert_annotation', type: 'text', portColor: '#3b82f6' },
+      { key: 'Output confidence key', value: 'annotation_confidence', type: 'text', portColor: '#3b82f6' },
+      { key: 'Output feedback key', value: 'expert_feedback', type: 'text', portColor: '#3b82f6' },
+    ],
+    inputPorts: [
+      { color: '#3b82f6', label: 'downstream_value_grades' },
+    ],
+    outputPorts: [
+      { color: '#f97316', label: 'expert_annotation' },
+      { color: '#f97316', label: 'annotation_confidence' },
+      { color: '#f97316', label: 'expert_feedback' },
+    ],
+  },
 ])
 
 const edges = reactive([
@@ -435,6 +468,7 @@ const edges = reactive([
   { id: 'e2-3', from: 2, to: 3, fromPort: 0, toPort: 0 },
   { id: 'e2-4', from: 2, to: 4, fromPort: 0, toPort: 0 },
   { id: 'e4-5', from: 4, to: 5, fromPort: 0, toPort: 0 },
+  { id: 'e5-6', from: 5, to: 6, fromPort: 3, toPort: 0 },
 ])
 
 // Dragging state
