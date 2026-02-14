@@ -37,6 +37,39 @@
       </div>
     </div>
 
+    <!-- Export Model Section (for running and completed tasks) -->
+    <div v-if="task.status === 'completed' || task.status === 'running'" class="mt-8 mb-8 bg-white rounded-lg border border-gray-200 p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">Export Model</h2>
+          <p class="text-sm text-gray-500 mt-1">Export the LoRA checkpoint to Models page</p>
+        </div>
+        <button
+          v-if="!isModelExported"
+          @click="exportModel"
+          class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          Export to Models
+        </button>
+        <div v-else class="inline-flex items-center px-4 py-2 bg-green-50 text-green-700 rounded-lg">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Already Exported
+        </div>
+      </div>
+      <div v-if="isModelExported" class="mt-4 p-4 bg-gray-50 rounded-lg">
+        <div class="text-sm text-gray-500 mb-2">Exported model details:</div>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div><span class="text-gray-500">Model ID:</span> <span class="font-medium text-gray-900">{{ exportedModelId }}</span></div>
+          <div><span class="text-gray-500">Type:</span> <span class="font-medium text-gray-900">LoRA ({{ task.type }})</span></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Training Loss Chart -->
     <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Training Loss</h2>
@@ -134,15 +167,59 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { tasks } from '@/data/tasks.js'
+import { models } from '@/data/models.js'
 
 const route = useRoute()
 const router = useRouter()
 const lossChart = ref(null)
 
+// Track exported models for this session
+const exportedModels = ref([])
+
 const task = computed(() => {
   const id = route.params.id
   return tasks.find(t => t.id === id) || tasks[0]
 })
+
+// Generate a unique model ID based on task
+const exportedModelId = computed(() => {
+  if (!task.value) return ''
+  return `lora/${task.value.id}-${task.value.name.replace(/\s+/g, '-')}`
+})
+
+// Check if model is already exported
+const isModelExported = computed(() => {
+  const modelId = exportedModelId.value
+  return models.some(m => m.id === modelId) || exportedModels.value.includes(modelId)
+})
+
+function exportModel() {
+  const modelId = exportedModelId.value
+  const newModel = {
+    id: modelId,
+    author: task.value.author,
+    name: `${task.value.name} (LoRA)`,
+    pipeline_tag: 'text-generation',
+    downloads: 0,
+    likes: 0,
+    lastModified: new Date().toISOString().split('T')[0],
+    tags: ['lora', 'fine-tuned', task.value.type?.toLowerCase().replace(/\s+/g, '-') || 'model-tuning'],
+    library: 'transformers',
+    language: 'multilingual',
+    license: 'apache-2.0',
+    featured: false,
+    description: `LoRA checkpoint exported from ${task.value.name} training task. Base model: ${trainingParams.value.baseModel}. Dataset: ${task.value.dataset}.`,
+    isExported: true,
+    baseModel: trainingParams.value.baseModel,
+    taskId: task.value.id
+  }
+  
+  models.unshift(newModel)
+  exportedModels.value.push(modelId)
+  
+  // Optionally navigate to the models page
+  // router.push({ name: 'models' })
+}
 
 const trainingParams = computed(() => {
   if (task.value.name && task.value.name.includes('VL')) {
