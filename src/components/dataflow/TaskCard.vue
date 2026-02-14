@@ -3,9 +3,18 @@
     class="border rounded-lg p-4 hover:shadow-md transition-all bg-white"
     :class="borderClass"
   >
-    <!-- Header: name + status badge -->
+    <!-- Header: name + status badge + type badge -->
     <div class="flex items-center justify-between mb-3">
-      <h3 class="text-sm font-semibold text-gray-900 truncate mr-2">{{ task.name }}</h3>
+      <div class="flex items-center gap-2 flex-1 min-w-0">
+        <span
+          v-if="task.type"
+          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium flex-shrink-0"
+          :class="typeBadgeClass"
+        >
+          {{ task.type }}
+        </span>
+        <h3 class="text-sm font-semibold text-gray-900 truncate">{{ task.name }}</h3>
+      </div>
       <span
         class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
         :class="statusBadgeClass"
@@ -73,6 +82,14 @@ import { computed } from 'vue'
 
 const props = defineProps({
   task: { type: Object, required: true }
+})
+
+const typeBadgeClass = computed(() => {
+  switch (props.task.type) {
+    case 'Model Tuning': return 'bg-purple-100 text-purple-700'
+    case 'Data Processing': return 'bg-blue-100 text-blue-700'
+    default: return 'bg-gray-100 text-gray-700'
+  }
 })
 
 const statusBadgeClass = computed(() => {
