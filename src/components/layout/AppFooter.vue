@@ -42,9 +42,9 @@
       <div class="mt-10 pt-8 border-t border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center space-x-2">
           <img src="/logo.png" alt="DCAI" class="w-8 h-8" />
-          <span class="text-white font-bold">DCAI Platform</span>
+          <span class="text-white font-bold">OriginHub Tech</span>
         </div>
-        <p class="text-sm text-gray-500">&copy; 2025 DCAI Platform. All rights reserved.</p>
+        <p class="text-sm text-gray-500">&copy; 2026 OriginHub Tech. All rights reserved.</p>
       </div>
     </div>
   </footer>
