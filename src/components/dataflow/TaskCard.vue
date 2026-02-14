@@ -1,7 +1,8 @@
 <template>
   <div
-    class="border rounded-lg p-4 hover:shadow-md transition-all bg-white"
-    :class="borderClass"
+    class="border rounded-lg p-4 hover:shadow-md transition-all bg-white cursor-pointer"
+    :class="[borderClass, isClickable && 'hover:border-purple-300 hover:bg-purple-50/30']"
+    @click="handleClick"
   >
     <!-- Header: name + status badge + type badge -->
     <div class="flex items-center justify-between mb-3">
@@ -79,10 +80,21 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const props = defineProps({
   task: { type: Object, required: true }
 })
+
+const isClickable = computed(() => props.task.type === 'Model Tuning')
+
+function handleClick() {
+  if (isClickable.value) {
+    router.push({ name: 'model-tuning-task', params: { id: props.task.id } })
+  }
+}
 
 const typeBadgeClass = computed(() => {
   switch (props.task.type) {

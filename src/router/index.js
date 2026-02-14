@@ -9,6 +9,7 @@ const routes = [
   { path: '/dataflow', name: 'dataflow', component: () => import('../views/DataFlowPage.vue') },
   { path: '/dataflow/canvas', name: 'dataflow-canvas', component: () => import('../views/DataFlowCanvasPage.vue') },
   { path: '/dataflow/tasks', name: 'dataflow-tasks', component: () => import('../views/DataFlowTasksPage.vue') },
+  { path: '/dataflow/tasks/:id', name: 'model-tuning-task', component: () => import('../views/ModelTuningTaskDetailPage.vue') },
   { path: '/spaces', name: 'spaces', component: () => import('../views/SpacesPage.vue') },
   { path: '/spaces/:id(.*)', name: 'space-detail', component: () => import('../views/SpaceDetailPage.vue') },
 ]
