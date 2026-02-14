@@ -33,8 +33,15 @@ export function useSearch(items, options = {}) {
       }
     }
 
-    // Sort
+    // Sort - featured items always first, then by selected sort
     result.sort((a, b) => {
+      // Featured items go first
+      const aFeatured = a.featured ? 1 : 0
+      const bFeatured = b.featured ? 1 : 0
+      if (aFeatured !== bFeatured) {
+        return bFeatured - aFeatured
+      }
+      // Then apply the selected sort
       switch (sortBy.value) {
         case 'downloads': return (b.downloads || 0) - (a.downloads || 0)
         case 'likes': return (b.likes || 0) - (a.likes || 0)
