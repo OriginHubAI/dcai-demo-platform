@@ -3,7 +3,7 @@
     class="fixed left-0 top-0 h-full flex flex-col z-50 shadow-lg transition-all duration-300 ease-in-out"
     :class="[
       isCollapsed ? 'w-16' : 'w-60',
-      'bg-white border-r border-slate-200'
+      'bg-slate-100 border-r border-slate-200'
     ]"
   >
     <!-- Logo & Toggle -->
@@ -17,7 +17,7 @@
         </div>
         <div class="flex flex-col">
           <span class="text-lg font-bold text-slate-800 tracking-tight">Sci-DCAI</span>
-          <span class="text-[10px] text-slate-500 -mt-1">AI Platform</span>
+          <span class="text-[10px] text-slate-500 -mt-1">Data-Centric AI Platform</span>
         </div>
       </router-link>
       <router-link to="/" class="flex items-center justify-center" v-else>
