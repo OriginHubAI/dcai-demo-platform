@@ -8,6 +8,7 @@ import { useRoute } from 'vue-router'
 import { getTaskById } from '@/data/tasks.js'
 import ModelTuningTaskDetailPage from './ModelTuningTaskDetailPage.vue'
 import DataProcessingTaskDetailPage from './DataProcessingTaskDetailPage.vue'
+import ModelEvaluationTaskDetailPage from './ModelEvaluationTaskDetailPage.vue'
 
 const route = useRoute()
 
@@ -19,6 +20,8 @@ const task = computed(() => {
 const detailComponent = computed(() => {
   if (task.value.type === 'Model Tuning') {
     return ModelTuningTaskDetailPage
+  } else if (task.value.type === 'Model Evaluation') {
+    return ModelEvaluationTaskDetailPage
   } else if (task.value.type === 'Data Processing') {
     return DataProcessingTaskDetailPage
   }

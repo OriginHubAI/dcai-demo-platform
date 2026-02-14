@@ -1,7 +1,7 @@
 <template>
   <div
     class="border rounded-lg p-4 hover:shadow-md transition-all bg-white cursor-pointer"
-    :class="[borderClass, isClickable && 'hover:border-purple-300 hover:bg-purple-50/30']"
+    :class="[borderClass, isClickable && (task.type === 'Model Evaluation' ? 'hover:border-emerald-300 hover:bg-emerald-50/30' : task.type === 'Model Tuning' ? 'hover:border-purple-300 hover:bg-purple-50/30' : 'hover:border-blue-300 hover:bg-blue-50/30')]"
     @click="handleClick"
   >
     <!-- Header: name + status badge + type badge -->
@@ -88,7 +88,7 @@ const props = defineProps({
   task: { type: Object, required: true }
 })
 
-const isClickable = computed(() => props.task.type === 'Model Tuning' || props.task.type === 'Data Processing')
+const isClickable = computed(() => props.task.type === 'Model Tuning' || props.task.type === 'Model Evaluation' || props.task.type === 'Data Processing')
 
 function handleClick() {
   if (isClickable.value) {
@@ -99,6 +99,7 @@ function handleClick() {
 const typeBadgeClass = computed(() => {
   switch (props.task.type) {
     case 'Model Tuning': return 'bg-purple-100 text-purple-700'
+    case 'Model Evaluation': return 'bg-emerald-100 text-emerald-700'
     case 'Data Processing': return 'bg-blue-100 text-blue-700'
     default: return 'bg-gray-100 text-gray-700'
   }
