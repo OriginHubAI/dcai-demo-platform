@@ -76,18 +76,30 @@
             </svg>
           </button>
           
-          <!-- Collapsed: Show icon with dropdown tooltip -->
-          <div v-else class="relative group">
-            <button
-              @click="toggleDropdown(link.to)"
-              class="w-full flex items-center justify-center p-2.5 rounded-xl transition-all duration-200"
+          <!-- Collapsed: Show children icons -->
+          <div v-else class="flex flex-col items-center gap-1">
+            <router-link
+              :to="link.to"
+              class="w-full flex items-center justify-center p-2 rounded-xl transition-all duration-200"
               :class="isActive(link.to) ? 'bg-slate-100 text-dc-primary' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'"
             >
               <component :is="link.icon" class="w-5 h-5" />
-            </button>
-            <!-- Tooltip for collapsed state -->
-            <div class="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-              {{ link.label }}
+            </router-link>
+            <!-- Child item icons -->
+            <div class="flex flex-col gap-1 py-1">
+              <router-link
+                v-for="child in link.children"
+                :key="child.to"
+                :to="child.to"
+                class="flex items-center justify-center p-1.5 rounded-lg transition-all duration-200 relative group"
+                :class="route.path === child.to ? 'bg-slate-100 text-dc-primary' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'"
+              >
+                <component :is="child.iconComponent" class="w-4 h-4" />
+                <!-- Tooltip for collapsed child icons -->
+                <div class="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                  {{ child.label }}
+                </div>
+              </router-link>
             </div>
           </div>
           
@@ -182,7 +194,7 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 const isCollapsed = ref(false)
 const dropdownOpen = reactive({
-  '/dataflow': true,
+  '/dataflow/canvas': true,
 })
 
 function toggleCollapse() {
@@ -235,12 +247,12 @@ const QuestionMarkCircleIcon = () => h('svg', { class: 'w-4 h-4', fill: 'none', 
 const navLinks = [
   { to: '/datasets', label: 'Datasets', icon: DatabaseIcon },
   {
-    to: '/dataflow',
+    to: '/dataflow/canvas',
     label: 'DataFlow',
     icon: FlowIcon,
     children: [
-      { to: '/dataflow', label: 'Packages', iconComponent: PackageIcon },
       { to: '/dataflow/canvas', label: 'Canvas', iconComponent: CanvasIcon },
+      { to: '/dataflow', label: 'Packages', iconComponent: PackageIcon },
       { to: '/dataflow/tasks', label: 'Tasks', iconComponent: TasksIcon },
     ],
   },
