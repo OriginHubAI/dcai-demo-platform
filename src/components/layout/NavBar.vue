@@ -46,7 +46,7 @@
     </button>
 
     <!-- Nav Links -->
-    <nav class="flex-1 py-4 overflow-y-auto" :class="isCollapsed ? 'px-2' : 'px-3'">
+    <nav class="flex-1 py-4 overflow-y-auto" :class="isCollapsed ? 'px-2 overflow-x-hidden scrollbar-hide' : 'px-3'">
       <div v-if="!isCollapsed" class="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Menu</div>
       <div v-else class="mb-2 text-center">
         <div class="w-8 h-px bg-slate-200 mx-auto"></div>
@@ -283,5 +283,14 @@ function isActive(path) {
 
 .animate-slideDown {
   animation: slideDown 0.2s ease-out;
+}
+
+/* Hide scrollbars when sidebar is collapsed */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>

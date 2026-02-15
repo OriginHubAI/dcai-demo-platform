@@ -52,13 +52,13 @@
         <span class="text-gray-500">Dataset</span>
         <span class="text-gray-800 font-medium truncate ml-auto">{{ task.dataset }}</span>
       </div>
-      <!-- Package -->
+      <!-- Package / Base Model -->
       <div class="flex items-center gap-2">
         <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
         </svg>
-        <span class="text-gray-500">Package</span>
-        <span class="text-gray-800 font-medium truncate ml-auto">{{ task.package }}</span>
+        <span class="text-gray-500">{{ task.type === 'Model Tuning' ? 'Base Model' : 'Package' }}</span>
+        <span class="text-gray-800 font-medium truncate ml-auto">{{ task.type === 'Model Tuning' ? task.baseModel : task.package }}</span>
       </div>
       <!-- Time -->
       <div class="flex items-center gap-2">

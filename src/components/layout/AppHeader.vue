@@ -163,7 +163,7 @@ const pageTitle = computed(() => {
     '/models/': 'Model Detail',
     '/spaces': 'Spaces',
     '/spaces/': 'Space Detail',
-    '/dataflow': 'DataFlow',
+    '/dataflow': 'Packages',
     '/dataflow/canvas': 'Canvas',
     '/dataflow/tasks': 'Tasks',
   }
