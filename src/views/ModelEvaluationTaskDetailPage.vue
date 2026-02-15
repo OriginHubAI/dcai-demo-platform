@@ -42,22 +42,22 @@
       <div class="bg-white rounded-lg border border-gray-200 p-4">
         <div class="text-sm text-gray-500 mb-1">Accuracy</div>
         <div class="text-2xl font-bold text-gray-900">{{ evaluationMetrics.accuracy }}</div>
-        <div class="text-xs text-green-600 mt-1">↑ 2.3% vs baseline</div>
+        <div class="text-xs text-green-600 mt-1">↑ 5.2% vs baseline</div>
       </div>
       <div class="bg-white rounded-lg border border-gray-200 p-4">
         <div class="text-sm text-gray-500 mb-1">Precision</div>
         <div class="text-2xl font-bold text-gray-900">{{ evaluationMetrics.precision }}</div>
-        <div class="text-xs text-green-600 mt-1">↑ 1.8% vs baseline</div>
+        <div class="text-xs text-green-600 mt-1">↑ 4.5% vs baseline</div>
       </div>
       <div class="bg-white rounded-lg border border-gray-200 p-4">
         <div class="text-sm text-gray-500 mb-1">Recall</div>
         <div class="text-2xl font-bold text-gray-900">{{ evaluationMetrics.recall }}</div>
-        <div class="text-xs text-green-600 mt-1">↑ 3.1% vs baseline</div>
+        <div class="text-xs text-green-600 mt-1">↑ 6.8% vs baseline</div>
       </div>
       <div class="bg-white rounded-lg border border-gray-200 p-4">
         <div class="text-sm text-gray-500 mb-1">F1 Score</div>
         <div class="text-2xl font-bold text-gray-900">{{ evaluationMetrics.f1 }}</div>
-        <div class="text-xs text-green-600 mt-1">↑ 2.5% vs baseline</div>
+        <div class="text-xs text-green-600 mt-1">↑ 4.2% vs baseline</div>
       </div>
     </div>
 
