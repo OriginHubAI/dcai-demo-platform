@@ -1,7 +1,9 @@
 <template>
-  <div class="h-[calc(100vh-57px)] flex flex-col overflow-hidden bg-[#f7f8fa]">
-    <!-- Top Toolbar -->
-    <div class="flex items-center justify-between px-4 py-2.5 bg-white border-b border-gray-200 flex-shrink-0">
+  <div class="h-[calc(100vh-57px)] flex overflow-hidden bg-[#f7f8fa]">
+    <!-- Main Canvas Area -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Top Toolbar -->
+      <div class="flex items-center justify-between px-4 py-2.5 bg-white border-b border-gray-200 flex-shrink-0">
       <div class="flex items-center gap-2">
         <button
           v-for="btn in toolbarButtons"
@@ -14,6 +16,17 @@
         >
           <span v-if="btn.icon" class="text-base" v-html="btn.icon" />
           <span>{{ btn.label }}</span>
+        </button>
+        <!-- Agent 编排按钮 - 仅在侧边栏关闭时显示 -->
+        <button
+          v-if="!agentSidebarExpanded"
+          @click="agentSidebarExpanded = true"
+          class="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors border bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-transparent hover:from-blue-600 hover:to-indigo-700 shadow-sm"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+          </svg>
+          <span>Agent 编排</span>
         </button>
       </div>
       <div class="flex items-center gap-1">
@@ -235,11 +248,19 @@
         </button>
       </div>
     </div>
+    </div>
+
+    <!-- Agent Dialog Sidebar -->
+    <AgentDialogSidebar
+      v-if="agentSidebarExpanded"
+      @close="agentSidebarExpanded = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import AgentDialogSidebar from '../components/dataflow/AgentDialogSidebar.vue'
 
 const canvasContainer = ref(null)
 const activeTool = ref('select')
@@ -247,6 +268,7 @@ const selectedNode = ref(null)
 const zoom = ref(0.85)
 const pan = reactive({ x: 50, y: 30 })
 const viewportSize = reactive({ w: 1200, h: 700 })
+const agentSidebarExpanded = ref(true)
 
 const toolbarButtons = [
   { id: 'compute', label: '算力配置', icon: '⚡' },
