@@ -6,24 +6,33 @@
     </div>
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 text-center">
       <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-slate-800">
-        The AI community building the future.
+        Empowering Industries with Data-Centric AI.
       </h1>
       <p class="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto mb-10">
-        The platform where the machine learning community collaborates on models, datasets, and applications.
+        The Data-Centric AI platform where AI developers, data scientists, and domain experts collaborate around data to build professional models, agents, and applications.
       </p>
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
         <router-link
-          to="/models"
+          to="/datasets"
           class="inline-flex items-center px-6 py-3 bg-dc-primary text-white font-semibold rounded-lg hover:bg-dc-primary-dark transition-colors text-sm shadow-lg shadow-dc-primary/20"
         >
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
           </svg>
-          Explore Models
+          Explore Datasets
+        </router-link>
+        <router-link
+          to="/dataflow/tasks"
+          class="inline-flex items-center px-6 py-3 bg-dc-primary text-white font-semibold rounded-lg hover:bg-dc-primary-dark transition-colors text-sm shadow-lg shadow-dc-primary/20"
+        >
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          View Tasks
         </router-link>
         <router-link
           to="/spaces"
-          class="inline-flex items-center px-6 py-3 bg-white text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors border border-slate-200 text-sm shadow-sm"
+          class="inline-flex items-center px-6 py-3 bg-dc-primary text-white font-semibold rounded-lg hover:bg-dc-primary-dark transition-colors text-sm shadow-lg shadow-dc-primary/20"
         >
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
@@ -31,22 +40,9 @@
           Browse Spaces
         </router-link>
       </div>
-      <!-- Stats -->
-      <div class="mt-16 grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-3xl mx-auto">
-        <div v-for="stat in stats" :key="stat.label">
-          <div class="text-2xl sm:text-3xl font-bold text-dc-primary">{{ stat.value }}</div>
-          <div class="text-sm text-slate-500 mt-1">{{ stat.label }}</div>
-        </div>
-      </div>
     </div>
   </section>
 </template>
 
 <script setup>
-const stats = [
-  { value: '900K+', label: 'Models' },
-  { value: '200K+', label: 'Datasets' },
-  { value: '400K+', label: 'Spaces' },
-  { value: '50K+', label: 'Organizations' },
-]
 </script>
