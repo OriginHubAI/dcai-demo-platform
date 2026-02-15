@@ -247,12 +247,20 @@
         <!-- Execution Sampled Data -->
         <div>
           <h3 class="text-sm font-semibold text-gray-900 mb-3">Execution Sampled Data</h3>
-          <div class="border border-gray-200 rounded-lg h-64 flex items-center justify-center bg-gray-50">
-            <div class="text-center">
-              <svg class="w-12 h-12 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              <p class="text-gray-400 text-sm">No Data</p>
+          <div class="border border-gray-200 rounded-lg h-64 bg-gray-900 overflow-auto">
+            <div v-if="sampleData" class="p-4 font-mono text-xs">
+              <div v-for="(line, index) in sampleDataLines" :key="index" class="mb-2">
+                <span class="text-gray-500 mr-2">{{ index + 1 }}</span>
+                <span class="text-green-400">{{ line }}</span>
+              </div>
+            </div>
+            <div v-else class="h-full flex items-center justify-center">
+              <div class="text-center">
+                <svg class="w-12 h-12 text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-gray-500 text-sm">No Data</p>
+              </div>
             </div>
           </div>
         </div>
@@ -417,6 +425,16 @@ const currentStepLogs = computed(() => {
 const executionLogs = computed(() => {
   const result = executionResult.value
   return result.logs || []
+})
+
+const sampleData = computed(() => {
+  const result = executionResult.value
+  return result.sampleData || ''
+})
+
+const sampleDataLines = computed(() => {
+  if (!sampleData.value) return []
+  return sampleData.value.split('\n').filter(line => line.trim())
 })
 
 const statusBadgeClass = computed(() => {

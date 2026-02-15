@@ -859,6 +859,9 @@ const executionResults = {
       { step: 'S4: ReasoningAns...', value: 16, color: '#bbf7d0' },
       { step: 'S5: ReasoningAns...', value: 16, color: '#bae6fd' },
     ],
+    sampleData: `{"instruction": "A farmer has 12 sheep and 5 lambs. If he sells 3 sheep, how many animals remain?", "output": "The farmer originally has 12 sheep + 5 lambs = 17 animals. After selling 3 sheep, he has 12 - 3 = 9 sheep and still 5 lambs. Total animals remaining: 9 + 5 = 14.", "golden_answer": "14", "source": "math_word_problems"}
+{"instruction": "Calculate the area of a circle with radius 5cm.", "output": "Using the formula A = πr², where r = 5cm. A = π × 5² = 25π ≈ 78.54 cm².", "golden_answer": "78.54 cm²", "source": "geometry_problems"}
+{"instruction": "If a train travels at 80 km/h, how long does it take to travel 200 km?", "output": "Time = Distance / Speed = 200 km / 80 km/h = 2.5 hours or 2 hours 30 minutes.", "golden_answer": "2.5 hours", "source": "physics_problems"}`,
     currentStepLogs: [
       '[2026-02-02T15:15:16.511061] [3/5] Initializing operator: ReasoningAnswerGenerator',
       '[2026-02-02T15:15:16.511117] - Initializing LLM serving: c4f66200d5e85944',
@@ -894,6 +897,9 @@ const executionResults = {
       { step: 'S1: QualityFilter', value: 4500, color: '#f8b4b4' },
       { step: 'S2: FeatureGen', value: 4500, color: '#bbf7d0' },
     ],
+    sampleData: `{"sequence": "AUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCU", "label": "mRNA", "length": 90, "gc_content": 0.33}
+{"sequence": "GCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGC", "label": "rRNA", "length": 100, "gc_content": 1.0}
+{"sequence": "UACGUACGUACGUACGUACGUACGUACGUACGUACGUACGUACGUACGUACGUACGUACGUACGUACGUACGUACGUACGUACGUACGUACGUACGUACG", "label": "tRNA", "length": 95, "gc_content": 0.25}`,
     currentStepLogs: [
       '[2026-02-02T10:25:16.511061] Initializing operator: SequenceFeatureGenerator',
       '[2026-02-02T10:25:16.511117] - Initializing LLM serving: c4f66200d5e85944',
@@ -919,6 +925,9 @@ const executionResults = {
       { step: 'S1: Convergence', value: 230, color: '#fde68a' },
       { step: 'S2: Normalizer', value: 230, color: '#bae6fd' },
     ],
+    sampleData: `{"molecule": "H2O", "energy": -76.3847, "forces": [[0.0, 0.0, 0.001], [0.0, -0.002, 0.0], [0.0, 0.002, -0.001]], "stress": [0.01, 0.01, 0.01, 0.0, 0.0, 0.0]}
+{"molecule": "CH4", "energy": -40.2189, "forces": [[0.001, 0.0, 0.0], [-0.001, 0.001, 0.0], [0.0, -0.001, 0.001], [0.0, 0.0, -0.001], [0.0, 0.0, 0.0]], "stress": [0.02, 0.02, 0.02, 0.0, 0.0, 0.0]}
+{"molecule": "CO2", "energy": -188.2431, "forces": [[0.0, 0.0, 0.0], [0.001, 0.0, 0.0], [-0.001, 0.0, 0.0]], "stress": [0.015, 0.015, 0.015, 0.0, 0.0, 0.0]}`,
     currentStepLogs: [
       '[2026-02-02T07:45:16.511061] Initializing operator: EnergyNormalizer',
       '[2026-02-02T07:45:16.511117] - Initializing LLM serving: c4f66200d5e85944',
@@ -943,6 +952,9 @@ const executionResults = {
       { step: 'S1: NoiseFilter', value: 9800, color: '#f8b4b4' },
       { step: 'S2: EventDetect', value: 342, color: '#bbf7d0' },
     ],
+    sampleData: `{"waveform": [0.002, 0.003, 0.001, 0.004, 0.156, 0.892, 1.234, 0.756, 0.342, 0.123], "timestamp": "2026-02-08T11:20:15.123Z", "magnitude": 4.2, "station_id": "SEIS-001"}
+{"waveform": [0.001, 0.002, 0.001, 0.003, 0.008, 0.015, 0.012, 0.009, 0.005, 0.003], "timestamp": "2026-02-08T11:22:30.456Z", "magnitude": 2.1, "station_id": "SEIS-003"}
+{"waveform": [0.003, 0.005, 0.012, 0.089, 0.456, 1.892, 2.456, 1.234, 0.567, 0.234], "timestamp": "2026-02-08T11:25:45.789Z", "magnitude": 5.7, "station_id": "SEIS-002"}`,
     currentStepLogs: [
       '[2026-02-08T11:25:00] Initializing EventDetector',
       'Detecting seismic events...',
@@ -965,6 +977,9 @@ const executionResults = {
       { step: 'S1: QualityCheck', value: 7200, color: '#fde68a' },
       { step: 'S2: Redshift', value: 7200, color: '#bae6fd' },
     ],
+    sampleData: `{"wavelength": [4000.5, 4001.0, 4001.5, 4002.0, 4862.7, 6564.6], "flux": [1.23, 1.25, 1.22, 1.24, 15.67, 23.45], "redshift": 0.0234, "object_id": "GAL-2026-001"}
+{"wavelength": [4000.0, 4000.5, 4001.0, 5008.2, 6565.2], "flux": [0.89, 0.91, 0.88, 8.92, 18.34], "redshift": 0.1567, "object_id": "QSO-2026-042"}
+{"wavelength": [4100.0, 4341.6, 4862.1, 6563.8], "flux": [3.45, 5.67, 7.89, 12.34], "redshift": 0.0089, "object_id": "STAR-2026-103"}`,
     currentStepLogs: [
       '[2026-02-08T06:15:00] Initializing RedshiftLabeler',
       'Calculating redshift values...',
@@ -987,6 +1002,9 @@ const executionResults = {
       { step: 'S1: DrugFilter', value: 13200, color: '#f8b4b4' },
       { step: 'S2: ADMET', value: 13200, color: '#bbf7d0' },
     ],
+    sampleData: `{"smiles": "CC(C)Cc1ccc(C(C)C(=O)O)cc1", "molecular_weight": 206.28, "logp": 3.5, "admet_props": {"solubility": 0.023, "absorption": 0.89, "cyp_inhibition": 0.12, "hERG": 0.34}}
+{"smiles": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C", "molecular_weight": 194.19, "logp": -0.07, "admet_props": {"solubility": 0.156, "absorption": 0.95, "cyp_inhibition": 0.08, "hERG": 0.21}}
+{"smiles": "CC(=O)Oc1ccccc1C(=O)O", "molecular_weight": 180.16, "logp": 1.19, "admet_props": {"solubility": 0.089, "absorption": 0.92, "cyp_inhibition": 0.15, "hERG": 0.18}}`,
     currentStepLogs: [
       '[2026-02-07T09:30:00] Initializing ADMETPredictor',
       'Predicting ADMET properties...',
@@ -1009,6 +1027,9 @@ const executionResults = {
       { step: 'S1: ImgQuality', value: 7800, color: '#fde68a' },
       { step: 'S2: Segment', value: 7800, color: '#bae6fd' },
     ],
+    sampleData: `{"image": "microscopy/cell_001.png", "cell_type": "HeLa", "resolution": [1024, 1024], "stain": "DAPI", "segmentation_mask": [[0,0,1,1],[0,1,1,0],[1,1,0,0],[1,0,0,1]]}
+{"image": "microscopy/cell_002.png", "cell_type": "MCF-7", "resolution": [1024, 1024], "stain": "Phalloidin", "segmentation_mask": [[1,1,0,0],[1,0,0,1],[0,0,1,1],[0,1,1,0]]}
+{"image": "microscopy/cell_003.png", "cell_type": "A549", "resolution": [2048, 2048], "stain": "Hoechst", "segmentation_mask": [[0,1,1,1],[1,1,0,0],[1,0,0,1],[0,0,1,1]]}`,
     currentStepLogs: [
       '[2026-02-06T22:00:00] Initializing CellSegmentation',
       'Segmenting cell images...',
@@ -1031,6 +1052,9 @@ const executionResults = {
       { step: 'S1: Calibrate', value: 48500, color: '#f8b4b4' },
       { step: 'S2: Clean', value: 48500, color: '#bbf7d0' },
     ],
+    sampleData: `{"timestamp": "2026-02-07T10:00:00Z", "temperature": 18.5, "salinity": 35.2, "depth": 100.0, "location": {"lat": 35.2, "lon": -123.4}}
+{"timestamp": "2026-02-07T10:15:00Z", "temperature": 18.3, "salinity": 35.3, "depth": 150.0, "location": {"lat": 35.2, "lon": -123.4}}
+{"timestamp": "2026-02-07T10:30:00Z", "temperature": 17.9, "salinity": 35.1, "depth": 200.0, "location": {"lat": 35.2, "lon": -123.4}}`,
     currentStepLogs: [
       '[2026-02-07T11:30:00] Initializing DataCleaner',
       'Cleaning sensor data...',
@@ -1053,6 +1077,9 @@ const executionResults = {
       { step: 'S1: Validate', value: 5800, color: '#fde68a' },
       { step: 'S2: Extract', value: 5800, color: '#bae6fd' },
     ],
+    sampleData: `{"structure": "SiO2", "space_group": "P3_221", "lattice_params": {"a": 4.91, "b": 4.91, "c": 5.40, "alpha": 90, "beta": 90, "gamma": 120}, "atomic_coords": [["Si", 0.47, 0.0, 0.33], ["O", 0.41, 0.27, 0.12]]}
+{"structure": "NaCl", "space_group": "Fm-3m", "lattice_params": {"a": 5.64, "b": 5.64, "c": 5.64, "alpha": 90, "beta": 90, "gamma": 90}, "atomic_coords": [["Na", 0.0, 0.0, 0.0], ["Cl", 0.5, 0.5, 0.5]]}
+{"structure": "Fe2O3", "space_group": "R-3c", "lattice_params": {"a": 5.03, "b": 5.03, "c": 13.75, "alpha": 90, "beta": 90, "gamma": 120}, "atomic_coords": [["Fe", 0.0, 0.0, 0.35], ["O", 0.31, 0.0, 0.25]]}`,
     currentStepLogs: [
       '[2026-02-06T17:00:00] Initializing FeatureExtractor',
       'Extracting crystal features...',
@@ -1075,6 +1102,9 @@ const executionResults = {
       { step: 'S1: VarFilter', value: 185000, color: '#f8b4b4' },
       { step: 'S2: Annotate', value: 185000, color: '#bbf7d0' },
     ],
+    sampleData: `{"chromosome": "chr1", "position": 1234567, "ref": "A", "alt": "G", "quality": 98.5, "annotation": "missense_variant", "gene": "BRCA1"}
+{"chromosome": "chr7", "position": 8765432, "ref": "C", "alt": "T", "quality": 92.1, "annotation": "synonymous_variant", "gene": "EGFR"}
+{"chromosome": "chr17", "position": 7654321, "ref": "G", "alt": "A", "quality": 99.9, "annotation": "stop_gained", "gene": "TP53"}`,
     currentStepLogs: [
       '[2026-02-06T09:00:00] Initializing VariantAnnotator',
       'Annotating variants...',
@@ -1097,6 +1127,9 @@ const executionResults = {
       { step: 'S1: ArtifactRem', value: 12000, color: '#f8b4b4' },
       { step: 'S2: Preprocess', value: 12000, color: '#fde68a' },
     ],
+    sampleData: `{"timestamp": "2026-02-07T13:00:00.000Z", "channel": "F3", "amplitude": 12.5, "frequency": 10.5, "subject_id": "S001", "preprocessed_signal": [0.12, 0.15, 0.11, 0.18, 0.22, 0.19, 0.14]}
+{"timestamp": "2026-02-07T13:00:00.004Z", "channel": "C3", "amplitude": 8.3, "frequency": 12.2, "subject_id": "S001", "preprocessed_signal": [0.08, 0.09, 0.11, 0.10, 0.09, 0.08, 0.07]}
+{"timestamp": "2026-02-07T13:00:00.008Z", "channel": "O1", "amplitude": 15.7, "frequency": 8.5, "subject_id": "S001", "preprocessed_signal": [0.18, 0.21, 0.25, 0.23, 0.19, 0.16, 0.14]}`,
     currentStepLogs: [
       '[2026-02-07T13:30:00] Initializing SignalPreprocessor',
       'Preprocessing EEG signals...',
@@ -1118,6 +1151,9 @@ const executionResults = {
       { step: 'S1: Parse', value: 10000, color: '#fde68a' },
       { step: 'S2: Analyze', value: 10000, color: '#bae6fd' },
     ],
+    sampleData: `{"frame": 1, "coordinates": [[0.0, 0.0, 0.0], [0.96, 0.0, 0.0], [0.0, 0.96, 0.0]], "velocities": [[0.01, 0.02, -0.01], [-0.01, 0.01, 0.0], [0.0, -0.02, 0.01]], "forces": [[0.05, 0.03, -0.02], [-0.04, 0.02, 0.01], [0.01, -0.03, 0.02]], "time": 0.0}
+{"frame": 2, "coordinates": [[0.001, 0.002, -0.001], [0.961, 0.001, 0.0], [-0.001, 0.959, 0.001]], "velocities": [[0.012, 0.018, -0.008], [-0.008, 0.012, 0.002], [0.002, -0.018, 0.012]], "forces": [[0.052, 0.028, -0.018], [-0.038, 0.025, 0.005], [0.012, -0.028, 0.018]], "time": 1.0}
+{"frame": 3, "coordinates": [[0.003, 0.004, -0.002], [0.963, 0.002, 0.001], [-0.002, 0.957, 0.002]], "velocities": [[0.015, 0.015, -0.005], [-0.005, 0.015, 0.005], [0.005, -0.015, 0.015]], "forces": [[0.055, 0.025, -0.015], [-0.035, 0.028, 0.008], [0.015, -0.025, 0.015]], "time": 2.0}`,
     currentStepLogs: [
       '[2026-02-06T00:00:00] Initializing TrajectoryAnalyzer',
       'Analyzing trajectories...',
@@ -1140,6 +1176,9 @@ const executionResults = {
       { step: 'S1: Validate', value: 11500, color: '#f8b4b4' },
       { step: 'S2: Predict', value: 11500, color: '#bbf7d0' },
     ],
+    sampleData: `{"formula": "HgBa2Ca2Cu3O8", "tc": 133.5, "pressure": 1.0, "structure_type": "cuprate", "ref": "Physica C 1993", "tc_prediction": 134.2}
+{"formula": "YBa2Cu3O7", "tc": 92.0, "pressure": 1.0, "structure_type": "cuprate", "ref": "Z. Phys. B 1987", "tc_prediction": 91.5}
+{"formula": "MgB2", "tc": 39.0, "pressure": 1.0, "structure_type": "intermetallic", "ref": "Nature 2001", "tc_prediction": 38.8}`,
     currentStepLogs: [
       '[2026-02-06T10:30:00] Initializing TcPredictor',
       'Predicting Tc values...',
@@ -1162,6 +1201,9 @@ const executionResults = {
       { step: 'S1: CloudFilter', value: 22000, color: '#fde68a' },
       { step: 'S2: Classify', value: 22000, color: '#bae6fd' },
     ],
+    sampleData: `{"image": "satellite/weather_20260205_1400.png", "timestamp": "2026-02-05T14:00:00Z", "region": "Pacific_North", "cloud_cover": 0.35, "temperature": 285.5, "weather_pattern": "partly_cloudy"}
+{"image": "satellite/weather_20260205_1500.png", "timestamp": "2026-02-05T15:00:00Z", "region": "Pacific_North", "cloud_cover": 0.72, "temperature": 283.2, "weather_pattern": "cloudy"}
+{"image": "satellite/weather_20260205_1600.png", "timestamp": "2026-02-05T16:00:00Z", "region": "Pacific_North", "cloud_cover": 0.18, "temperature": 288.7, "weather_pattern": "clear"}`,
     currentStepLogs: [
       '[2026-02-05T16:00:00] Initializing WeatherClassifier',
       'Classifying weather patterns...',
@@ -1184,6 +1226,9 @@ const executionResults = {
       { step: 'S1: DupFilter', value: 75000, color: '#f8b4b4' },
       { step: 'S2: Deduplicate', value: 75000, color: '#bbf7d0' },
     ],
+    sampleData: `{"species": "Panthera leo", "location": "Serengeti National Park", "date": "2026-02-01", "observer": "Dr. Smith", "coordinates": {"lat": -2.333, "lon": 34.833}, "deduplicated_record": true}
+{"species": "Elephas africanus", "location": "Masai Mara", "date": "2026-02-03", "observer": "Jane Doe", "coordinates": {"lat": -1.5, "lon": 35.2}, "deduplicated_record": true}
+{"species": "Giraffa camelopardalis", "location": "Amboseli", "date": "2026-02-05", "observer": "John Lee", "coordinates": {"lat": -2.65, "lon": 37.25}, "deduplicated_record": false}`,
     currentStepLogs: [
       '[2026-02-08T13:00:00] Initializing RecordDeduplicator',
       'Deduplicating records...',
@@ -1205,6 +1250,9 @@ const executionResults = {
       { step: 'S1: LangFilter', value: 4800, color: '#fde68a' },
       { step: 'S2: NER', value: 4800, color: '#bae6fd' },
     ],
+    sampleData: `{"title": "Microstructure Evolution in Austenitic Stainless Steel during Annealing", "abstract": "The austenitic stainless steel 316L shows significant changes in grain structure when annealed at 1050°C.", "named_entities": {"materials": ["316L stainless steel"], "processes": ["annealing"], "temperatures": ["1050°C"], "properties": ["grain structure", "microstructure"]}}
+{"title": "Effect of Carbon Content on Martensitic Transformation in High-Strength Steel", "abstract": "Carbon content above 0.8% wt inhibits martensitic transformation and promotes pearlite formation.", "named_entities": {"materials": ["high-strength steel"], "processes": ["martensitic transformation"], "properties": ["carbon content"], "values": ["0.8% wt"]}}
+{"title": "Titanium Alloys for Aerospace Applications: A Review", "abstract": "Ti-6Al-4V remains the most widely used titanium alloy in aerospace due to its excellent strength-to-weight ratio.", "named_entities": {"materials": ["Ti-6Al-4V", "titanium alloy"], "applications": ["aerospace"], "properties": ["strength-to-weight ratio"]}}`,
     currentStepLogs: [
       '[2026-02-07T15:30:00] Initializing NERExtractor',
       'Extracting named entities...',
@@ -1227,6 +1275,9 @@ const executionResults = {
       { step: 'S1: Quality', value: 3000, color: '#f8b4b4' },
       { step: 'S2: Segment', value: 3000, color: '#fde68a' },
     ],
+    sampleData: `{"map_image": "geoscience/map_region_A_2025.png", "region": "Appalachian Basin", "scale": "1:24000", "legend": ["sandstone", "shale", "limestone", "granite"], "segmentation": {"sandstone": 0.35, "shale": 0.42, "limestone": 0.18, "granite": 0.05}}
+{"map_image": "geoscience/map_region_B_2025.png", "region": "Permian Basin", "scale": "1:50000", "legend": ["dolomite", "chert", "gypsum", "halite"], "segmentation": {"dolomite": 0.28, "chert": 0.15, "gypsum": 0.35, "halite": 0.22}}
+{"map_image": "geoscience/map_region_C_2025.png", "region": "Michigan Basin", "scale": "1:100000", "legend": ["salt", "anhydrite", "dolomite", "shale"], "segmentation": {"salt": 0.45, "anhydrite": 0.12, "dolomite": 0.25, "shale": 0.18}}`,
     currentStepLogs: [
       '[2026-02-07T08:30:00] Initializing SegmentationLabeler',
       'Segmenting geoscience maps...',
@@ -1248,6 +1299,9 @@ const executionResults = {
       { step: 'S1: Converge', value: 19500, color: '#fde68a' },
       { step: 'S2: Validate', value: 19500, color: '#bae6fd' },
     ],
+    sampleData: `{"simulation_id": "CFD-2026-001", "parameters": {"Reynolds": 10000, "Mach": 0.3, "Prandtl": 0.71}, "results": {"lift_coeff": 0.85, "drag_coeff": 0.042, "pressure_drop": 125.5}, "error": 1e-7, "timestamp": "2026-02-06T16:00:00Z", "validation_result": "passed"}
+{"simulation_id": "CFD-2026-002", "parameters": {"Reynolds": 50000, "Mach": 0.5, "Prandtl": 0.71}, "results": {"lift_coeff": 0.92, "drag_coeff": 0.038, "pressure_drop": 203.7}, "error": 5e-8, "timestamp": "2026-02-06T16:30:00Z", "validation_result": "passed"}
+{"simulation_id": "CFD-2026-003", "parameters": {"Reynolds": 200000, "Mach": 0.8, "Prandtl": 0.71}, "results": {"lift_coeff": 0.78, "drag_coeff": 0.055, "pressure_drop": 456.2}, "error": 8e-8, "timestamp": "2026-02-06T17:00:00Z", "validation_result": "passed"}`,
     currentStepLogs: [
       '[2026-02-06T18:00:00] Initializing DataValidator',
       'Validating simulation data...',
@@ -1270,6 +1324,9 @@ const executionResults = {
       { step: 'S1: Complete', value: 15000, color: '#f8b4b4' },
       { step: 'S2: Structure', value: 15000, color: '#bbf7d0' },
     ],
+    sampleData: `{"trial_id": "NCT04567890", "patient_id": "PT-001", "outcome": "Treatment with 200mg showed 45% tumor reduction", "drug": "OncoBlock-200", "dosage": "200mg", "structured_outcome": {"drug": "OncoBlock-200", "dose_mg": 200, "response": "partial_response", "tumor_reduction_pct": 45}}
+{"trial_id": "NCT04567891", "patient_id": "PT-002", "outcome": "Patient experienced stable disease after 3 months", "drug": "ImmunoGuard", "dosage": "50mg/m2", "structured_outcome": {"drug": "ImmunoGuard", "dose_mg_m2": 50, "response": "stable_disease", "duration_months": 3}}
+{"trial_id": "NCT04567892", "patient_id": "PT-003", "outcome": "Complete remission achieved within 6 weeks", "drug": "ChemoX-75", "dosage": "75mg", "structured_outcome": {"drug": "ChemoX-75", "dose_mg": 75, "response": "complete_remission", "time_to_response_weeks": 6}}`,
     currentStepLogs: [
       '[2026-02-08T09:15:00] Initializing OutcomeStructurer',
       'Structuring trial outcomes...',
@@ -1291,6 +1348,9 @@ const executionResults = {
       { step: 'S1: Complete', value: 7800, color: '#fde68a' },
       { step: 'S2: Parse', value: 7800, color: '#bae6fd' },
     ],
+    sampleData: `{"problem": "Find all positive integers n such that n^2 + 3n + 2 is divisible by 6.", "solution": "First factor: n^2 + 3n + 2 = (n+1)(n+2). This is always even since either n+1 or n+2 is even. For divisibility by 3, check n mod 3. When n ≡ 0 (mod 3), n+1 ≡ 1, n+2 ≡ 2. When n ≡ 1 (mod 3), n+1 ≡ 2, n+2 ≡ 0. When n ≡ 2 (mod 3), n+1 ≡ 0. So all n work except n ≡ 0 (mod 3).", "difficulty": "medium", "topic": "number_theory", "year": 2022, "parsed_steps": [{"step": 1, "action": "factor_polynomial", "result": "(n+1)(n+2)"}, {"step": 2, "action": "check_parity", "result": "always_even"}, {"step": 3, "action": "modulo_analysis", "result": "n_not_divisible_by_3"}]}
+{"problem": "In triangle ABC, prove that a^2 + b^2 + c^2 ≥ 4√3·S, where S is the area.", "solution": "Using Heron's formula and AM-GM inequality. Let s = (a+b+c)/2. Then S = √[s(s-a)(s-b)(s-c)]. By AM-GM, (s-a)+(s-b)+(s-c) = s. Also a^2+b^2+c^2 ≥ 4√3·S with equality when a=b=c.", "difficulty": "hard", "topic": "geometry", "year": 2023, "parsed_steps": [{"step": 1, "action": "apply_heron_formula", "result": "S_in_terms_of_sides"}, {"step": 2, "action": "apply_am_gm", "result": "inequality_established"}, {"step": 3, "action": "equality_case", "result": "equilateral_triangle"}]}
+{"problem": "Find the sum of all positive divisors of 72.", "solution": "Prime factorization: 72 = 2^3 × 3^2. Sum of divisors formula: σ(n) = (2^4-1)/(2-1) × (3^3-1)/(3-1) = 15 × 13 = 195.", "difficulty": "easy", "topic": "number_theory", "year": 2021, "parsed_steps": [{"step": 1, "action": "prime_factorization", "result": "2^3_×_3^2"}, {"step": 2, "action": "apply_divisor_formula", "result": "σ(72)_calculated"}, {"step": 3, "action": "final_computation", "result": "195"}]}`,
     currentStepLogs: [
       '[2026-02-06T12:30:00] Initializing SolutionParser',
       'Parsing math solutions...',
@@ -1313,6 +1373,9 @@ const executionResults = {
       { step: 'S1: SpecFilter', value: 14500, color: '#f8b4b4' },
       { step: 'S2: Engineer', value: 14500, color: '#bbf7d0' },
     ],
+    sampleData: `{"wavelength": [400, 450, 500, 550, 600, 650, 700, 750, 800, 850], "reflectance": [0.15, 0.18, 0.22, 0.28, 0.35, 0.42, 0.48, 0.52, 0.55, 0.58], "sample_id": "SOIL-2026-001", "location": {"lat": 40.7, "lon": -74.0}, "depth": 15, "engineered_features": {"ndvi": 0.67, "savi": 0.58, "clay_index": 0.23, "organic_matter": 3.2}}
+{"wavelength": [400, 450, 500, 550, 600, 650, 700, 750, 800, 850], "reflectance": [0.12, 0.14, 0.17, 0.21, 0.26, 0.31, 0.36, 0.40, 0.43, 0.46], "sample_id": "SOIL-2026-002", "location": {"lat": 40.7, "lon": -74.1}, "depth": 30, "engineered_features": {"ndvi": 0.72, "savi": 0.65, "clay_index": 0.31, "organic_matter": 4.1}}
+{"wavelength": [400, 450, 500, 550, 600, 650, 700, 750, 800, 850], "reflectance": [0.18, 0.22, 0.26, 0.32, 0.38, 0.45, 0.51, 0.56, 0.60, 0.63], "sample_id": "SOIL-2026-003", "location": {"lat": 40.8, "lon": -74.0}, "depth": 10, "engineered_features": {"ndvi": 0.62, "savi": 0.52, "clay_index": 0.18, "organic_matter": 2.8}}`,
     currentStepLogs: [
       '[2026-02-05T09:30:00] Initializing FeatureEngineer',
       'Engineering soil features...',
@@ -1335,6 +1398,9 @@ const executionResults = {
       { step: 'S1: Clarity', value: 9500, color: '#fde68a' },
       { step: 'S2: Detect', value: 9500, color: '#bae6fd' },
     ],
+    sampleData: `{"image": "fossils/trilobite_001.jpg", "fossil_type": "trilobite", "era": "Cambrian", "location": "Burgess Shale, Canada", "specimen_id": "FOS-2026-001", "detection_result": {"confidence": 0.94, "bbox": [120, 80, 340, 280], "species": "Olenoides serratus"}}
+{"image": "fossils/ammonite_002.jpg", "fossil_type": "ammonite", "era": "Jurassic", "location": "Solnhofen, Germany", "specimen_id": "FOS-2026-002", "detection_result": {"confidence": 0.97, "bbox": [200, 150, 450, 400], "species": "Ammonites subradians"}}
+{"image": "fossils/dinosaur_bone_003.jpg", "fossil_type": "vertebrate", "era": "Cretaceous", "location": "Hell Creek, USA", "specimen_id": "FOS-2026-003", "detection_result": {"confidence": 0.89, "bbox": [50, 100, 500, 350], "species": "Tyrannosaurus rex"}}`,
     currentStepLogs: [
       '[2026-02-08T13:30:00] Initializing FossilDetector',
       'Training fossil detection...',
@@ -1356,6 +1422,9 @@ const executionResults = {
       { step: 'S1: ParseLogs', value: 98000, color: '#fde68a' },
       { step: 'S2: TagAnomaly', value: 98000, color: '#bae6fd' },
     ],
+    sampleData: `{"timestamp": "2026-02-06T18:15:23Z", "log_level": "WARNING", "message": "Coolant flow rate dropped to 245 m3/h (expected: 250-260)", "reactor_id": "PWR-001", "sensor_reading": 245.3, "anomaly_tag": "coolant_flow_degradation"}
+{"timestamp": "2026-02-06T18:22:45Z", "log_level": "ERROR", "message": "Neutron flux sensor N-12 reading anomaly: 1.15×10^14 n/cm2/s (threshold: 1.0×10^14)", "reactor_id": "PWR-001", "sensor_reading": 1.15e14, "anomaly_tag": "neutron_flux_spike"}
+{"timestamp": "2026-02-06T18:30:12Z", "log_level": "INFO", "message": "Control rod bank A adjusted: 5% insertion", "reactor_id": "PWR-001", "sensor_reading": 0.95, "anomaly_tag": "normal_operation"}`,
     currentStepLogs: [
       '[2026-02-06T19:00:00] Initializing AnomalyTagger',
       'Tagging anomalies...',
@@ -1378,6 +1447,9 @@ const executionResults = {
       { step: 'S1: Coverage', value: 32000, color: '#f8b4b4' },
       { step: 'S2: Annotate', value: 32000, color: '#bbf7d0' },
     ],
+    sampleData: `{"image": "aerial/survey_001_tile_0_0.jpg", "coordinates": {"lat_min": 37.7749, "lat_max": 37.7849, "lon_min": -122.4194, "lon_max": -122.4094}, "resolution": 0.3, "capture_date": "2026-02-05", "area_km2": 1.12, "land_use_label": {"residential": 0.45, "commercial": 0.25, "vegetation": 0.20, "road": 0.10}}
+{"image": "aerial/survey_001_tile_0_1.jpg", "coordinates": {"lat_min": 37.7749, "lat_max": 37.7849, "lon_min": -122.4094, "lon_max": -122.3994}, "resolution": 0.3, "capture_date": "2026-02-05", "area_km2": 1.12, "land_use_label": {"industrial": 0.40, "residential": 0.15, "vegetation": 0.30, "water": 0.15}}
+{"image": "aerial/survey_001_tile_1_0.jpg", "coordinates": {"lat_min": 37.7649, "lat_max": 37.7749, "lon_min": -122.4194, "lon_max": -122.4094}, "resolution": 0.3, "capture_date": "2026-02-05", "area_km2": 1.12, "land_use_label": {"agricultural": 0.55, "vegetation": 0.30, "residential": 0.10, "road": 0.05}}`,
     currentStepLogs: [
       '[2026-02-05T18:00:00] Initializing LandUseAnnotator',
       'Annotating land use...',
