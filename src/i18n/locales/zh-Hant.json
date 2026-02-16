@@ -40,6 +40,77 @@
     "search": "搜索",
     "loading": "加載中...",
     "noResults": "未找到結果",
-    "language": "語言"
+    "language": "語言",
+    "filters": "篩選",
+    "clearAllFilters": "清除所有篩選"
+  },
+  "datasets": {
+    "title": "數據集",
+    "count": "{count} 個數據集",
+    "searchPlaceholder": "篩選數據集...",
+    "noResults": "未找到數據集",
+    "noResultsHint": "嘗試調整搜索或篩選條件"
+  },
+  "spaces": {
+    "title": "應用",
+    "count": "{count} 個應用",
+    "searchPlaceholder": "搜索應用...",
+    "noResults": "未找到應用",
+    "noResultsHint": "嘗試調整搜索或分類",
+    "categories": {
+      "all": "全部",
+      "imageGeneration": "圖像生成",
+      "videoGeneration": "視頻生成",
+      "textGeneration": "文本生成",
+      "audio": "音頻"
+    },
+    "sort": {
+      "mostLikes": "最多點讚",
+      "trending": "熱門",
+      "recentlyUpdated": "最近更新"
+    }
+  },
+  "models": {
+    "title": "模型",
+    "count": "{count} 個模型",
+    "searchPlaceholder": "篩選模型...",
+    "noResults": "未找到模型",
+    "noResultsHint": "嘗試調整搜索或篩選條件"
+  },
+  "packages": {
+    "title": "算子包",
+    "count": "{count} 個算子包",
+    "searchPlaceholder": "搜索算子包...",
+    "noResults": "未找到算子包",
+    "noResultsHint": "嘗試調整搜索或分類",
+    "categories": {
+      "all": "全部",
+      "multimodal": "多模態",
+      "science": "科學",
+      "timeSeries": "時間序列"
+    },
+    "sort": {
+      "mostDownloads": "最多下載",
+      "mostLikes": "最多點讚",
+      "recentlyUpdated": "最近更新"
+    }
+  },
+  "tasks": {
+    "title": "任務",
+    "count": "{count} 個任務",
+    "searchPlaceholder": "搜索任務...",
+    "noResults": "未找到任務",
+    "noResultsHint": "嘗試調整搜索或篩選條件",
+    "status": {
+      "all": "全部",
+      "running": "運行中",
+      "completed": "已完成",
+      "failed": "失敗"
+    },
+    "sort": {
+      "mostRecent": "最近",
+      "name": "名稱",
+      "status": "狀態"
+    }
   }
 }

@@ -1,14 +1,14 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Datasets</h1>
-      <span class="text-sm text-gray-500">{{ totalItems }} datasets</span>
+      <h1 class="text-2xl font-bold text-gray-900">{{ $t('datasets.title') }}</h1>
+      <span class="text-sm text-gray-500">{{ $t('datasets.count', { count: totalItems }) }}</span>
     </div>
     <div class="lg:grid lg:grid-cols-4 lg:gap-6">
       <!-- Sidebar -->
       <aside class="hidden lg:block lg:col-span-1">
         <div class="sticky top-20">
-          <SearchBar v-model="searchQuery" placeholder="Filter datasets..." />
+          <SearchBar v-model="searchQuery" :placeholder="$t('datasets.searchPlaceholder')" />
           <div class="mt-4">
             <DatasetFilters v-model:selected="filters" />
           </div>
@@ -17,7 +17,7 @@
             @click="clearFilters"
             class="mt-3 text-xs text-gray-500 hover:text-gray-700 underline"
           >
-            Clear all filters ({{ activeFilterCount }})
+            {{ $t('common.clearAllFilters') }} ({{ activeFilterCount }})
           </button>
         </div>
       </aside>
@@ -26,7 +26,7 @@
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center space-x-2 lg:hidden">
             <button @click="showMobileFilters = !showMobileFilters" class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 hover:bg-gray-50">
-              Filters
+              {{ $t('common.filters') }}
               <span v-if="activeFilterCount" class="ml-1 bg-dc-primary text-white rounded-full px-1.5 text-xs">{{ activeFilterCount }}</span>
             </button>
           </div>
@@ -34,7 +34,7 @@
         </div>
         <!-- Mobile filters -->
         <div v-if="showMobileFilters" class="lg:hidden mb-4 p-4 border border-gray-200 rounded-lg bg-white">
-          <SearchBar v-model="searchQuery" placeholder="Filter datasets..." />
+          <SearchBar v-model="searchQuery" :placeholder="$t('datasets.searchPlaceholder')" />
           <div class="mt-3">
             <DatasetFilters v-model:selected="filters" />
           </div>
@@ -44,8 +44,8 @@
           <DatasetCard v-for="ds in paginatedItems" :key="ds.id" :dataset="ds" />
         </div>
         <div v-else class="text-center py-16 text-gray-500">
-          <p class="text-lg">No datasets found</p>
-          <p class="text-sm mt-1">Try adjusting your search or filters</p>
+          <p class="text-lg">{{ $t('datasets.noResults') }}</p>
+          <p class="text-sm mt-1">{{ $t('datasets.noResultsHint') }}</p>
         </div>
         <PaginationBar v-model="currentPage" :total-pages="totalPages" />
       </div>
@@ -55,6 +55,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { datasets } from '@/data/datasets.js'
 import { sortOptions } from '@/data/filters.js'
 import { useSearch } from '@/composables/useSearch.js'
@@ -65,6 +66,7 @@ import PaginationBar from '@/components/common/PaginationBar.vue'
 import DatasetCard from '@/components/datasets/DatasetCard.vue'
 import DatasetFilters from '@/components/datasets/DatasetFilters.vue'
 
+const { t } = useI18n()
 const showMobileFilters = ref(false)
 
 const { searchQuery, filters, sortBy, filtered, clearFilters, activeFilterCount } = useSearch(datasets)

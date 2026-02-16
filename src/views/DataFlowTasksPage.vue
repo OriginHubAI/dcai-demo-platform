@@ -1,13 +1,13 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Tasks</h1>
-      <span class="text-sm text-gray-500">{{ filteredTasks.length }} tasks</span>
+      <h1 class="text-2xl font-bold text-gray-900">{{ $t('tasks.title') }}</h1>
+      <span class="text-sm text-gray-500">{{ $t('tasks.count', { count: filteredTasks.length }) }}</span>
     </div>
     <!-- Status filter tabs -->
     <div class="flex items-center space-x-2 mb-6 overflow-x-auto pb-2">
       <button
-        v-for="sf in taskStatusFilters"
+        v-for="sf in translatedStatusFilters"
         :key="sf.value"
         @click="activeStatus = sf.value"
         class="px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors"
@@ -26,37 +26,46 @@
     <!-- Search + Sort -->
     <div class="flex items-center gap-3 mb-6">
       <div class="flex-1 max-w-md">
-        <SearchBar v-model="searchQuery" placeholder="Search tasks..." />
+        <SearchBar v-model="searchQuery" :placeholder="$t('tasks.searchPlaceholder')" />
       </div>
-      <SortDropdown v-model="sortBy" :options="sortOptions" />
+      <SortDropdown v-model="sortBy" :options="translatedSortOptions" />
     </div>
     <!-- Results -->
     <div v-if="filteredTasks.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <TaskCard v-for="task in filteredTasks" :key="task.id" :task="task" />
     </div>
     <div v-else class="text-center py-16 text-gray-500">
-      <p class="text-lg">No tasks found</p>
-      <p class="text-sm mt-1">Try adjusting your search or filters</p>
+      <p class="text-lg">{{ $t('tasks.noResults') }}</p>
+      <p class="text-sm mt-1">{{ $t('tasks.noResultsHint') }}</p>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import { tasks, taskStatusFilters } from '@/data/tasks.js'
+import { useI18n } from 'vue-i18n'
+import { tasks } from '@/data/tasks.js'
 import SearchBar from '@/components/common/SearchBar.vue'
 import SortDropdown from '@/components/common/SortDropdown.vue'
 import TaskCard from '@/components/dataflow/TaskCard.vue'
 
+const { t } = useI18n()
 const searchQuery = ref('')
 const activeStatus = ref('all')
 const sortBy = ref('recent')
 
-const sortOptions = [
-  { value: 'recent', label: 'Most Recent' },
-  { value: 'name', label: 'Name' },
-  { value: 'status', label: 'Status' },
-]
+const translatedStatusFilters = computed(() => [
+  { value: 'all', label: t('tasks.status.all') },
+  { value: 'running', label: t('tasks.status.running') },
+  { value: 'completed', label: t('tasks.status.completed') },
+  { value: 'failed', label: t('tasks.status.failed') },
+])
+
+const translatedSortOptions = computed(() => [
+  { value: 'recent', label: t('tasks.sort.mostRecent') },
+  { value: 'name', label: t('tasks.sort.name') },
+  { value: 'status', label: t('tasks.sort.status') },
+])
 
 function statusCount(status) {
   return tasks.filter(t => t.status === status).length

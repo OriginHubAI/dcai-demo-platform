@@ -40,6 +40,77 @@
     "search": "Search",
     "loading": "Loading...",
     "noResults": "No results found",
-    "language": "Language"
+    "language": "Language",
+    "filters": "Filters",
+    "clearAllFilters": "Clear all filters"
+  },
+  "datasets": {
+    "title": "Datasets",
+    "count": "{count} datasets",
+    "searchPlaceholder": "Filter datasets...",
+    "noResults": "No datasets found",
+    "noResultsHint": "Try adjusting your search or filters"
+  },
+  "spaces": {
+    "title": "Spaces",
+    "count": "{count} spaces",
+    "searchPlaceholder": "Search spaces...",
+    "noResults": "No spaces found",
+    "noResultsHint": "Try adjusting your search or category",
+    "categories": {
+      "all": "All",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
+      "textGeneration": "Text Generation",
+      "audio": "Audio"
+    },
+    "sort": {
+      "mostLikes": "Most Likes",
+      "trending": "Trending",
+      "recentlyUpdated": "Recently Updated"
+    }
+  },
+  "models": {
+    "title": "Models",
+    "count": "{count} models",
+    "searchPlaceholder": "Filter models...",
+    "noResults": "No models found",
+    "noResultsHint": "Try adjusting your search or filters"
+  },
+  "packages": {
+    "title": "Packages",
+    "count": "{count} packages",
+    "searchPlaceholder": "Search packages...",
+    "noResults": "No packages found",
+    "noResultsHint": "Try adjusting your search or category",
+    "categories": {
+      "all": "All",
+      "multimodal": "Multimodal",
+      "science": "Science",
+      "timeSeries": "Time Series"
+    },
+    "sort": {
+      "mostDownloads": "Most Downloads",
+      "mostLikes": "Most Likes",
+      "recentlyUpdated": "Recently Updated"
+    }
+  },
+  "tasks": {
+    "title": "Tasks",
+    "count": "{count} tasks",
+    "searchPlaceholder": "Search tasks...",
+    "noResults": "No tasks found",
+    "noResultsHint": "Try adjusting your search or filters",
+    "status": {
+      "all": "All",
+      "running": "Running",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "sort": {
+      "mostRecent": "Most Recent",
+      "name": "Name",
+      "status": "Status"
+    }
   }
 }
