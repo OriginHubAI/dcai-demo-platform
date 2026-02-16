@@ -21,7 +21,7 @@
         </div>
         <input
           type="text"
-          placeholder="Search datasets, models, spaces..."
+          :placeholder="t('header.searchPlaceholder')"
           class="w-full pl-11 pr-12 py-2.5 text-sm bg-slate-50/80 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-dc-primary/20 focus:border-dc-primary/50 focus:bg-white transition-all duration-200 placeholder:text-slate-400"
           @keydown.enter="handleSearch"
           v-model="searchQuery"
@@ -41,6 +41,51 @@
         <PlusIcon class="w-4 h-4" />
         <span>New</span>
       </button>
+
+      <!-- Language Toggle -->
+      <div class="relative">
+        <button
+          @click="showLanguageMenu = !showLanguageMenu"
+          class="p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100/80 rounded-xl transition-all duration-200"
+          :class="{ 'bg-slate-100/80': showLanguageMenu }"
+        >
+          <GlobeIcon class="w-5 h-5" />
+        </button>
+
+        <!-- Language Dropdown -->
+        <Transition
+          enter-active-class="transition-all duration-200 ease-out"
+          enter-from-class="opacity-0 scale-95 -translate-y-2"
+          enter-to-class="opacity-100 scale-100 translate-y-0"
+          leave-active-class="transition-all duration-150 ease-in"
+          leave-from-class="opacity-100 scale-100 translate-y-0"
+          leave-to-class="opacity-0 scale-95 -translate-y-2"
+        >
+          <div v-if="showLanguageMenu" class="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-50 overflow-hidden">
+            <button
+              @click="setLanguage('zh')"
+              class="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
+              :class="currentLocale === 'zh' ? 'bg-slate-50 text-dc-primary font-medium' : 'text-slate-700 hover:bg-slate-50 hover:text-dc-primary'"
+            >
+              简体中文
+            </button>
+            <button
+              @click="setLanguage('zh-Hant')"
+              class="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
+              :class="currentLocale === 'zh-Hant' ? 'bg-slate-50 text-dc-primary font-medium' : 'text-slate-700 hover:bg-slate-50 hover:text-dc-primary'"
+            >
+              繁體中文
+            </button>
+            <button
+              @click="setLanguage('en')"
+              class="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
+              :class="currentLocale === 'en' ? 'bg-slate-50 text-dc-primary font-medium' : 'text-slate-700 hover:bg-slate-50 hover:text-dc-primary'"
+            >
+              English
+            </button>
+          </div>
+        </Transition>
+      </div>
 
       <!-- Notifications -->
       <button class="relative p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100/80 rounded-xl transition-all duration-200">
@@ -78,11 +123,11 @@
             <div class="py-1">
               <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-dc-primary transition-colors">
                 <UserIcon class="w-4 h-4 text-slate-400" />
-                Profile
+                {{ t('header.profile') }}
               </a>
               <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-dc-primary transition-colors">
                 <CogIcon class="w-4 h-4 text-slate-400" />
-                Settings
+                {{ t('header.settings') }}
               </a>
               <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-dc-primary transition-colors">
                 <KeyIcon class="w-4 h-4 text-slate-400" />
@@ -92,7 +137,7 @@
             <div class="border-t border-slate-100 mt-1 pt-1">
               <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
                 <LogoutIcon class="w-4 h-4" />
-                Sign out
+                {{ t('header.logout') }}
               </a>
             </div>
           </div>
@@ -105,11 +150,22 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const router = useRouter()
 const searchQuery = ref('')
 const showUserMenu = ref(false)
+const showLanguageMenu = ref(false)
+
+const { locale, t } = useI18n()
+const currentLocale = computed(() => locale.value)
+
+function setLanguage(lang) {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+  showLanguageMenu.value = false
+}
 
 // Icon components
 const HomeIcon = () => h('svg', { class: 'w-5 h-5', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
@@ -153,28 +209,32 @@ const LogoutIcon = () => h('svg', { class: 'w-4 h-4', fill: 'none', stroke: 'cur
   h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1' })
 ])
 
+const GlobeIcon = () => h('svg', { class: 'w-5 h-5', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+  h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9' })
+])
+
 // Page title based on route
 const pageTitle = computed(() => {
-  const titles = {
+  const titleKeys = {
     '/': '',
-    '/datasets': 'Datasets',
-    '/datasets/': 'Dataset Detail',
-    '/models': 'Models',
-    '/models/': 'Model Detail',
-    '/spaces': 'Spaces',
-    '/spaces/': 'Space Detail',
-    '/dataflow': 'Packages',
-    '/dataflow/canvas': 'Canvas',
-    '/dataflow/tasks': 'Tasks',
+    '/datasets': 'nav.datasets',
+    '/datasets/': 'nav.datasets',
+    '/models': 'nav.models',
+    '/models/': 'nav.models',
+    '/spaces': 'nav.spaces',
+    '/spaces/': 'nav.spaces',
+    '/dataflow': 'nav.packages',
+    '/dataflow/canvas': 'nav.canvas',
+    '/dataflow/tasks': 'nav.tasks',
   }
   
-  if (titles[route.path]) {
-    return titles[route.path]
+  if (titleKeys[route.path]) {
+    return titleKeys[route.path] ? t(titleKeys[route.path]) : ''
   }
   
-  for (const [path, title] of Object.entries(titles)) {
+  for (const [path, key] of Object.entries(titleKeys)) {
     if (path.endsWith('/') && route.path.startsWith(path)) {
-      return title
+      return key ? t(key) : ''
     }
   }
   
@@ -188,7 +248,15 @@ function handleSearch() {
   }
 }
 
-// Keyboard shortcut for search
+// Close menus when clicking outside
+function handleClickOutside(e) {
+  if (!e.target.closest('.relative')) {
+    showUserMenu.value = false
+    showLanguageMenu.value = false
+  }
+}
+
+// Close menus on escape key
 function handleKeydown(e) {
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
     e.preventDefault()
@@ -196,13 +264,7 @@ function handleKeydown(e) {
   }
   if (e.key === 'Escape') {
     showUserMenu.value = false
-  }
-}
-
-// Close user menu when clicking outside
-function handleClickOutside(e) {
-  if (!e.target.closest('.relative')) {
-    showUserMenu.value = false
+    showLanguageMenu.value = false
   }
 }
 

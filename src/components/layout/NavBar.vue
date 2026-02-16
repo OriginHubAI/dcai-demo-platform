@@ -16,8 +16,8 @@
           <img src="/logo.png" alt="DCAI" class="w-9 h-9 rounded-lg shadow-md group-hover:scale-105 transition-transform duration-300" />
         </div>
         <div class="flex flex-col">
-          <span class="text-lg font-bold text-slate-800 tracking-tight">Sci-DCAI</span>
-          <span class="text-[10px] text-slate-500 -mt-1">Data-Centric AI Platform</span>
+          <span class="text-lg font-bold text-slate-800 tracking-tight">{{ t('app.title') }}</span>
+          <span class="text-[10px] text-slate-500 -mt-1">{{ t('app.subtitle') }}</span>
         </div>
       </router-link>
       <router-link to="/" class="flex items-center justify-center" v-else>
@@ -29,7 +29,7 @@
         v-if="!isCollapsed"
         @click="toggleCollapse"
         class="ml-auto p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all duration-200"
-        title="收起侧边栏"
+        :title="t('nav.collapseSidebar')"
       >
         <ChevronLeftIcon class="w-4 h-4" />
       </button>
@@ -40,14 +40,14 @@
       v-if="isCollapsed"
       @click="toggleCollapse"
       class="absolute -right-3 top-20 w-6 h-6 bg-white border border-slate-200 rounded-full shadow-md flex items-center justify-center text-slate-400 hover:text-slate-600 hover:shadow-lg transition-all duration-200 z-50"
-      title="展开侧边栏"
+      :title="t('nav.expandSidebar')"
     >
       <ChevronRightIcon class="w-3 h-3" />
     </button>
 
     <!-- Nav Links -->
     <nav class="flex-1 py-4 overflow-y-auto" :class="isCollapsed ? 'px-2 overflow-x-hidden scrollbar-hide' : 'px-3'">
-      <div v-if="!isCollapsed" class="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Menu</div>
+      <div v-if="!isCollapsed" class="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">{{ t('nav.menu') }}</div>
       <div v-else class="mb-2 text-center">
         <div class="w-8 h-px bg-slate-200 mx-auto"></div>
       </div>
@@ -63,7 +63,7 @@
           >
             <div class="flex items-center gap-3">
               <component :is="link.icon" class="w-5 h-5" :class="isActive(link.to) ? 'text-dc-primary' : 'text-slate-400'" />
-              <span>{{ link.label }}</span>
+              <span>{{ t(link.labelKey) }}</span>
             </div>
             <svg 
               class="w-4 h-4 transition-transform duration-200 text-slate-400" 
@@ -97,7 +97,7 @@
                 <component :is="child.iconComponent" class="w-4 h-4" />
                 <!-- Tooltip for collapsed child icons -->
                 <div class="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                  {{ child.label }}
+                  {{ t(child.labelKey) }}
                 </div>
               </router-link>
             </div>
@@ -108,16 +108,16 @@
             v-show="dropdownOpen[link.to] && !isCollapsed"
             class="mt-1 space-y-0.5 pl-4 animate-slideDown"
           >
-            <router-link
-              v-for="child in link.children"
-              :key="child.to"
-              :to="child.to"
-              class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200"
-              :class="route.path === child.to ? 'bg-slate-50 text-dc-primary font-medium' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'"
-            >
-              <component :is="child.iconComponent" class="w-4 h-4" />
-              <span>{{ child.label }}</span>
-            </router-link>
+              <router-link
+                v-for="child in link.children"
+                :key="child.to"
+                :to="child.to"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200"
+                :class="route.path === child.to ? 'bg-slate-50 text-dc-primary font-medium' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'"
+              >
+                <component :is="child.iconComponent" class="w-4 h-4" />
+                <span>{{ t(child.labelKey) }}</span>
+              </router-link>
           </div>
           
           <!-- Collapsed: Show children on hover -->
@@ -125,7 +125,7 @@
             v-if="isCollapsed && dropdownOpen[link.to]"
             class="absolute left-full top-0 ml-2 w-40 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50"
           >
-            <div class="px-3 py-1 text-xs font-semibold text-slate-400 uppercase tracking-wider">{{ link.label }}</div>
+            <div class="px-3 py-1 text-xs font-semibold text-slate-400 uppercase tracking-wider">{{ t(link.labelKey) }}</div>
             <router-link
               v-for="child in link.children"
               :key="child.to"
@@ -135,7 +135,7 @@
               @click="dropdownOpen[link.to] = false"
             >
               <component :is="child.iconComponent" class="w-4 h-4" />
-              <span>{{ child.label }}</span>
+              <span>{{ t(child.labelKey) }}</span>
             </router-link>
           </div>
         </div>
@@ -151,12 +151,12 @@
           ]"
         >
           <component :is="link.icon" class="w-5 h-5 transition-colors" :class="isActive(link.to) ? 'text-dc-primary' : 'text-slate-400 group-hover:text-slate-500'" />
-          <span v-if="!isCollapsed">{{ link.label }}</span>
+          <span v-if="!isCollapsed">{{ t(link.labelKey) }}</span>
           <div v-if="isActive(link.to) && !isCollapsed" class="ml-auto w-1.5 h-1.5 rounded-full bg-dc-primary"></div>
           
           <!-- Tooltip for collapsed state -->
           <div v-if="isCollapsed" class="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-            {{ link.label }}
+            {{ t(link.labelKey) }}
           </div>
         </router-link>
       </template>
@@ -176,11 +176,11 @@
         >
           <QuestionMarkCircleIcon class="w-4 h-4" />
         </div>
-        <span v-if="!isCollapsed" class="font-medium text-sm">Help & Support</span>
+        <span v-if="!isCollapsed" class="font-medium text-sm">{{ t('nav.helpSupport') }}</span>
         
         <!-- Tooltip for collapsed state -->
         <div v-if="isCollapsed" class="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-          Help & Support
+          {{ t('nav.helpSupport') }}
         </div>
       </button>
     </div>
@@ -190,12 +190,15 @@
 <script setup>
 import { reactive, ref, h } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const isCollapsed = ref(false)
 const dropdownOpen = reactive({
   '/dataflow/canvas': true,
 })
+
+const { t } = useI18n()
 
 function toggleCollapse() {
   isCollapsed.value = !isCollapsed.value
@@ -245,19 +248,19 @@ const QuestionMarkCircleIcon = () => h('svg', { class: 'w-4 h-4', fill: 'none', 
 ])
 
 const navLinks = [
-  { to: '/datasets', label: 'Datasets', icon: DatabaseIcon },
+  { to: '/datasets', labelKey: 'nav.datasets', icon: DatabaseIcon },
   {
     to: '/dataflow/canvas',
-    label: 'DataFlow',
+    labelKey: 'nav.dataflow',
     icon: FlowIcon,
     children: [
-      { to: '/dataflow/canvas', label: 'Canvas', iconComponent: CanvasIcon },
-      { to: '/dataflow', label: 'Packages', iconComponent: PackageIcon },
-      { to: '/dataflow/tasks', label: 'Tasks', iconComponent: TasksIcon },
+      { to: '/dataflow/canvas', labelKey: 'nav.canvas', iconComponent: CanvasIcon },
+      { to: '/dataflow', labelKey: 'nav.packages', iconComponent: PackageIcon },
+      { to: '/dataflow/tasks', labelKey: 'nav.tasks', iconComponent: TasksIcon },
     ],
   },
-  { to: '/spaces', label: 'Spaces', icon: RocketIcon },
-  { to: '/models', label: 'Models', icon: CubeIcon },
+  { to: '/spaces', labelKey: 'nav.spaces', icon: RocketIcon },
+  { to: '/models', labelKey: 'nav.models', icon: CubeIcon },
 ]
 
 function toggleDropdown(key) {

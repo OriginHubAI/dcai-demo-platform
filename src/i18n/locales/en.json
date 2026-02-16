@@ -1,0 +1,45 @@
+{
+  "nav": {
+    "datasets": "Datasets",
+    "dataflow": "DataFlow",
+    "canvas": "Canvas",
+    "packages": "Packages",
+    "tasks": "Tasks",
+    "spaces": "Spaces",
+    "models": "Models",
+    "helpSupport": "Help & Support",
+    "menu": "Menu",
+    "collapseSidebar": "Collapse Sidebar",
+    "expandSidebar": "Expand Sidebar"
+  },
+  "app": {
+    "title": "Sci-DCAI",
+    "subtitle": "Data-Centric AI Platform"
+  },
+  "header": {
+    "search": "Search",
+    "searchPlaceholder": "Search datasets, models, spaces...",
+    "login": "Login",
+    "signup": "Sign Up",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "common": {
+    "home": "Home",
+    "about": "About",
+    "documentation": "Documentation",
+    "community": "Community",
+    "blog": "Blog",
+    "support": "Support",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "all": "All",
+    "filter": "Filter",
+    "sort": "Sort",
+    "search": "Search",
+    "loading": "Loading...",
+    "noResults": "No results found",
+    "language": "Language"
+  }
+}
