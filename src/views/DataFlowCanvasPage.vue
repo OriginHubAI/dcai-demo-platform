@@ -9,24 +9,40 @@
           v-for="btn in toolbarButtons"
           :key="btn.id"
           @click="onToolbarClick(btn.id)"
-          class="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors border"
+          class="flex items-center gap-1.5 rounded-full text-sm font-medium transition-colors border relative group"
           :class="btn.id === 'execute'
-            ? 'bg-[#10b981] text-white border-[#10b981] hover:bg-[#059669] shadow-sm'
-            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300'"
+            ? 'w-10 h-10 bg-[#10b981] text-white border-[#10b981] hover:bg-[#059669] shadow-sm justify-center'
+            : 'px-4 py-2 bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300'"
+          :title="btn.label"
         >
-          <span v-if="btn.icon" class="text-base" v-html="btn.icon" />
-          <span>{{ btn.label }}</span>
+          <span
+            v-if="btn.icon"
+            :class="btn.iconOnly ? 'text-xl' : 'text-base'"
+            v-html="btn.icon"
+          />
+          <span v-if="!btn.iconOnly">{{ btn.label }}</span>
+          <!-- Tooltip for icon-only buttons -->
+          <span
+            v-if="btn.iconOnly"
+            class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50"
+          >
+            {{ btn.label }}
+          </span>
         </button>
-        <!-- Agent 编排按钮 - 仅在侧边栏关闭时显示 -->
+        <!-- Agent Orchestration button - only show when sidebar is closed -->
         <button
           v-if="!agentSidebarExpanded"
           @click="agentSidebarExpanded = true"
-          class="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors border bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-transparent hover:from-blue-600 hover:to-indigo-700 shadow-sm"
+          class="w-10 h-10 flex items-center justify-center rounded-full text-sm font-medium transition-all border-0 bg-gradient-to-br from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 shadow-md relative group"
+          title="Agent Orchestration"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
           </svg>
-          <span>Agent 编排</span>
+          <!-- Tooltip -->
+          <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+            Agent Orchestration
+          </span>
         </button>
       </div>
       <div class="flex items-center gap-1">
@@ -160,7 +176,7 @@
             <div class="px-4 pb-3">
               <!-- Init params section -->
               <div v-if="node.initParams && node.initParams.length" class="mb-2">
-                <div class="text-xs font-semibold text-green-600 mb-1.5">初始化参数</div>
+                <div class="text-xs font-semibold text-green-600 mb-1.5">Init Params</div>
                 <div v-for="param in node.initParams" :key="param.key" class="mb-1.5">
                   <div class="flex items-center gap-1">
                     <span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: param.portColor || '#10b981' }" />
@@ -179,7 +195,7 @@
 
               <!-- Runtime params section -->
               <div v-if="node.runtimeParams && node.runtimeParams.length">
-                <div class="text-xs font-semibold text-blue-600 mb-1.5">运行参数</div>
+                <div class="text-xs font-semibold text-blue-600 mb-1.5">Runtime Params</div>
                 <div v-for="param in node.runtimeParams" :key="param.key" class="mb-1.5">
                   <div class="flex items-center gap-1">
                     <span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: param.portColor || '#3b82f6' }" />
@@ -271,12 +287,12 @@ const viewportSize = reactive({ w: 1200, h: 700 })
 const agentSidebarExpanded = ref(true)
 
 const toolbarButtons = [
-  { id: 'compute', label: '算力配置', icon: '⚡' },
-  { id: 'dataset', label: '数据集', icon: '🗃️' },
-  { id: 'operators', label: '算子库', icon: '≡' },
-  { id: 'pipeline-lib', label: 'Pipeline库', icon: '🔗' },
-  { id: 'save', label: '保存Pipeline', icon: '💾' },
-  { id: 'execute', label: '▶ 执行任务', icon: '' },
+  { id: 'compute', label: 'LLM Config', icon: '⚡' },
+  { id: 'dataset', label: 'Dataset', icon: '🗃️' },
+  { id: 'operators', label: 'Operator Library', icon: '≡' },
+  { id: 'pipeline-lib', label: 'Pipeline Library', icon: '🔗' },
+  { id: 'save', label: 'Save Pipeline', icon: '💾' },
+  { id: 'execute', label: 'Execute Task', icon: '▶', iconOnly: true },
 ]
 
 let nodeIdCounter = 10
@@ -293,14 +309,14 @@ const nodes = reactive([
     width: 260,
     nodeHeight: 260,
     configSection: {
-      title: 'MinerU 配置',
+      title: 'MinerU Config',
       params: [
         { key: 'dataset_id', value: '02960634-2099-4580-9779-4a2...', type: 'text' },
       ]
     },
     runtimeParams: [
       { key: 'Output Key', value: 'raw_content', type: 'text', portColor: '#3b82f6' },
-      { key: '切片模式', value: '按全文切分', type: 'select', portColor: '#3b82f6' },
+      { key: 'Slice Mode', value: 'Split by Full Text', type: 'select', portColor: '#3b82f6' },
     ],
     inputPorts: [],
     outputPorts: [
@@ -343,7 +359,7 @@ const nodes = reactive([
     width: 260,
     nodeHeight: 350,
     initParams: [
-      { key: 'Use llm', value: '是', type: 'select', portColor: '#10b981' },
+      { key: 'Use llm', value: 'Yes', type: 'select', portColor: '#10b981' },
       { key: 'System prompt', value: 'Please evaluate the quality of this data on a scale from 1 to 5.', type: 'textarea', portColor: '#10b981' },
       { key: 'User model name', value: 'Qwen3-30B-A3B-Instru...', type: 'select', portColor: '#10b981' },
     ],
@@ -369,7 +385,7 @@ const nodes = reactive([
     width: 260,
     nodeHeight: 460,
     initParams: [
-      { key: 'Use llm', value: '是', type: 'select', portColor: '#10b981' },
+      { key: 'Use llm', value: 'Yes', type: 'select', portColor: '#10b981' },
       { key: 'User model name', value: 'Qwen3-30B-A3B-Instr...', type: 'select', portColor: '#10b981' },
     ],
     runtimeParams: [
@@ -399,7 +415,7 @@ const nodes = reactive([
     width: 280,
     nodeHeight: 600,
     initParams: [
-      { key: 'Use llm', value: '是', type: 'select', portColor: '#10b981' },
+      { key: 'Use llm', value: 'Yes', type: 'select', portColor: '#10b981' },
       { key: 'User model name', value: 'Qwen3-30B-A3B-Instruct-25...', type: 'select', portColor: '#10b981' },
     ],
     runtimeParams: [

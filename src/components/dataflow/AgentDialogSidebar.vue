@@ -6,7 +6,7 @@
     <button
       @click="$emit('close')"
       class="absolute right-3 top-3 z-20 w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
-      title="关闭"
+      title="Close"
     >
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -24,10 +24,10 @@
             </svg>
           </div>
           <div>
-            <h3 class="text-sm font-bold text-gray-900">AI 智能编排</h3>
+            <h3 class="text-sm font-bold text-gray-900">AI Orchestration</h3>
             <div class="flex items-center gap-1.5 mt-0.5">
               <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              <span class="text-xs text-green-600 font-medium">运行中</span>
+              <span class="text-xs text-green-600 font-medium">Running</span>
             </div>
           </div>
         </div>
@@ -53,7 +53,7 @@
           <div class="flex-1">
             <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl rounded-tl-sm px-4 py-3 border border-blue-100 shadow-sm">
               <p class="text-sm text-gray-700 leading-relaxed">
-                感谢您的信息！我们已经有足够的细节来开始创建您的视频数据处理流水线。马上为您准备执行！
+                Thank you for your information! We have enough details to start creating your video data processing pipeline. Preparing for execution now!
               </p>
             </div>
             <span class="text-xs text-gray-400 mt-1.5 block">17:20:13</span>
@@ -69,29 +69,29 @@
               </svg>
             </div>
             <div>
-              <h4 class="text-sm font-bold text-gray-900">需求总结</h4>
+              <h4 class="text-sm font-bold text-gray-900">Requirements Summary</h4>
               <span class="text-xs text-gray-500 font-mono">wf_mult_pipeline_recommand_agent</span>
             </div>
           </div>
           <div class="p-4">
             <div class="flex items-center gap-2 mb-4">
-              <span class="text-xs text-gray-500">当前阶段:</span>
-              <span class="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">需求收集</span>
+              <span class="text-xs text-gray-500">Current Stage:</span>
+              <span class="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">Requirements Collection</span>
             </div>
             <div class="grid grid-cols-3 gap-3">
               <div class="bg-gray-50 rounded-lg p-3">
-                <div class="text-xs text-gray-500 mb-1.5">描述任务目标 <span class="text-red-500">*</span></div>
-                <div class="text-xs text-gray-800 font-medium">视频中数据的提取</div>
+                <div class="text-xs text-gray-500 mb-1.5">Describe Task Goal <span class="text-red-500">*</span></div>
+                <div class="text-xs text-gray-800 font-medium">Extract data from videos</div>
                 <div class="text-xs text-gray-400 mt-2 text-right">8 / 200</div>
               </div>
               <div class="bg-gray-50 rounded-lg p-3">
-                <div class="text-xs text-gray-500 mb-1.5">描述数据集特征</div>
-                <div class="text-xs text-gray-800 font-medium">视频格式为mp4</div>
+                <div class="text-xs text-gray-500 mb-1.5">Describe Dataset Features</div>
+                <div class="text-xs text-gray-800 font-medium">Video format is mp4</div>
                 <div class="text-xs text-gray-400 mt-2 text-right">8 / 200</div>
               </div>
               <div class="bg-gray-50 rounded-lg p-3">
-                <div class="text-xs text-gray-500 mb-1.5">描述数据处理规则</div>
-                <div class="text-xs text-gray-800 font-medium">提取视频音频、识别画面信息及字幕</div>
+                <div class="text-xs text-gray-500 mb-1.5">Describe Data Processing Rules</div>
+                <div class="text-xs text-gray-800 font-medium">Extract audio, recognize visuals and subtitles</div>
                 <div class="text-xs text-gray-400 mt-2 text-right">16 / 200</div>
               </div>
             </div>
@@ -106,25 +106,25 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
               </svg>
             </div>
-            <h4 class="text-sm font-bold text-gray-900">开始分析</h4>
+            <h4 class="text-sm font-bold text-gray-900">Start Analysis</h4>
           </div>
           <div class="p-4">
-            <div class="text-xs text-gray-500 mb-3">任务:</div>
-            <div class="text-sm font-semibold text-gray-800 mb-4">用户输入:</div>
+            <div class="text-xs text-gray-500 mb-3">Task:</div>
+            <div class="text-sm font-semibold text-gray-800 mb-4">User Input:</div>
             <div class="bg-gray-50 rounded-lg p-3 mb-4">
-              <div class="text-xs text-gray-500 mb-2">已收集的需求:</div>
+              <div class="text-xs text-gray-500 mb-2">Collected Requirements:</div>
               <ul class="space-y-2 text-xs text-gray-700">
                 <li class="flex items-start gap-2">
                   <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0"></span>
-                  <span><span class="font-mono text-indigo-600">task_goal:</span> 视频中数据的提取</span>
+                  <span><span class="font-mono text-indigo-600">task_goal:</span> Extract data from videos</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0"></span>
-                  <span><span class="font-mono text-indigo-600">dataset_info:</span> 视频格式为mp4</span>
+                  <span><span class="font-mono text-indigo-600">dataset_info:</span> Video format is mp4</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0"></span>
-                  <span><span class="font-mono text-indigo-600">processing_rules:</span> 提取视频音频、识别画面信息及字幕</span>
+                  <span><span class="font-mono text-indigo-600">processing_rules:</span> Extract audio, recognize visuals and subtitles</span>
                 </li>
               </ul>
             </div>
@@ -133,7 +133,7 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span>正在分析中...</span>
+              <span>Analyzing...</span>
             </div>
           </div>
         </div>
@@ -146,12 +146,12 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
             </div>
-            <h4 class="text-sm font-bold text-gray-900">计划决策</h4>
+            <h4 class="text-sm font-bold text-gray-900">Plan Decision</h4>
           </div>
           <div class="p-4">
-            <div class="text-xs text-gray-500 mb-2">原因:</div>
+            <div class="text-xs text-gray-500 mb-2">Reason:</div>
             <p class="text-sm text-gray-700 leading-relaxed">
-              正在分析与理解用户需求，我决定选择合适的工具处理该需求
+              Analyzing and understanding user requirements, I have decided to select appropriate tools to process this request
             </p>
           </div>
         </div>
@@ -162,10 +162,10 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
             </svg>
-            生成 Pipeline
+            Generate Pipeline
           </button>
           <button class="px-4 py-2.5 border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200">
-            重置
+            Reset
           </button>
         </div>
       </div>
