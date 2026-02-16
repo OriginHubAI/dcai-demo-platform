@@ -37,7 +37,7 @@
       </div>
     </div>
 
-    <!-- Evaluation Metrics Summary Cards -->
+    <!-- LLM Evaluation Metrics Summary Cards -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       <div class="bg-white rounded-lg border border-gray-200 p-4">
         <div class="text-sm text-gray-500 mb-1">Accuracy</div>
@@ -45,19 +45,19 @@
         <div class="text-xs text-green-600 mt-1">↑ 5.2% vs baseline</div>
       </div>
       <div class="bg-white rounded-lg border border-gray-200 p-4">
-        <div class="text-sm text-gray-500 mb-1">Precision</div>
-        <div class="text-2xl font-bold text-gray-900">{{ evaluationMetrics.precision }}</div>
+        <div class="text-sm text-gray-500 mb-1">Hallucination Rate</div>
+        <div class="text-2xl font-bold text-gray-900">{{ evaluationMetrics.hallucinationRate }}</div>
+        <div class="text-xs text-green-600 mt-1">↓ 2.1% vs baseline</div>
+      </div>
+      <div class="bg-white rounded-lg border border-gray-200 p-4">
+        <div class="text-sm text-gray-500 mb-1">Instruction Following</div>
+        <div class="text-2xl font-bold text-gray-900">{{ evaluationMetrics.instructionFollowing }}</div>
+        <div class="text-xs text-green-600 mt-1">↑ 3.8% vs baseline</div>
+      </div>
+      <div class="bg-white rounded-lg border border-gray-200 p-4">
+        <div class="text-sm text-gray-500 mb-1">Multi-hop Reasoning</div>
+        <div class="text-2xl font-bold text-gray-900">{{ evaluationMetrics.multiHopReasoning }}</div>
         <div class="text-xs text-green-600 mt-1">↑ 4.5% vs baseline</div>
-      </div>
-      <div class="bg-white rounded-lg border border-gray-200 p-4">
-        <div class="text-sm text-gray-500 mb-1">Recall</div>
-        <div class="text-2xl font-bold text-gray-900">{{ evaluationMetrics.recall }}</div>
-        <div class="text-xs text-green-600 mt-1">↑ 6.8% vs baseline</div>
-      </div>
-      <div class="bg-white rounded-lg border border-gray-200 p-4">
-        <div class="text-sm text-gray-500 mb-1">F1 Score</div>
-        <div class="text-2xl font-bold text-gray-900">{{ evaluationMetrics.f1 }}</div>
-        <div class="text-xs text-green-600 mt-1">↑ 4.2% vs baseline</div>
       </div>
     </div>
 
@@ -69,33 +69,33 @@
       </div>
     </div>
 
-    <!-- Additional Metrics -->
+    <!-- Additional LLM Metrics -->
     <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Detailed Metrics</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div class="p-4 bg-gray-50 rounded-lg">
-          <div class="text-sm text-gray-500 mb-1">AUC-ROC</div>
-          <div class="text-base font-medium text-gray-900">{{ detailedMetrics.auc }}</div>
+          <div class="text-sm text-gray-500 mb-1">Context Understanding</div>
+          <div class="text-base font-medium text-gray-900">{{ detailedMetrics.contextUnderstanding }}</div>
         </div>
         <div class="p-4 bg-gray-50 rounded-lg">
-          <div class="text-sm text-gray-500 mb-1">Perplexity</div>
-          <div class="text-base font-medium text-gray-900">{{ detailedMetrics.perplexity }}</div>
+          <div class="text-sm text-gray-500 mb-1">Code Generation</div>
+          <div class="text-base font-medium text-gray-900">{{ detailedMetrics.codeGeneration }}</div>
         </div>
         <div class="p-4 bg-gray-50 rounded-lg">
-          <div class="text-sm text-gray-500 mb-1">BLEU Score</div>
-          <div class="text-base font-medium text-gray-900">{{ detailedMetrics.bleu }}</div>
+          <div class="text-sm text-gray-500 mb-1">Math Reasoning</div>
+          <div class="text-base font-medium text-gray-900">{{ detailedMetrics.mathReasoning }}</div>
         </div>
         <div class="p-4 bg-gray-50 rounded-lg">
-          <div class="text-sm text-gray-500 mb-1">ROUGE-L</div>
-          <div class="text-base font-medium text-gray-900">{{ detailedMetrics.rouge }}</div>
+          <div class="text-sm text-gray-500 mb-1">Factuality</div>
+          <div class="text-base font-medium text-gray-900">{{ detailedMetrics.factuality }}</div>
         </div>
         <div class="p-4 bg-gray-50 rounded-lg">
-          <div class="text-sm text-gray-500 mb-1">Latency (ms)</div>
-          <div class="text-base font-medium text-gray-900">{{ detailedMetrics.latency }}</div>
+          <div class="text-sm text-gray-500 mb-1">Creativity</div>
+          <div class="text-base font-medium text-gray-900">{{ detailedMetrics.creativity }}</div>
         </div>
         <div class="p-4 bg-gray-50 rounded-lg">
-          <div class="text-sm text-gray-500 mb-1">Throughput (samples/s)</div>
-          <div class="text-base font-medium text-gray-900">{{ detailedMetrics.throughput }}</div>
+          <div class="text-sm text-gray-500 mb-1">Safety</div>
+          <div class="text-base font-medium text-gray-900">{{ detailedMetrics.safety }}</div>
         </div>
       </div>
     </div>
@@ -172,56 +172,56 @@ const evaluationMetrics = computed(() => {
   if (task.value.name && task.value.name.includes('Math')) {
     return {
       accuracy: '78.5%',
-      precision: '76.2%',
-      recall: '80.1%',
-      f1: '78.1%'
+      hallucinationRate: '12.3%',
+      instructionFollowing: '85.2%',
+      multiHopReasoning: '72.8%'
     }
   }
   if (task.value.name && task.value.name.includes('LLaMA')) {
     return {
       accuracy: '85.3%',
-      precision: '84.1%',
-      recall: '86.5%',
-      f1: '85.3%'
+      hallucinationRate: '8.5%',
+      instructionFollowing: '91.7%',
+      multiHopReasoning: '82.4%'
     }
   }
   // Default metrics for Qwen3
   return {
     accuracy: '82.7%',
-    precision: '81.4%',
-    recall: '84.2%',
-    f1: '82.8%'
+    hallucinationRate: '9.8%',
+    instructionFollowing: '88.5%',
+    multiHopReasoning: '79.3%'
   }
 })
 
 const detailedMetrics = computed(() => {
   if (task.value.name && task.value.name.includes('Math')) {
     return {
-      auc: '0.923',
-      perplexity: '4.56',
-      bleu: '32.1',
-      rouge: '0.45',
-      latency: '125',
-      throughput: '45.2'
+      contextUnderstanding: '81.2%',
+      codeGeneration: '74.5%',
+      mathReasoning: '78.5%',
+      factuality: '87.6%',
+      creativity: '76.3%',
+      safety: '92.1%'
     }
   }
   if (task.value.name && task.value.name.includes('LLaMA')) {
     return {
-      auc: '0.951',
-      perplexity: '3.21',
-      bleu: '38.7',
-      rouge: '0.52',
-      latency: '180',
-      throughput: '32.5'
+      contextUnderstanding: '89.4%',
+      codeGeneration: '86.7%',
+      mathReasoning: '82.3%',
+      factuality: '91.5%',
+      creativity: '84.2%',
+      safety: '93.8%'
     }
   }
   return {
-    auc: '0.938',
-    perplexity: '3.87',
-    bleu: '35.4',
-    rouge: '0.48',
-    latency: '156',
-    throughput: '38.7'
+    contextUnderstanding: '86.8%',
+    codeGeneration: '82.4%',
+    mathReasoning: '80.1%',
+    factuality: '90.2%',
+    creativity: '80.7%',
+    safety: '93.2%'
   }
 })
 
@@ -296,14 +296,14 @@ function drawChart() {
   const centerY = height / 2 + 30  // Slightly lower to make room for top labels
   const radius = Math.min(width, height) / 2 - 100  // Larger radius for bigger chart
   
-  // Metrics data
-  const labels = ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'AUC-ROC']
+  // LLM Metrics data - using 5 key metrics for the radar chart
+  const labels = ['Accuracy', 'Hallucination↓', 'Instruction Following', 'Multi-hop Reasoning', 'Context Understanding']
   const values = [
     parseFloat(evaluationMetrics.value.accuracy),
-    parseFloat(evaluationMetrics.value.precision),
-    parseFloat(evaluationMetrics.value.recall),
-    parseFloat(evaluationMetrics.value.f1),
-    parseFloat(detailedMetrics.value.auc) * 100
+    100 - parseFloat(evaluationMetrics.value.hallucinationRate), // Invert hallucination rate
+    parseFloat(evaluationMetrics.value.instructionFollowing),
+    parseFloat(evaluationMetrics.value.multiHopReasoning),
+    parseFloat(detailedMetrics.value.contextUnderstanding)
   ]
   
   const numAxes = labels.length
@@ -356,7 +356,7 @@ function drawChart() {
     
     // Adjust text alignment based on position
     if (Math.abs(angle - (-Math.PI / 2)) < 0.1) {
-      // Top label (Accuracy)
+      // Top label
       ctx.textAlign = 'center'
       ctx.fillText(labels[i], labelX, labelY)
     } else if (angle > -Math.PI / 2 && angle < Math.PI / 2) {
@@ -420,7 +420,7 @@ function drawChart() {
     let valueX, valueY
     
     if (Math.abs(angle - (-Math.PI / 2)) < 0.1) {
-      // Top value (Accuracy) - position above
+      // Top value - position above
       ctx.textAlign = 'center'
       valueX = x
       valueY = y - valueOffset
