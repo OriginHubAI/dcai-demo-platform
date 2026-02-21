@@ -4,6 +4,7 @@ export const spaces = [
   { id: 'OpenDCAI/Paper2Any', author: 'OpenDCAI', title: 'Paper2Any', emoji: '📄', colorFrom: 'blue', colorTo: 'cyan', description: 'Convert academic papers into various formats including podcasts, presentations, and summaries.', category: 'text-generation', sdk: 'gradio', likes: 2800, status: 'running', hardware: 'A100' },
   { id: 'OpenDCAI/MCP-VectorSQL', author: 'OpenDCAI', title: 'MCP-VectorSQL', emoji: '🔍', colorFrom: 'green', colorTo: 'teal', description: 'Convert natural language questions into high-quality SQL queries for vector databases.', category: 'text-generation', sdk: 'gradio', likes: 1900, status: 'running', hardware: 'A10G' },
   { id: 'OpenDCAI/Dataflow-LoopAI', author: 'OpenDCAI', title: 'DataFlow-LoopAI', emoji: '🔄', colorFrom: 'purple', colorTo: 'pink', description: 'AI-powered dataflow automation tool for building intelligent workflows and pipelines.', category: 'text-generation', sdk: 'gradio', likes: 1500, status: 'running', hardware: 'A100' },
+  { id: 'OpenDCAI/Chem-CoT-Generator', author: 'OpenDCAI', title: 'Chem-CoT-Generator', emoji: '🧪', colorFrom: 'teal', colorTo: 'green', description: 'Generate high-quality chemical chain-of-thought (CoT) data for training and fine-tuning chemistry-focused LLMs.', category: 'text-generation', sdk: 'gradio', likes: 2100, status: 'running', hardware: 'A100' },
 ]
 
 export function getSpaceById(id) {
