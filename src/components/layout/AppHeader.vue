@@ -129,10 +129,10 @@
                 <CogIcon class="w-4 h-4 text-slate-400" />
                 {{ t('header.settings') }}
               </a>
-              <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-dc-primary transition-colors">
+              <router-link to="/access-tokens" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-dc-primary transition-colors">
                 <KeyIcon class="w-4 h-4 text-slate-400" />
-                API Keys
-              </a>
+                {{ t('header.accessTokens') }}
+              </router-link>
             </div>
             <div class="border-t border-slate-100 mt-1 pt-1">
               <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">

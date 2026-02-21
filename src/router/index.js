@@ -12,6 +12,7 @@ const routes = [
   { path: '/dataflow/tasks/:id', name: 'task-detail', component: () => import('../views/TaskDetailRouter.vue') },
   { path: '/spaces', name: 'spaces', component: () => import('../views/SpacesPage.vue') },
   { path: '/spaces/:id(.*)', name: 'space-detail', component: () => import('../views/SpaceDetailPage.vue') },
+  { path: '/access-tokens', name: 'access-tokens', component: () => import('../views/AccessTokensPage.vue') },
 ]
 
 const router = createRouter({
