@@ -79,6 +79,13 @@
         </div>
       </div>
     </div>
+
+    <!-- Knowledge Graph Modal -->
+    <KnowledgeGraphModal
+      :visible="showGraphModal"
+      :kb="selectedKb"
+      @close="showGraphModal = false"
+    />
   </div>
 </template>
 
@@ -91,9 +98,12 @@ import SearchBar from '@/components/common/SearchBar.vue'
 import SortDropdown from '@/components/common/SortDropdown.vue'
 import PaginationBar from '@/components/common/PaginationBar.vue'
 import KnowledgeBaseCard from '@/components/knowledgeBase/KnowledgeBaseCard.vue'
+import KnowledgeGraphModal from '@/components/knowledgeBase/KnowledgeGraphModal.vue'
 
 const { t } = useI18n()
 const showCreateModal = ref(false)
+const showGraphModal = ref(false)
+const selectedKb = ref(null)
 
 // Search and sort
 const searchQuery = ref('')
@@ -144,8 +154,8 @@ function handleChat(kb) {
 }
 
 function handleGraph(kb) {
-  console.log('Open knowledge graph for KB:', kb.id)
-  // Navigate to knowledge graph page
+  selectedKb.value = kb
+  showGraphModal.value = true
 }
 
 function handleDelete(kb) {

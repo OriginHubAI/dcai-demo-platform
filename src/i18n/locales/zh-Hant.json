@@ -75,7 +75,9 @@
     "noResults": "未找到結果",
     "language": "語言",
     "filters": "篩選",
-    "clearAllFilters": "清除所有篩選"
+    "clearAllFilters": "清除所有篩選",
+    "reset": "重置視圖",
+    "close": "關閉"
   },
   "datasets": {
     "title": "數據集",
@@ -191,6 +193,12 @@
       "general": "通用",
       "domain": "領域",
       "private": "私有"
+    },
+    "graphLegend": "節點類型",
+    "graphControls": {
+      "zoom": "滾輪縮放",
+      "pan": "拖拽平移",
+      "click": "點擊節點查看詳情"
     }
   }
 }

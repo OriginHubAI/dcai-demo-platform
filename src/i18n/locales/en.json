@@ -75,7 +75,9 @@
     "noResults": "No results found",
     "language": "Language",
     "filters": "Filters",
-    "clearAllFilters": "Clear all filters"
+    "clearAllFilters": "Clear all filters",
+    "reset": "Reset View",
+    "close": "Close"
   },
   "datasets": {
     "title": "Datasets",
@@ -191,6 +193,12 @@
       "general": "General",
       "domain": "Domain",
       "private": "Private"
+    },
+    "graphLegend": "Node Types",
+    "graphControls": {
+      "zoom": "Scroll to zoom",
+      "pan": "Drag to pan",
+      "click": "Click node for details"
     }
   }
 }
