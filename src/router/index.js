@@ -13,6 +13,7 @@ const routes = [
   { path: '/spaces', name: 'spaces', component: () => import('../views/SpacesPage.vue') },
   { path: '/spaces/:id(.*)', name: 'space-detail', component: () => import('../views/SpaceDetailPage.vue') },
   { path: '/access-tokens', name: 'access-tokens', component: () => import('../views/AccessTokensPage.vue') },
+  { path: '/knowledge-base', name: 'knowledge-base', component: () => import('../views/KnowledgeBasePage.vue') },
 ]
 
 const router = createRouter({

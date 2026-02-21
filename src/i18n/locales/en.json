@@ -7,6 +7,7 @@
     "tasks": "Tasks",
     "spaces": "Spaces",
     "models": "Models",
+    "knowledgeBase": "Knowledge Base",
     "helpSupport": "Help & Support",
     "menu": "Menu",
     "collapseSidebar": "Collapse Sidebar",
@@ -144,5 +145,25 @@
       "name": "Name",
       "status": "Status"
     }
+  },
+  "knowledgeBase": {
+    "title": "Knowledge Base",
+    "subtitle": "Manage your knowledge bases, chat with data and explore knowledge graphs",
+    "count": "{count} knowledge bases",
+    "searchPlaceholder": "Search knowledge bases...",
+    "create": "Create Knowledge Base",
+    "createTitle": "Create New Knowledge Base",
+    "createDescription": "Create a knowledge base from an existing dataset",
+    "selectDataset": "Select Dataset",
+    "filters": {
+      "status": "Status",
+      "type": "Type",
+      "features": "Features",
+      "hasKnowledgeGraph": "Has Knowledge Graph",
+      "hasMcp": "Supports MCP Query"
+    },
+    "noResults": "No knowledge bases found",
+    "noResultsHint": "Try adjusting your search or filters",
+    "confirmDelete": "Are you sure you want to delete knowledge base \"{name}\"? This action cannot be undone."
   }
 }
