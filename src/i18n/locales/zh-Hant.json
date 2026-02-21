@@ -7,6 +7,7 @@
     "tasks": "任務",
     "spaces": "應用",
     "models": "模型",
+    "knowledgeBase": "知識庫",
     "helpSupport": "幫助與支持",
     "menu": "菜單",
     "collapseSidebar": "收起側邊欄",
@@ -143,6 +144,44 @@
       "mostRecent": "最近",
       "name": "名稱",
       "status": "狀態"
+    }
+  },
+  "knowledgeBase": {
+    "title": "知識庫",
+    "subtitle": "管理您的知識庫，與數據進行對話和知識圖譜探索",
+    "count": "{count} 個知識庫",
+    "searchPlaceholder": "搜索知識庫...",
+    "create": "創建知識庫",
+    "createTitle": "創建新知識庫",
+    "createDescription": "從現有數據集創建知識庫",
+    "selectDataset": "選擇數據集",
+    "sourceDataset": "來源數據集",
+    "filters": {
+      "status": "狀態",
+      "type": "類型",
+      "features": "功能特性",
+      "hasKnowledgeGraph": "包含知識圖譜",
+      "hasMcp": "支持 MCP 查詢"
+    },
+    "noResults": "未找到知識庫",
+    "noResultsHint": "嘗試調整搜索或篩選條件",
+    "confirmDelete": "確定要刪除知識庫 \"{name}\" 嗎？此操作無法撤銷。",
+    "introduction": "簡介",
+    "fileCount": "文件數量",
+    "lastUpdated": "更新時間",
+    "conversation": "開始對話",
+    "knowledgeGraph": "知識圖譜",
+    "delete": "刪除",
+    "status": {
+      "ready": "就緒",
+      "processing": "處理中",
+      "error": "錯誤",
+      "pending": "待處理"
+    },
+    "type": {
+      "general": "通用",
+      "domain": "領域",
+      "private": "私有"
     }
   }
 }

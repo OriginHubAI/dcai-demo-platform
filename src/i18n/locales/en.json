@@ -7,7 +7,7 @@
     "tasks": "Tasks",
     "spaces": "Spaces",
     "models": "Models",
-    "knowledgeBase": "Knowledge Base",
+    "knowledgeBase": "Knowledge Bases",
     "helpSupport": "Help & Support",
     "menu": "Menu",
     "collapseSidebar": "Collapse Sidebar",
@@ -147,7 +147,7 @@
     }
   },
   "knowledgeBase": {
-    "title": "Knowledge Base",
+    "title": "Knowledge Bases",
     "subtitle": "Manage your knowledge bases, chat with data and explore knowledge graphs",
     "count": "{count} knowledge bases",
     "searchPlaceholder": "Search knowledge bases...",
@@ -155,6 +155,7 @@
     "createTitle": "Create New Knowledge Base",
     "createDescription": "Create a knowledge base from an existing dataset",
     "selectDataset": "Select Dataset",
+    "sourceDataset": "Source Dataset",
     "filters": {
       "status": "Status",
       "type": "Type",
@@ -164,6 +165,23 @@
     },
     "noResults": "No knowledge bases found",
     "noResultsHint": "Try adjusting your search or filters",
-    "confirmDelete": "Are you sure you want to delete knowledge base \"{name}\"? This action cannot be undone."
+    "confirmDelete": "Are you sure you want to delete knowledge base \"{name}\"? This action cannot be undone.",
+    "introduction": "Introduction",
+    "fileCount": "Files",
+    "lastUpdated": "Last Updated",
+    "conversation": "Conversation",
+    "knowledgeGraph": "Knowledge Graph",
+    "delete": "Delete",
+    "status": {
+      "ready": "Ready",
+      "processing": "Processing",
+      "error": "Error",
+      "pending": "Pending"
+    },
+    "type": {
+      "general": "General",
+      "domain": "Domain",
+      "private": "Private"
+    }
   }
 }

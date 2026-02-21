@@ -152,9 +152,10 @@
     "count": "{count} 个知识库",
     "searchPlaceholder": "搜索知识库...",
     "create": "创建知识库",
-    "createTitle": "创建新知诀库",
+    "createTitle": "创建新知识库",
     "createDescription": "从现有数据集创建知识库",
     "selectDataset": "选择数据集",
+    "sourceDataset": "来源数据集",
     "filters": {
       "status": "状态",
       "type": "类型",
@@ -164,6 +165,23 @@
     },
     "noResults": "未找到知识库",
     "noResultsHint": "尝试调整搜索或筛选条件",
-    "confirmDelete": "确定要删除知识库 \"{name}\" 吗？此操作无法撤销。"
+    "confirmDelete": "确定要删除知识库 \"{name}\" 吗？此操作无法撤销。",
+    "introduction": "简介",
+    "fileCount": "文件数量",
+    "lastUpdated": "更新时间",
+    "conversation": "开始对话",
+    "knowledgeGraph": "知识图谱",
+    "delete": "删除",
+    "status": {
+      "ready": "就绪",
+      "processing": "处理中",
+      "error": "错误",
+      "pending": "待处理"
+    },
+    "type": {
+      "general": "通用",
+      "domain": "领域",
+      "private": "私有"
+    }
   }
 }

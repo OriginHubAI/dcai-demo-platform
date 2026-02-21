@@ -15,24 +15,32 @@
         </span>
       </div>
 
+      <!-- Source Dataset -->
+      <div v-if="sourceDataset" class="mb-2">
+        <p class="text-sm text-gray-600">
+          <span class="text-gray-400">{{ $t('knowledgeBase.sourceDataset') }}:</span>
+          <span class="ml-1 text-indigo-600 font-medium">{{ sourceDataset.name }}</span>
+        </p>
+      </div>
+
       <!-- Description -->
       <div class="mb-2">
         <p class="text-sm text-gray-600">
-          <span class="text-gray-400">简介：</span>{{ kb.description }}
+          <span class="text-gray-400">{{ $t('knowledgeBase.introduction') }}：</span>{{ kb.description }}
         </p>
       </div>
 
       <!-- File Count -->
       <div class="mb-2">
         <p class="text-sm text-gray-600">
-          <span class="text-gray-400">文件数量：</span>{{ kb.fileCount }}篇
+          <span class="text-gray-400">{{ $t('knowledgeBase.fileCount') }}:</span> {{ kb.fileCount }}
         </p>
       </div>
 
       <!-- Update Time -->
       <div>
         <p class="text-sm text-gray-600">
-          <span class="text-gray-400">更新时间：</span>{{ kb.lastModified }}
+          <span class="text-gray-400">{{ $t('knowledgeBase.lastUpdated') }}：</span>{{ kb.lastModified }}
         </p>
       </div>
     </div>
@@ -48,7 +56,7 @@
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
         </svg>
-        开始对话
+        {{ $t('knowledgeBase.conversation') }}
       </button>
       <button
         @click="$emit('graph', kb)"
@@ -59,7 +67,7 @@
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
         </svg>
-        知识图谱
+        {{ $t('knowledgeBase.knowledgeGraph') }}
       </button>
       <button
         @click="$emit('delete', kb)"
@@ -68,7 +76,7 @@
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
         </svg>
-        删除
+        {{ $t('knowledgeBase.delete') }}
       </button>
     </div>
   </div>
@@ -76,7 +84,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { kbTypeMap } from '@/data/knowledgeBase.js'
+import { getDatasetById } from '@/data/datasets.js'
 
 const props = defineProps({
   kb: { type: Object, required: true }
@@ -84,5 +94,17 @@ const props = defineProps({
 
 defineEmits(['chat', 'graph', 'delete'])
 
-const typeLabel = computed(() => kbTypeMap[props.kb.type]?.label || '通用')
+const { t, locale } = useI18n()
+
+const typeLabel = computed(() => {
+  const type = props.kb.type || 'general'
+  return t(`knowledgeBase.type.${type}`)
+})
+
+const sourceDataset = computed(() => {
+  if (props.kb.datasetId) {
+    return getDatasetById(props.kb.datasetId)
+  }
+  return null
+})
 </script>

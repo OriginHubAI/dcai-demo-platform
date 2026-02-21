@@ -1,26 +1,26 @@
 export const knowledgeBases = [
   {
-    id: 'kb-hb-standards',
-    name: 'HB领域标准',
-    description: 'HB领域标准',
-    datasetId: 'iron-steel-papers',
-    fileCount: 0,
+    id: 'kb-math-olympiad',
+    name: 'Math Olympiad Problems',
+    description: 'International math olympiad problems with step-by-step solutions',
+    datasetId: 'math-olympiad-problems',
+    fileCount: 12,
     lastModified: '2026-02-09 15:54:09',
     type: 'general',
     status: 'ready',
     vectorStore: {
       provider: 'milvus',
-      collection: 'hb_standards',
+      collection: 'math_olympiad',
       dimension: 1536,
       vectorCount: 15420,
       indexType: 'IVF_FLAT'
     },
     pipeline: {
       stages: [
-        { name: 'parse', status: 'completed', label: '文档解析' },
-        { name: 'chunk', status: 'completed', label: '文本切分' },
-        { name: 'embed', status: 'completed', label: '向量化' },
-        { name: 'index', status: 'completed', label: '索引构建' }
+        { name: 'parse', status: 'completed', label: 'Document Parsing' },
+        { name: 'chunk', status: 'completed', label: 'Text Chunking' },
+        { name: 'embed', status: 'completed', label: 'Embedding' },
+        { name: 'index', status: 'completed', label: 'Index Building' }
       ],
       lastRun: '2026-02-09 15:54:09'
     },
@@ -32,32 +32,32 @@ export const knowledgeBases = [
     },
     mcp: {
       enabled: true,
-      endpoint: '/mcp/kb-hb-standards',
+      endpoint: '/mcp/kb-math-olympiad',
       tools: ['search', 'query', 'traverse']
     }
   },
   {
-    id: 'kb-high-temp-alloy-1',
-    name: '高温合金上',
-    description: '44种牌号数据',
-    datasetId: 'materials-genome',
-    fileCount: 0,
+    id: 'kb-protein-structures',
+    name: 'Protein Structures 3D',
+    description: 'Three-dimensional protein structure predictions with amino acid sequences',
+    datasetId: 'protein-structures-3d',
+    fileCount: 8,
     lastModified: '2026-02-07 17:47:23',
-    type: 'general',
+    type: 'domain',
     status: 'ready',
     vectorStore: {
       provider: 'milvus',
-      collection: 'high_temp_alloy_1',
+      collection: 'protein_structures',
       dimension: 1536,
       vectorCount: 8930,
       indexType: 'HNSW'
     },
     pipeline: {
       stages: [
-        { name: 'parse', status: 'completed', label: '文档解析' },
-        { name: 'chunk', status: 'completed', label: '文本切分' },
-        { name: 'embed', status: 'completed', label: '向量化' },
-        { name: 'index', status: 'completed', label: '索引构建' }
+        { name: 'parse', status: 'completed', label: 'Document Parsing' },
+        { name: 'chunk', status: 'completed', label: 'Text Chunking' },
+        { name: 'embed', status: 'completed', label: 'Embedding' },
+        { name: 'index', status: 'completed', label: 'Index Building' }
       ],
       lastRun: '2026-02-07 17:47:23'
     },
@@ -69,32 +69,32 @@ export const knowledgeBases = [
     },
     mcp: {
       enabled: true,
-      endpoint: '/mcp/kb-high-temp-alloy-1',
+      endpoint: '/mcp/kb-protein-structures',
       tools: ['search', 'query', 'traverse']
     }
   },
   {
-    id: 'kb-resume-test',
-    name: '简历测试',
-    description: '简历测试',
-    datasetId: 'clinical-trials-nlp',
-    fileCount: 0,
+    id: 'kb-rna-sequences',
+    name: 'RNA Sequence Database',
+    description: 'Curated RNA sequence data including mRNA, tRNA, and non-coding RNA',
+    datasetId: 'rna-sequences',
+    fileCount: 5,
     lastModified: '2026-02-06 17:50:46',
-    type: 'general',
+    type: 'domain',
     status: 'processing',
     vectorStore: {
       provider: 'milvus',
-      collection: 'resume_test',
+      collection: 'rna_sequences',
       dimension: 1536,
       vectorCount: 0,
       indexType: 'IVF_FLAT'
     },
     pipeline: {
       stages: [
-        { name: 'parse', status: 'completed', label: '文档解析' },
-        { name: 'chunk', status: 'completed', label: '文本切分' },
-        { name: 'embed', status: 'running', label: '向量化' },
-        { name: 'index', status: 'pending', label: '索引构建' }
+        { name: 'parse', status: 'completed', label: 'Document Parsing' },
+        { name: 'chunk', status: 'completed', label: 'Text Chunking' },
+        { name: 'embed', status: 'running', label: 'Embedding' },
+        { name: 'index', status: 'pending', label: 'Index Building' }
       ],
       lastRun: '2026-02-06 17:50:46',
       progress: 65
@@ -112,27 +112,27 @@ export const knowledgeBases = [
     }
   },
   {
-    id: 'kb-high-temp-alloy-handbook',
-    name: '高温合金手册-上卷',
-    description: '包含77种变形高温合金成分和性能数据。',
-    datasetId: 'superconductor-db',
-    fileCount: 0,
+    id: 'kb-astrophysics',
+    name: 'Astrophysics Spectra',
+    description: 'Stellar and galactic spectral data from ground-based and space telescopes',
+    datasetId: 'astrophysics-spectra',
+    fileCount: 15,
     lastModified: '2026-02-06 16:08:13',
-    type: 'general',
+    type: 'domain',
     status: 'ready',
     vectorStore: {
       provider: 'milvus',
-      collection: 'high_temp_alloy_handbook',
+      collection: 'astrophysics_spectra',
       dimension: 1536,
       vectorCount: 24680,
       indexType: 'HNSW'
     },
     pipeline: {
       stages: [
-        { name: 'parse', status: 'completed', label: '文档解析' },
-        { name: 'chunk', status: 'completed', label: '文本切分' },
-        { name: 'embed', status: 'completed', label: '向量化' },
-        { name: 'index', status: 'completed', label: '索引构建' }
+        { name: 'parse', status: 'completed', label: 'Document Parsing' },
+        { name: 'chunk', status: 'completed', label: 'Text Chunking' },
+        { name: 'embed', status: 'completed', label: 'Embedding' },
+        { name: 'index', status: 'completed', label: 'Index Building' }
       ],
       lastRun: '2026-02-06 16:08:13'
     },
@@ -144,32 +144,32 @@ export const knowledgeBases = [
     },
     mcp: {
       enabled: true,
-      endpoint: '/mcp/kb-high-temp-alloy-handbook',
+      endpoint: '/mcp/kb-astrophysics',
       tools: ['search', 'query', 'traverse', 'recommend']
     }
   },
   {
-    id: 'kb-polymer-research',
-    name: '聚合物研究知识库',
-    description: '聚合物专利和技术文献知识库',
-    datasetId: 'polymer-patents',
+    id: 'kb-physics-simulations',
+    name: 'Physics Simulations',
+    description: 'Numerical simulation outputs for fluid dynamics, quantum mechanics, and thermodynamics',
+    datasetId: 'physics-simulations',
     fileCount: 12,
     lastModified: '2026-02-05 14:32:18',
-    type: 'general',
+    type: 'domain',
     status: 'ready',
     vectorStore: {
       provider: 'milvus',
-      collection: 'polymer_research',
+      collection: 'physics_simulations',
       dimension: 1536,
       vectorCount: 45620,
       indexType: 'HNSW'
     },
     pipeline: {
       stages: [
-        { name: 'parse', status: 'completed', label: '文档解析' },
-        { name: 'chunk', status: 'completed', label: '文本切分' },
-        { name: 'embed', status: 'completed', label: '向量化' },
-        { name: 'index', status: 'completed', label: '索引构建' }
+        { name: 'parse', status: 'completed', label: 'Document Parsing' },
+        { name: 'chunk', status: 'completed', label: 'Text Chunking' },
+        { name: 'embed', status: 'completed', label: 'Embedding' },
+        { name: 'index', status: 'completed', label: 'Index Building' }
       ],
       lastRun: '2026-02-05 14:32:18'
     },
@@ -181,35 +181,35 @@ export const knowledgeBases = [
     },
     mcp: {
       enabled: true,
-      endpoint: '/mcp/kb-polymer-research',
+      endpoint: '/mcp/kb-physics-simulations',
       tools: ['search', 'query', 'traverse']
     }
   },
   {
-    id: 'kb-chemistry-reference',
-    name: '化学参考资料库',
-    description: '化学教材和参考书籍知识库',
-    datasetId: 'chemistry-books',
+    id: 'kb-quantum-chemistry',
+    name: 'Quantum Chemistry Calculations',
+    description: 'Density functional theory calculation results for molecular systems',
+    datasetId: 'quantum-chemistry-calcs',
     fileCount: 8,
     lastModified: '2026-02-04 09:15:33',
-    type: 'general',
+    type: 'domain',
     status: 'error',
     vectorStore: {
       provider: 'milvus',
-      collection: 'chemistry_reference',
+      collection: 'quantum_chemistry',
       dimension: 1536,
       vectorCount: 0,
       indexType: null
     },
     pipeline: {
       stages: [
-        { name: 'parse', status: 'completed', label: '文档解析' },
-        { name: 'chunk', status: 'error', label: '文本切分', error: 'Chunk size too large for some documents' },
-        { name: 'embed', status: 'pending', label: '向量化' },
-        { name: 'index', status: 'pending', label: '索引构建' }
+        { name: 'parse', status: 'completed', label: 'Document Parsing' },
+        { name: 'chunk', status: 'error', label: 'Text Chunking', error: 'Chunk size too large for some documents' },
+        { name: 'embed', status: 'pending', label: 'Embedding' },
+        { name: 'index', status: 'pending', label: 'Index Building' }
       ],
       lastRun: '2026-02-04 09:15:33',
-      error: '部分文档切分失败，请检查文档格式'
+      error: 'Some documents failed to chunk. Please check the document format.'
     },
     knowledgeGraph: {
       enabled: false,
@@ -234,14 +234,14 @@ export function getKnowledgeBaseByDatasetId(datasetId) {
 }
 
 export const kbTypeMap = {
-  general: { label: '通用', color: 'blue' },
-  domain: { label: '领域', color: 'purple' },
-  private: { label: '私有', color: 'orange' }
+  general: { label: 'General', color: 'blue' },
+  domain: { label: 'Domain', color: 'purple' },
+  private: { label: 'Private', color: 'orange' }
 }
 
 export const kbStatusMap = {
-  ready: { label: '就绪', color: 'green', icon: 'check' },
-  processing: { label: '处理中', color: 'yellow', icon: 'sync' },
-  error: { label: '错误', color: 'red', icon: 'error' },
-  pending: { label: '待处理', color: 'gray', icon: 'clock' }
+  ready: { label: 'Ready', color: 'green', icon: 'check' },
+  processing: { label: 'Processing', color: 'yellow', icon: 'sync' },
+  error: { label: 'Error', color: 'red', icon: 'error' },
+  pending: { label: 'Pending', color: 'gray', icon: 'clock' }
 }
