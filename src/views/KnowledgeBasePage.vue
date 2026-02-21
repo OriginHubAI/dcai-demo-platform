@@ -99,11 +99,11 @@ const showCreateModal = ref(false)
 const searchQuery = ref('')
 const sortBy = ref('recentlyUpdated')
 
-const sortOptions = [
-  { value: 'recentlyUpdated', label: '最近更新' },
-  { value: 'name', label: '名称' },
-  { value: 'vectorCount', label: '向量数量' }
-]
+const sortOptions = computed(() => [
+  { value: 'recentlyUpdated', label: t('knowledgeBase.sort.recentlyUpdated') },
+  { value: 'name', label: t('knowledgeBase.sort.name') },
+  { value: 'vectorCount', label: t('knowledgeBase.sort.vectorCount') }
+])
 
 // Filter logic
 const filtered = computed(() => {

@@ -151,6 +151,15 @@
     "subtitle": "管理您的知識庫，與數據進行對話和知識圖譜探索",
     "count": "{count} 個知識庫",
     "searchPlaceholder": "搜索知識庫...",
+    "sort": {
+      "recentlyUpdated": "最近更新",
+      "name": "名稱",
+      "vectorCount": "向量數量"
+    },
+    "indexingStatus": {
+      "indexing": "索引中",
+      "indexed": "已索引"
+    },
     "create": "創建知識庫",
     "createTitle": "創建新知識庫",
     "createDescription": "從現有數據集創建知識庫",

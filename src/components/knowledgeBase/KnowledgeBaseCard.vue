@@ -2,16 +2,24 @@
   <div class="bg-white border border-gray-200 rounded-lg hover:shadow-md hover:border-gray-300 transition-all overflow-hidden">
     <!-- Card Content -->
     <div class="p-5">
-      <!-- Header: Title + Type Badge -->
+      <!-- Header: Title + Indexing Status Badge -->
       <div class="flex items-start justify-between gap-2 mb-3">
         <h3 class="text-lg font-semibold text-gray-900 flex-1">{{ kb.name }}</h3>
         <span
-          class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 bg-indigo-50 text-indigo-700"
+          :class="[
+            'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0',
+            isIndexed
+              ? 'bg-green-50 text-green-700'
+              : 'bg-yellow-50 text-yellow-700'
+          ]"
         >
-          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          <svg v-if="isIndexed" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
           </svg>
-          {{ typeLabel }}
+          <svg v-else class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          {{ indexingStatusLabel }}
         </span>
       </div>
 
@@ -85,7 +93,6 @@
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { kbTypeMap } from '@/data/knowledgeBase.js'
 import { getDatasetById } from '@/data/datasets.js'
 
 const props = defineProps({
@@ -94,11 +101,17 @@ const props = defineProps({
 
 defineEmits(['chat', 'graph', 'delete'])
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 
-const typeLabel = computed(() => {
-  const type = props.kb.type || 'general'
-  return t(`knowledgeBase.type.${type}`)
+// Determine if the knowledge base is fully indexed (ready) or still indexing
+const isIndexed = computed(() => {
+  return props.kb.status === 'ready'
+})
+
+const indexingStatusLabel = computed(() => {
+  return isIndexed.value
+    ? t('knowledgeBase.indexingStatus.indexed')
+    : t('knowledgeBase.indexingStatus.indexing')
 })
 
 const sourceDataset = computed(() => {

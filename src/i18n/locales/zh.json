@@ -151,6 +151,15 @@
     "subtitle": "管理您的知识库，与数据进行对话和知识图谱探索",
     "count": "{count} 个知识库",
     "searchPlaceholder": "搜索知识库...",
+    "sort": {
+      "recentlyUpdated": "最近更新",
+      "name": "名称",
+      "vectorCount": "向量数量"
+    },
+    "indexingStatus": {
+      "indexing": "索引中",
+      "indexed": "已索引"
+    },
     "create": "创建知识库",
     "createTitle": "创建新知识库",
     "createDescription": "从现有数据集创建知识库",

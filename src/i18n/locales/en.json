@@ -151,6 +151,15 @@
     "subtitle": "Manage your knowledge bases, chat with data and explore knowledge graphs",
     "count": "{count} knowledge bases",
     "searchPlaceholder": "Search knowledge bases...",
+    "sort": {
+      "recentlyUpdated": "Recently Updated",
+      "name": "Name",
+      "vectorCount": "Vector Count"
+    },
+    "indexingStatus": {
+      "indexing": "Indexing",
+      "indexed": "Indexed"
+    },
     "create": "Create Knowledge Base",
     "createTitle": "Create New Knowledge Base",
     "createDescription": "Create a knowledge base from an existing dataset",
