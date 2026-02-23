@@ -87,6 +87,12 @@
         </Transition>
       </div>
 
+      <!-- Credits Display -->
+      <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100/80 border border-slate-200/60">
+        <CoinIcon class="w-5 h-5 text-blue-500" />
+        <span class="text-sm font-semibold text-slate-700">30</span>
+      </div>
+
       <!-- Notifications -->
       <button class="relative p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100/80 rounded-xl transition-all duration-200">
         <BellIcon class="w-5 h-5" />
@@ -95,15 +101,19 @@
 
       <!-- User Menu -->
       <div class="relative ml-1">
-        <button 
+        <button
           @click="showUserMenu = !showUserMenu"
-          class="flex items-center gap-2 p-1.5 pr-3 rounded-xl hover:bg-slate-100/80 transition-all duration-200 group"
+          class="flex items-center gap-3 p-1.5 pr-3 rounded-xl hover:bg-slate-100/80 transition-all duration-200 group border border-slate-200/60"
           :class="{ 'bg-slate-100/80': showUserMenu }"
         >
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-dc-primary via-dc-primary to-dc-accent flex items-center justify-center text-white text-sm font-bold shadow-md group-hover:shadow-lg transition-shadow">
-            U
+          <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-md group-hover:shadow-lg transition-shadow">
+            <CrownIcon class="w-5 h-5" />
           </div>
-          <ChevronDownIcon class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': showUserMenu }" />
+          <div class="flex flex-col items-start">
+            <span class="text-sm font-bold text-slate-800 leading-tight">Alice</span>
+            <span class="text-[10px] font-medium text-slate-500 uppercase tracking-wide">PRO MEMBER</span>
+          </div>
+          <ChevronDownIcon class="w-4 h-4 text-slate-400 transition-transform duration-200 ml-1" :class="{ 'rotate-180': showUserMenu }" />
         </button>
 
         <!-- Dropdown -->
@@ -117,8 +127,8 @@
         >
           <div v-if="showUserMenu" class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-50 overflow-hidden">
             <div class="px-4 py-3 border-b border-slate-100">
-              <p class="text-sm font-bold text-slate-900">User Name</p>
-              <p class="text-xs text-slate-500 mt-0.5">user@example.com</p>
+              <p class="text-sm font-bold text-slate-900">Alice</p>
+              <p class="text-xs text-slate-500 mt-0.5">alice@example.com</p>
             </div>
             <div class="py-1">
               <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-dc-primary transition-colors">
@@ -211,6 +221,16 @@ const LogoutIcon = () => h('svg', { class: 'w-4 h-4', fill: 'none', stroke: 'cur
 
 const GlobeIcon = () => h('svg', { class: 'w-5 h-5', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
   h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9' })
+])
+
+const CoinIcon = () => h('svg', { class: 'w-5 h-5', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+  h('circle', { cx: '12', cy: '12', r: '9', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
+  h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M12 7v5l3 3' }),
+  h('circle', { cx: '12', cy: '12', r: '3', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', fill: 'none' })
+])
+
+const CrownIcon = () => h('svg', { class: 'w-5 h-5', fill: 'currentColor', viewBox: '0 0 24 24' }, [
+  h('path', { d: 'M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm2-2h10v2H7v-2z' })
 ])
 
 // Page title based on route
