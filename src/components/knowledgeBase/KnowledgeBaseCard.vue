@@ -1,7 +1,7 @@
 <template>
-  <div class="bg-white border border-gray-200 rounded-lg hover:shadow-md hover:border-gray-300 transition-all overflow-hidden">
+  <div class="bg-white border border-gray-200 rounded-lg hover:shadow-md hover:border-gray-300 transition-all overflow-hidden flex flex-col h-full">
     <!-- Card Content -->
-    <div class="p-5">
+    <div class="p-5 flex-grow">
       <!-- Header: Title + Indexing Status Badge -->
       <div class="flex items-start justify-between gap-2 mb-3">
         <h3 class="text-lg font-semibold text-gray-900 flex-1">{{ kb.name }}</h3>

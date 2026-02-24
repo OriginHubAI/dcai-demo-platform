@@ -30,11 +30,12 @@
       </div>
 
       <!-- Results -->
-        <div v-if="paginatedItems.length" class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div v-if="paginatedItems.length" class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
           <KnowledgeBaseCard
             v-for="kb in paginatedItems"
             :key="kb.id"
             :kb="kb"
+            class="h-full"
             @chat="handleChat"
             @graph="handleGraph"
             @delete="handleDelete"
