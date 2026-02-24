@@ -148,6 +148,13 @@
       "status": "Status"
     }
   },
+  "exportData": {
+    "title": "Export Data",
+    "description": "Select a processing node to export its result data to datasets",
+    "selectNode": "Select a processing node",
+    "exportToDatasets": "Export to Datasets",
+    "successMessage": "Data exported successfully! Redirecting to datasets..."
+  },
   "knowledgeBase": {
     "title": "Knowledge Bases",
     "subtitle": "Manage your knowledge bases, chat with data and explore knowledge graphs",

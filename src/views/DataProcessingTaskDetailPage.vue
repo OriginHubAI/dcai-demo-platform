@@ -35,6 +35,56 @@
       </div>
     </div>
 
+    <!-- Export Data Card -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+      <div class="flex items-start justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 mb-2">{{ $t('exportData.title') }}</h2>
+          <p class="text-sm text-gray-500">{{ $t('exportData.description') }}</p>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+        </div>
+      </div>
+      <div class="mt-4 flex flex-col sm:flex-row gap-3">
+        <div class="flex-1">
+          <select
+            v-model="selectedNodeId"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+          >
+            <option value="">{{ $t('exportData.selectNode') }}</option>
+            <option
+              v-for="node in exportableNodes"
+              :key="node.id"
+              :value="node.id"
+            >
+              {{ node.name }} ({{ node.type }})
+            </option>
+          </select>
+        </div>
+        <button
+          @click="exportData"
+          :disabled="!selectedNodeId"
+          class="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+          {{ $t('exportData.exportToDatasets') }}
+        </button>
+      </div>
+      <div v-if="exportSuccess" class="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+        <div class="flex items-center gap-2 text-sm text-green-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          {{ $t('exportData.successMessage') }}
+        </div>
+      </div>
+    </div>
+
     <!-- Data Pipeline - Separate scrollable container -->
     <div class="mb-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
       <div class="max-w-[1800px]">
@@ -309,6 +359,7 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getTaskById } from '@/data/tasks.js'
 import { getDataProcessingPipeline, getExecutionResult } from '@/data/dataflowTasks.js'
+import { datasets } from '@/data/datasets.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -317,6 +368,13 @@ const pipelineContainer = ref(null)
 const nodeConnections = ref([])
 const svgMinWidth = ref(0)
 const pipelineMinWidth = ref(0)
+const selectedNodeId = ref('')
+const exportSuccess = ref(false)
+
+// Get nodes that can be exported (filter and generate nodes have output data)
+const exportableNodes = computed(() => {
+  return pipelineNodes.value.filter(node => node.type !== 'dataset')
+})
 
 const task = computed(() => {
   const id = route.params.id
@@ -497,6 +555,61 @@ function formatDate(isoStr) {
     minute: '2-digit',
     hour12: false
   })
+}
+
+// Export data from selected node to datasets
+function exportData() {
+  if (!selectedNodeId.value) return
+
+  const node = pipelineNodes.value.find(n => n.id === selectedNodeId.value)
+  if (!node) return
+
+  // Generate a unique dataset ID
+  const timestamp = Date.now()
+  const datasetId = `${task.value.id}-${node.id}-${timestamp}`
+
+  // Get sample count from execution result
+  const result = executionResult.value
+  const sampleCount = result.sampleCounts?.[pipelineNodes.value.indexOf(node)]?.value || 1000
+
+  // Create new dataset object
+  const newDataset = {
+    id: datasetId,
+    author: task.value.author || 'dataflow-export',
+    name: `${node.name} - ${task.value.name}`,
+    task: node.type === 'filter' ? 'text-classification' : 'text-generation',
+    domain: task.value.type?.toLowerCase().includes('rna') ? 'biology' :
+            task.value.type?.toLowerCase().includes('chem') ? 'chemistry' :
+            task.value.type?.toLowerCase().includes('physics') ? 'physics' :
+            task.value.type?.toLowerCase().includes('math') ? 'mathematics' :
+            task.value.type?.toLowerCase().includes('geo') ? 'earth-science' :
+            'materials-science',
+    downloads: 0,
+    likes: 0,
+    lastModified: new Date().toISOString().split('T')[0],
+    rows: sampleCount,
+    size: `${(sampleCount * 0.001).toFixed(1)}MB`,
+    modality: 'text',
+    language: 'en',
+    license: 'cc-by-4.0',
+    description: `Exported data from ${node.name} (${node.type}) in task "${task.value.name}". Processing node with ${Object.keys(node.initParams || {}).length} init parameters and ${Object.keys(node.runParams || {}).length} run parameters.`,
+    sourceTaskId: task.value.id,
+    sourceNodeId: node.id,
+    exportedAt: new Date().toISOString()
+  }
+
+  // Add to datasets array (in a real app, this would be an API call)
+  datasets.unshift(newDataset)
+
+  // Show success message
+  exportSuccess.value = true
+
+  // Reset after 2 seconds and navigate to datasets
+  setTimeout(() => {
+    exportSuccess.value = false
+    selectedNodeId.value = ''
+    router.push({ name: 'datasets' })
+  }, 2000)
 }
 
 function drawSampleChart() {

@@ -148,6 +148,13 @@
       "status": "状态"
     }
   },
+  "exportData": {
+    "title": "导出数据",
+    "description": "选择处理节点以将其结果数据导出到数据集",
+    "selectNode": "选择处理节点",
+    "exportToDatasets": "导出到数据集",
+    "successMessage": "数据导出成功！正在跳转到数据集..."
+  },
   "knowledgeBase": {
     "title": "知识库",
     "subtitle": "管理您的知识库，与数据进行对话和知识图谱探索",
