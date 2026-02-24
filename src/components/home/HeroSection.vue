@@ -12,9 +12,9 @@
         The Data-Centric AI platform where AI developers, data scientists, and domain experts collaborate around data to build professional models, agents, and applications.
       </p>
 
-      <div class="inline-flex flex-col w-full sm:w-fit max-w-full mx-auto">
+      <div class="inline-flex flex-col w-full max-w-2xl mx-auto">
         <!-- ChatGPT-style Dialog -->
-        <div class="mb-10 w-full">
+        <div class="mb-6 w-full">
           <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-4 min-h-[120px] flex flex-col justify-between">
             <div class="flex items-start gap-3">
               <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
@@ -24,7 +24,7 @@
               </div>
               <div class="flex-1 pt-1">
                 <p class="text-slate-400 text-left text-lg">
-                  Assign a data task, DataMaster will handle the rest.
+                  Just tell about your data needs, and DataMaster will help you get things done.
                 </p>
               </div>
             </div>
@@ -38,48 +38,40 @@
           </div>
         </div>
 
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
-        <router-link
-          to="/datasets"
-          class="inline-flex items-center px-6 py-3 bg-dc-primary text-white font-semibold rounded-lg hover:bg-dc-primary-dark transition-colors text-sm shadow-lg shadow-dc-primary/20"
-        >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
-          </svg>
-          Explore Datasets
-        </router-link>
-        <router-link
-          to="/dataflow/canvas"
-          class="inline-flex items-center px-6 py-3 bg-dc-primary text-white font-semibold rounded-lg hover:bg-dc-primary-dark transition-colors text-sm shadow-lg shadow-dc-primary/20"
-        >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
-          </svg>
-          DataFlow Canvas
-        </router-link>
-        <router-link
-          to="/dataflow/tasks"
-          class="inline-flex items-center px-6 py-3 bg-dc-primary text-white font-semibold rounded-lg hover:bg-dc-primary-dark transition-colors text-sm shadow-lg shadow-dc-primary/20"
-        >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-          </svg>
-          View Tasks
-        </router-link>
-        <router-link
-          to="/spaces"
-          class="inline-flex items-center px-6 py-3 bg-dc-primary text-white font-semibold rounded-lg hover:bg-dc-primary-dark transition-colors text-sm shadow-lg shadow-dc-primary/20"
-        >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-          </svg>
-          Browse Spaces
-        </router-link>
-      </div>
+        <!-- Example Queries Section -->
+        <div class="w-full text-left">
+          <h3 class="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+            <span class="w-1 h-4 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full"></span>
+            Try these queries
+          </h3>
+          <div class="space-y-3">
+            <button
+              v-for="(query, index) in exampleQueries"
+              :key="index"
+              @click="handleQueryClick(query)"
+              class="w-full text-left bg-white rounded-xl shadow-md border border-slate-100 p-4 hover:shadow-lg hover:border-blue-200 transition-all duration-200 group"
+            >
+              <p class="text-slate-700 text-sm sm:text-base group-hover:text-slate-900">
+                {{ query }}
+              </p>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 </template>
 
 <script setup>
+const exampleQueries = [
+  '@arxiv-stem-papers what are recent advances on superconductivity',
+  'Generate SFT data from @k12-science-textbooks',
+  'Extract knowledge graphs from @chemistry-books',
+  'Finetune a model on @math-proofs-corpus'
+]
+
+const handleQueryClick = (query) => {
+  // Handle query click - could emit event or navigate
+  console.log('Selected query:', query)
+}
 </script>
