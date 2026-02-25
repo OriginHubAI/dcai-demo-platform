@@ -479,6 +479,38 @@ export const datasets = [
     license: 'cc-by-4.0',
     description: 'Comprehensive database of superconducting materials with critical temperature, crystal structure, chemical formula, and electronic band structure data.'
   },
+  {
+    id: 'medicine-textbooks',
+    author: 'med-edu-ai',
+    name: 'Medicine TextBooks',
+    task: 'text-generation',
+    domain: 'medicine',
+    downloads: 890000,
+    likes: 1680,
+    lastModified: '2025-03-20',
+    rows: 450000,
+    size: '15GB',
+    modality: 'text',
+    language: 'en',
+    license: 'cc-by-4.0',
+    description: 'A comprehensive collection of medical textbooks covering internal medicine, surgery, pediatrics, and clinical guidelines for medical education and training.'
+  },
+  {
+    id: 'arxiv-papers-charts',
+    author: 'arxiv-community',
+    name: 'ArXiv Papers Charts',
+    task: 'text-generation',
+    domain: 'education',
+    downloads: 1200000,
+    likes: 2100,
+    lastModified: '2025-03-22',
+    rows: 850000,
+    size: '42GB',
+    modality: 'text',
+    language: 'en',
+    license: 'cc-by-4.0',
+    description: 'Conversational dataset derived from ArXiv scientific papers with question-answer pairs, summaries, and explanations for academic discussions and chart understanding.'
+  },
 ]
 
 export function getDatasetById(id) {

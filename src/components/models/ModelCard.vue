@@ -9,7 +9,7 @@
           <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 flex-shrink-0">
             {{ model.author.charAt(0).toUpperCase() }}
           </div>
-          <span class="text-sm font-semibold text-gray-900 truncate">{{ model.id }}</span>
+          <span class="text-sm font-semibold text-gray-900 truncate">{{ displayId }}</span>
         </div>
         <p class="text-xs text-gray-500 line-clamp-2 mt-1">{{ model.description }}</p>
       </div>
@@ -17,6 +17,14 @@
     <div class="flex items-center flex-wrap gap-2 mt-3">
       <TagBadge :label="model.pipeline_tag" :color="taskColorMap[model.pipeline_tag] || 'gray'" />
       <span class="text-xs text-gray-400">Updated {{ formatDate(model.lastModified) }}</span>
+    </div>
+    <div v-if="model.baseModel || model.dataset" class="flex flex-wrap gap-2 mt-2">
+      <span v-if="model.baseModel" class="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">
+        Base: {{ model.baseModel }}
+      </span>
+      <span v-if="model.dataset" class="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded border border-green-100">
+        Dataset: {{ model.dataset }}
+      </span>
     </div>
     <div class="flex items-center space-x-4 mt-2">
       <StatBadge icon="download" :value="model.downloads" />
@@ -26,12 +34,18 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import TagBadge from '@/components/common/TagBadge.vue'
 import StatBadge from '@/components/common/StatBadge.vue'
 import { taskColorMap } from '@/data/filters.js'
 
-defineProps({
+const props = defineProps({
   model: { type: Object, required: true }
+})
+
+const displayId = computed(() => {
+  // Remove "Qwen/" prefix from display
+  return props.model.id.replace(/^Qwen\//, '')
 })
 
 function formatDate(dateStr) {

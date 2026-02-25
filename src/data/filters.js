@@ -82,6 +82,7 @@ export const spaceCategories = [
 ]
 
 export const sortOptions = [
+  { value: 'default', label: 'Default' },
   { value: 'trending', label: 'Trending' },
   { value: 'downloads', label: 'Most Downloads' },
   { value: 'likes', label: 'Most Likes' },

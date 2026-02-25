@@ -41,7 +41,7 @@ import ModelCard from '@/components/models/ModelCard.vue'
 const { t } = useI18n()
 const route = useRoute()
 
-const { searchQuery, sortBy, filtered } = useSearch(models)
+const { searchQuery, sortBy, filtered } = useSearch(models, { defaultSort: 'default' })
 const { currentPage, totalPages, paginatedItems, totalItems } = usePagination(filtered, 12)
 
 onMounted(() => {
