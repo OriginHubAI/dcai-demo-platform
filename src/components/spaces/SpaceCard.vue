@@ -1,6 +1,6 @@
 <template>
   <router-link
-    :to="`/spaces/${space.id}`"
+    :to="`/apps/${space.id}`"
     class="block rounded-lg overflow-hidden hover:shadow-lg transition-all border border-gray-200"
   >
     <!-- Gradient header -->
@@ -21,12 +21,8 @@
       </div>
       <p class="text-xs text-gray-500 mb-2">{{ space.author }}</p>
       <p class="text-xs text-gray-600 line-clamp-2">{{ space.description }}</p>
-      <div class="flex items-center justify-between mt-3">
-        <div class="flex items-center space-x-3">
-          <StatBadge icon="like" :value="space.likes" />
-          <span class="text-xs text-gray-400">{{ space.sdk }}</span>
-        </div>
-        <span class="text-xs text-gray-400">{{ space.hardware }}</span>
+      <div class="flex items-center mt-3">
+        <StatBadge icon="like" :value="space.likes" />
       </div>
     </div>
   </router-link>

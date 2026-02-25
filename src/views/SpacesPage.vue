@@ -49,18 +49,21 @@ import SpaceCard from '@/components/spaces/SpaceCard.vue'
 
 const { t } = useI18n()
 const searchQuery = ref('')
-const sortBy = ref('likes')
+const sortBy = ref('default')
 const activeCategory = ref('all')
 
 const translatedCategories = computed(() => [
   { value: 'all', label: t('spaces.categories.all') },
+  { value: 'agent-based', label: t('spaces.categories.agentBased') },
   { value: 'image-generation', label: t('spaces.categories.imageGeneration') },
   { value: 'video-generation', label: t('spaces.categories.videoGeneration') },
   { value: 'text-generation', label: t('spaces.categories.textGeneration') },
   { value: 'audio', label: t('spaces.categories.audio') },
+  { value: 'cad', label: t('spaces.categories.cad') },
 ])
 
 const translatedSortOptions = computed(() => [
+  { value: 'default', label: t('spaces.sort.default') },
   { value: 'likes', label: t('spaces.sort.mostLikes') },
   { value: 'trending', label: t('spaces.sort.trending') },
   { value: 'recent', label: t('spaces.sort.recentlyUpdated') },
@@ -90,8 +93,9 @@ const filtered = computed(() => {
     switch (sortBy.value) {
       case 'likes': return b.likes - a.likes
       case 'recent': return 0
-      case 'trending':
-      default: return b.likes - a.likes
+      case 'trending': return b.likes - a.likes
+      case 'default':
+      default: return 0
     }
   })
 

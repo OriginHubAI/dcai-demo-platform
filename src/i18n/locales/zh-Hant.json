@@ -5,7 +5,7 @@
     "canvas": "畫布",
     "packages": "算子包",
     "tasks": "任務",
-    "spaces": "應用",
+    "apps": "應用",
     "models": "模型",
     "knowledgeBase": "知識庫",
     "helpSupport": "幫助與支持",
@@ -19,7 +19,7 @@
   },
   "header": {
     "search": "搜索",
-    "searchPlaceholder": "搜索數據集、模型、應用...",
+    "searchPlaceholder": "搜索數據集、模型、Apps...",
     "login": "登錄",
     "signup": "註冊",
     "profile": "個人資料",
@@ -48,8 +48,8 @@
     "tokenName": "令牌名稱",
     "tokenNamePlaceholder": "例如：dataset-api",
     "permissionLevel": "權限級別",
-    "readPermission": "讀取 - 可以讀取數據集、模型和應用",
-    "writePermission": "寫入 - 可以讀取和寫入數據集、模型和應用",
+    "readPermission": "讀取 - 可以讀取數據集、模型和 Apps",
+    "writePermission": "寫入 - 可以讀取和寫入數據集、模型和 Apps",
     "create": "創建",
     "cancel": "取消",
     "tokenCreated": "令牌創建成功！請立即複製，因為您將無法再次查看它。",
@@ -97,9 +97,12 @@
       "imageGeneration": "圖像生成",
       "videoGeneration": "視頻生成",
       "textGeneration": "文本生成",
-      "audio": "音頻"
+      "audio": "音頻",
+      "agentBased": "智能體應用",
+      "cad": "CAD"
     },
     "sort": {
+      "default": "默認",
       "mostLikes": "最多點讚",
       "trending": "熱門",
       "recentlyUpdated": "最近更新"

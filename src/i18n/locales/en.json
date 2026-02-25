@@ -5,7 +5,7 @@
     "canvas": "Canvas",
     "packages": "Packages",
     "tasks": "Tasks",
-    "spaces": "Spaces",
+    "apps": "Apps",
     "models": "Models",
     "knowledgeBase": "Knowledge Bases",
     "helpSupport": "Help & Support",
@@ -19,7 +19,7 @@
   },
   "header": {
     "search": "Search",
-    "searchPlaceholder": "Search datasets, models, spaces...",
+    "searchPlaceholder": "Search datasets, models, apps...",
     "login": "Login",
     "signup": "Sign Up",
     "profile": "Profile",
@@ -48,8 +48,8 @@
     "tokenName": "Token Name",
     "tokenNamePlaceholder": "e.g., dataset-api",
     "permissionLevel": "Permission Level",
-    "readPermission": "Read - Can read datasets, models, and spaces",
-    "writePermission": "Write - Can read and write datasets, models, and spaces",
+    "readPermission": "Read - Can read datasets, models, and apps",
+    "writePermission": "Write - Can read and write datasets, models, and apps",
     "create": "Create",
     "cancel": "Cancel",
     "tokenCreated": "Token created successfully! Make sure to copy it now as you won't be able to see it again.",
@@ -87,19 +87,22 @@
     "noResultsHint": "Try adjusting your search or filters"
   },
   "spaces": {
-    "title": "Spaces",
-    "count": "{count} spaces",
-    "searchPlaceholder": "Search spaces...",
-    "noResults": "No spaces found",
+    "title": "Apps",
+    "count": "{count} apps",
+    "searchPlaceholder": "Search apps...",
+    "noResults": "No apps found",
     "noResultsHint": "Try adjusting your search or category",
     "categories": {
       "all": "All",
       "imageGeneration": "Image Generation",
       "videoGeneration": "Video Generation",
       "textGeneration": "Text Generation",
-      "audio": "Audio"
+      "audio": "Audio",
+      "agentBased": "Agent-based",
+      "cad": "CAD"
     },
     "sort": {
+      "default": "Default",
       "mostLikes": "Most Likes",
       "trending": "Trending",
       "recentlyUpdated": "Recently Updated"

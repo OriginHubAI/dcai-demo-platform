@@ -264,7 +264,7 @@ const navLinks = [
       { to: '/dataflow/tasks', labelKey: 'nav.tasks', iconComponent: TasksIcon },
     ],
   },
-  { to: '/spaces', labelKey: 'nav.spaces', icon: RocketIcon },
+  { to: '/apps', labelKey: 'nav.apps', icon: RocketIcon },
   { to: '/models', labelKey: 'nav.models', icon: CubeIcon },
 ]
 

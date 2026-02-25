@@ -3,7 +3,7 @@
     <div v-if="space">
       <!-- Breadcrumb -->
       <div class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
-        <router-link to="/spaces" class="hover:text-gray-700">Spaces</router-link>
+        <router-link to="/apps" class="hover:text-gray-700">Apps</router-link>
         <span>/</span>
         <span class="text-gray-900">{{ space.id }}</span>
       </div>
@@ -105,8 +105,8 @@
       </div>
     </div>
     <div v-else class="text-center py-20">
-      <p class="text-lg text-gray-500">Space not found</p>
-      <router-link to="/spaces" class="text-sm text-blue-600 hover:underline mt-2 inline-block">Back to Spaces</router-link>
+      <p class="text-lg text-gray-500">App not found</p>
+      <router-link to="/apps" class="text-sm text-blue-600 hover:underline mt-2 inline-block">Back to Apps</router-link>
     </div>
   </div>
 </template>
