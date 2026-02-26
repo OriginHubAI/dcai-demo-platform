@@ -44,7 +44,7 @@ urlpatterns = [
     path('api/v2/', include('task.urls_v2')),
     path('api/v2/dataflow/', include('dataflow.urls')),
     path('api/v2/', include('knowledgebase.urls')),
-    path('api/v2/', include('spaces.urls')),
+    path('api/v2/', include('apps.urls')),
     
     # API admin endpoints
     path('api/admin/', include('customadmin.urls')),

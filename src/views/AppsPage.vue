@@ -1,8 +1,8 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">{{ $t('spaces.title') }}</h1>
-      <span class="text-sm text-gray-500">{{ $t('spaces.count', { count: totalItems }) }}</span>
+      <h1 class="text-2xl font-bold text-gray-900">{{ $t('apps.title') }}</h1>
+      <span class="text-sm text-gray-500">{{ $t('apps.count', { count: totalItems }) }}</span>
     </div>
     <!-- Category tabs -->
     <div class="flex items-center space-x-2 mb-6 overflow-x-auto pb-2">
@@ -21,7 +21,7 @@
     <!-- Search + Sort -->
     <div class="flex items-center gap-3 mb-6">
       <div class="flex-1 max-w-md">
-        <SearchBar v-model="searchQuery" :placeholder="$t('spaces.searchPlaceholder')" />
+        <SearchBar v-model="searchQuery" :placeholder="$t('apps.searchPlaceholder')" />
       </div>
       <SortDropdown v-model="sortBy" :options="translatedSortOptions" />
     </div>
@@ -30,11 +30,11 @@
       <p class="text-lg">Loading...</p>
     </div>
     <div v-else-if="paginatedItems.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      <SpaceCard v-for="space in paginatedItems" :key="space.id" :space="space" />
+      <AppCard v-for="app in paginatedItems" :key="app.id" :app="app" />
     </div>
     <div v-else class="text-center py-16 text-gray-500">
-      <p class="text-lg">{{ $t('spaces.noResults') }}</p>
-      <p class="text-sm mt-1">{{ $t('spaces.noResultsHint') }}</p>
+      <p class="text-lg">{{ $t('apps.noResults') }}</p>
+      <p class="text-sm mt-1">{{ $t('apps.noResultsHint') }}</p>
     </div>
     <PaginationBar v-model="currentPage" :total-pages="totalPages" />
   </div>
@@ -43,64 +43,64 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { spaceApi } from '@/services/api.js'
+import { appApi } from '@/services/api.js'
 import { usePagination } from '@/composables/usePagination.js'
 import SearchBar from '@/components/common/SearchBar.vue'
 import SortDropdown from '@/components/common/SortDropdown.vue'
 import PaginationBar from '@/components/common/PaginationBar.vue'
-import SpaceCard from '@/components/spaces/SpaceCard.vue'
+import AppCard from '@/components/apps/AppCard.vue'
 
 const { t } = useI18n()
 const searchQuery = ref('')
 const sortBy = ref('default')
 const activeCategory = ref('all')
-const spaces = ref([])
+const apps = ref([])
 const loading = ref(false)
 
 const translatedCategories = computed(() => [
-  { value: 'all', label: t('spaces.categories.all') },
-  { value: 'agent-based', label: t('spaces.categories.agentBased') },
-  { value: 'image-generation', label: t('spaces.categories.imageGeneration') },
-  { value: 'video-generation', label: t('spaces.categories.videoGeneration') },
-  { value: 'text-generation', label: t('spaces.categories.textGeneration') },
-  { value: 'audio', label: t('spaces.categories.audio') },
-  { value: 'cad', label: t('spaces.categories.cad') },
+  { value: 'all', label: t('apps.categories.all') },
+  { value: 'agent-based', label: t('apps.categories.agentBased') },
+  { value: 'image-generation', label: t('apps.categories.imageGeneration') },
+  { value: 'video-generation', label: t('apps.categories.videoGeneration') },
+  { value: 'text-generation', label: t('apps.categories.textGeneration') },
+  { value: 'audio', label: t('apps.categories.audio') },
+  { value: 'cad', label: t('apps.categories.cad') },
 ])
 
 const translatedSortOptions = computed(() => [
-  { value: 'default', label: t('spaces.sort.default') },
-  { value: 'likes', label: t('spaces.sort.mostLikes') },
-  { value: 'trending', label: t('spaces.sort.trending') },
-  { value: 'recent', label: t('spaces.sort.recentlyUpdated') },
+  { value: 'default', label: t('apps.sort.default') },
+  { value: 'likes', label: t('apps.sort.mostLikes') },
+  { value: 'trending', label: t('apps.sort.trending') },
+  { value: 'recent', label: t('apps.sort.recentlyUpdated') },
 ])
 
 function selectCategory(cat) {
   activeCategory.value = cat
 }
 
-// Load spaces from API
-async function loadSpaces() {
+// Load apps from API
+async function loadApps() {
   loading.value = true
   try {
     const params = {}
     if (activeCategory.value !== 'all') {
       params.category = activeCategory.value
     }
-    const data = await spaceApi.getSpaces(params)
-    spaces.value = data
+    const data = await appApi.getApps(params)
+    apps.value = data
   } catch (error) {
-    console.error('Failed to load spaces:', error)
+    console.error('Failed to load apps:', error)
   } finally {
     loading.value = false
   }
 }
 
 onMounted(() => {
-  loadSpaces()
+  loadApps()
 })
 
 const filtered = computed(() => {
-  let result = [...spaces.value]
+  let result = [...apps.value]
 
   if (activeCategory.value !== 'all') {
     result = result.filter(s => s.category === activeCategory.value)
@@ -132,7 +132,7 @@ const { currentPage, totalPages, paginatedItems, totalItems } = usePagination(fi
 
 watch([activeCategory], () => {
   currentPage.value = 1
-  loadSpaces()
+  loadApps()
 })
 
 watch([searchQuery], () => {

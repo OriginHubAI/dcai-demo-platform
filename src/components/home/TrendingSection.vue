@@ -41,19 +41,19 @@
         </div>
         <div class="space-y-2">
           <router-link
-            v-for="(space, i) in trendingSpaces"
-            :key="space.id"
-            :to="`/apps/${space.id}`"
+            v-for="(app, i) in trendingApps"
+            :key="app.id"
+            :to="`/apps/${app.id}`"
             class="flex items-center space-x-3 p-2.5 rounded-lg hover:bg-gray-50 transition-colors group"
           >
             <span class="text-xs text-gray-400 w-4">{{ i + 1 }}</span>
             <div class="flex-1 min-w-0">
               <div class="text-sm font-medium text-gray-900 truncate group-hover:text-blue-600">
-                <span class="mr-1">{{ space.emoji }}</span>{{ space.title }}
+                <span class="mr-1">{{ app.emoji }}</span>{{ app.title }}
               </div>
               <div class="flex items-center space-x-3 mt-0.5">
-                <span class="text-xs text-gray-500">{{ space.author }}</span>
-                <StatBadge icon="like" :value="space.likes" />
+                <span class="text-xs text-gray-500">{{ app.author }}</span>
+                <StatBadge icon="like" :value="app.likes" />
               </div>
             </div>
           </router-link>
@@ -95,7 +95,7 @@
 import { computed } from 'vue'
 import { models } from '@/data/models.js'
 import { datasets } from '@/data/datasets.js'
-import { spaces } from '@/data/spaces.js'
+import { apps } from '@/data/apps.js'
 import { taskColorMap } from '@/data/filters.js'
 import TagBadge from '@/components/common/TagBadge.vue'
 import StatBadge from '@/components/common/StatBadge.vue'
@@ -106,7 +106,7 @@ const trendingModels = computed(() =>
 const trendingDatasets = computed(() =>
   [...datasets].sort((a, b) => b.likes - a.likes).slice(0, 5)
 )
-const trendingSpaces = computed(() =>
-  [...spaces].sort((a, b) => b.likes - a.likes).slice(0, 5)
+const trendingApps = computed(() =>
+  [...apps].sort((a, b) => b.likes - a.likes).slice(0, 5)
 )
 </script>

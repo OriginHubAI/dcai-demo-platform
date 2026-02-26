@@ -86,7 +86,7 @@
     "noResults": "No datasets found",
     "noResultsHint": "Try adjusting your search or filters"
   },
-  "spaces": {
+  "apps": {
     "title": "Apps",
     "count": "{count} apps",
     "searchPlaceholder": "Search apps...",

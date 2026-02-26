@@ -10,8 +10,8 @@ const routes = [
   { path: '/dataflow/canvas', name: 'dataflow-canvas', component: () => import('../views/DataFlowCanvasPage.vue') },
   { path: '/dataflow/tasks', name: 'dataflow-tasks', component: () => import('../views/DataFlowTasksPage.vue') },
   { path: '/dataflow/tasks/:id', name: 'task-detail', component: () => import('../views/TaskDetailRouter.vue') },
-  { path: '/apps', name: 'apps', component: () => import('../views/SpacesPage.vue') },
-  { path: '/apps/:id(.*)', name: 'app-detail', component: () => import('../views/SpaceDetailPage.vue') },
+  { path: '/apps', name: 'apps', component: () => import('../views/AppsPage.vue') },
+  { path: '/apps/:id(.*)', name: 'app-detail', component: () => import('../views/AppDetailPage.vue') },
   // Redirect old /spaces routes to /apps
   { path: '/spaces', redirect: '/apps' },
   { path: '/spaces/:id(.*)', redirect: '/apps/:id' },

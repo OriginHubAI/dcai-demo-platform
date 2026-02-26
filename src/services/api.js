@@ -223,35 +223,35 @@ export const modelApi = {
 }
 
 /**
- * Space API Service
+ * App API Service
  */
-export const spaceApi = {
+export const appApi = {
   /**
-   * Get all spaces
+   * Get all apps
    */
-  async getSpaces(params = {}) {
+  async getApps(params = {}) {
     if (isMockMode()) {
-      const { spaces } = await import('@/data/spaces.js')
-      return spaces
+      const { apps } = await import('@/data/apps.js')
+      return apps
     }
     
     const queryParams = new URLSearchParams(params)
-    const url = getApiUrl(`/spaces?${queryParams}`)
+    const url = getApiUrl(`/apps?${queryParams}`)
     const response = await fetchWithAuth(url)
     return response.data?.list || []
   },
   
   /**
-   * Get space by ID
-   * @param {string} spaceId
+   * Get app by ID
+   * @param {string} appId
    */
-  async getSpaceById(spaceId) {
+  async getAppById(appId) {
     if (isMockMode()) {
-      const { getSpaceById } = await import('@/data/spaces.js')
-      return getSpaceById(spaceId)
+      const { getAppById } = await import('@/data/apps.js')
+      return getAppById(appId)
     }
     
-    const url = getApiUrl(`/spaces/${spaceId}`)
+    const url = getApiUrl(`/apps/${appId}`)
     const response = await fetchWithAuth(url)
     return response.data
   },
@@ -264,5 +264,5 @@ export default {
   dataflow: dataflowApi,
   knowledgeBase: knowledgeBaseApi,
   model: modelApi,
-  space: spaceApi,
+  app: appApi,
 }

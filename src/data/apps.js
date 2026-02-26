@@ -1,4 +1,4 @@
-export const spaces = [
+export const apps = [
   { id: 'OpenDCAI/Open-NotebookLM', author: 'OpenDCAI', title: 'Open-NotebookLM', emoji: '📓', colorFrom: 'indigo', colorTo: 'purple', description: 'Convert PDFs into podcast-style audio conversations using open-source LLMs and TTS models.', category: 'text-generation', sdk: 'gradio', likes: 3200, status: 'running', hardware: 'A100' },
   { id: 'SciDCAI/CAD-DataMaster', author: 'SciDCAI', title: 'CAD DataMaster', emoji: '🏗️', colorFrom: 'blue', colorTo: 'cyan', description: 'Comprehensive CAD data processing platform supporting CAD file parsing, format conversion, 3D visualization, and intelligent analysis.', category: 'cad', sdk: 'gradio', likes: 4200, status: 'running', hardware: 'A100' },
   { id: 'KupasAI/MultiModal-DataAgent', author: 'KupasAI', title: 'MultiModal DataAgent', emoji: '🤖', colorFrom: 'purple', colorTo: 'indigo', description: 'Agent-based multimodal data processing application powered by intelligent agents for handling text, image, audio, and video data.', category: 'agent-based', sdk: 'gradio', likes: 3500, status: 'running', hardware: 'A100' },
@@ -9,6 +9,6 @@ export const spaces = [
   { id: 'OpenDCAI/Chem-CoT-Generator', author: 'OpenDCAI', title: 'Chemistry CoT Data Generator', emoji: '🧪', colorFrom: 'teal', colorTo: 'green', description: 'Generate high-quality chemical chain-of-thought (CoT) data for training and fine-tuning chemistry-focused LLMs.', category: 'text-generation', sdk: 'gradio', likes: 2100, status: 'running', hardware: 'A100' },
 ]
 
-export function getSpaceById(id) {
-  return spaces.find(s => s.id === id)
+export function getAppById(id) {
+  return apps.find(s => s.id === id)
 }

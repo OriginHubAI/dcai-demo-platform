@@ -86,7 +86,7 @@
     "noResults": "未找到数据集",
     "noResultsHint": "尝试调整搜索或筛选条件"
   },
-  "spaces": {
+  "apps": {
     "title": "应用",
     "count": "{count} 个应用",
     "searchPlaceholder": "搜索应用...",

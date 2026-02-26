@@ -1,5 +1,5 @@
 """
-Spaces (Apps) URL Configuration
+Apps URL Configuration
 """
 from django.urls import path
 from rest_framework.decorators import api_view, permission_classes
@@ -7,8 +7,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 
-# Sample Spaces (Apps) data
-SAMPLE_SPACES = [
+# Sample Apps data
+SAMPLE_APPS = [
     {
         'id': 'OpenDCAI/Open-NotebookLM',
         'author': 'OpenDCAI',
@@ -158,21 +158,21 @@ SAMPLE_SPACES = [
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def spaces_list(request):
-    """List Spaces (Apps)"""
+def apps_list(request):
+    """List Apps"""
     page = int(request.query_params.get('page', 1))
     page_size = int(request.query_params.get('page_size', 20))
     category = request.query_params.get('category', None)
     sdk = request.query_params.get('sdk', None)
     
     # Filter by category if provided
-    filtered_spaces = SAMPLE_SPACES
+    filtered_apps = SAMPLE_APPS
     if category:
-        filtered_spaces = [s for s in filtered_spaces if s['category'] == category]
+        filtered_apps = [s for s in filtered_apps if s['category'] == category]
     if sdk:
-        filtered_spaces = [s for s in filtered_spaces if s['sdk'] == sdk]
+        filtered_apps = [s for s in filtered_apps if s['sdk'] == sdk]
     
-    total = len(filtered_spaces)
+    total = len(filtered_apps)
     start = (page - 1) * page_size
     end = start + page_size
     
@@ -180,7 +180,7 @@ def spaces_list(request):
         'code': 0,
         'msg': 'success',
         'data': {
-            'list': filtered_spaces[start:end],
+            'list': filtered_apps[start:end],
             'total': total,
             'page': page,
             'page_size': page_size,
@@ -190,25 +190,25 @@ def spaces_list(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def spaces_detail(request, space_id):
-    """Get Space detail"""
-    space = next((s for s in SAMPLE_SPACES if s['id'] == space_id), None)
+def apps_detail(request, app_id):
+    """Get App detail"""
+    app = next((s for s in SAMPLE_APPS if s['id'] == app_id), None)
     
-    if space:
+    if app:
         return Response({
             'code': 0,
             'msg': 'success',
-            'data': space
+            'data': app
         })
     
     return Response({
         'code': 404,
-        'msg': 'space not found',
+        'msg': 'app not found',
         'data': {}
     })
 
 
 urlpatterns = [
-    path('spaces', spaces_list, name='spaces-list'),
-    path('spaces/<str:space_id>', spaces_detail, name='spaces-detail'),
+    path('apps', apps_list, name='apps-list'),
+    path('apps/<str:app_id>', apps_detail, name='apps-detail'),
 ]
