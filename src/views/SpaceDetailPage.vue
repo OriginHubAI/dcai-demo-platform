@@ -1,6 +1,9 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <div v-if="space">
+    <div v-if="loading" class="text-center py-20">
+      <p class="text-lg text-gray-500">Loading...</p>
+    </div>
+    <div v-else-if="space">
       <!-- Breadcrumb -->
       <div class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
         <router-link to="/apps" class="hover:text-gray-700">Apps</router-link>
@@ -112,13 +115,24 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { getSpaceById } from '@/data/spaces.js'
+import { spaceApi } from '@/services/api.js'
 import StatBadge from '@/components/common/StatBadge.vue'
 
 const route = useRoute()
-const space = computed(() => getSpaceById(route.params.id))
+const space = ref(null)
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    space.value = await spaceApi.getSpaceById(route.params.id)
+  } catch (error) {
+    console.error('Failed to load space:', error)
+  } finally {
+    loading.value = false
+  }
+})
 
 const colorValues = {
   red: '#ef4444', orange: '#f97316', yellow: '#eab308', green: '#22c55e',

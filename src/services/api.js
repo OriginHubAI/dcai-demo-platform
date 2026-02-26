@@ -229,15 +229,31 @@ export const spaceApi = {
   /**
    * Get all spaces
    */
-  async getSpaces() {
+  async getSpaces(params = {}) {
     if (isMockMode()) {
       const { spaces } = await import('@/data/spaces.js')
       return spaces
     }
     
-    const url = getApiUrl('/spaces')
+    const queryParams = new URLSearchParams(params)
+    const url = getApiUrl(`/spaces?${queryParams}`)
     const response = await fetchWithAuth(url)
     return response.data?.list || []
+  },
+  
+  /**
+   * Get space by ID
+   * @param {string} spaceId
+   */
+  async getSpaceById(spaceId) {
+    if (isMockMode()) {
+      const { getSpaceById } = await import('@/data/spaces.js')
+      return getSpaceById(spaceId)
+    }
+    
+    const url = getApiUrl(`/spaces/${spaceId}`)
+    const response = await fetchWithAuth(url)
+    return response.data
   },
 }
 

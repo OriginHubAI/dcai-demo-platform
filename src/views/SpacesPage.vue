@@ -26,7 +26,10 @@
       <SortDropdown v-model="sortBy" :options="translatedSortOptions" />
     </div>
     <!-- Results -->
-    <div v-if="paginatedItems.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div v-if="loading" class="text-center py-16 text-gray-500">
+      <p class="text-lg">Loading...</p>
+    </div>
+    <div v-else-if="paginatedItems.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       <SpaceCard v-for="space in paginatedItems" :key="space.id" :space="space" />
     </div>
     <div v-else class="text-center py-16 text-gray-500">
@@ -38,9 +41,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { spaces } from '@/data/spaces.js'
+import { spaceApi } from '@/services/api.js'
 import { usePagination } from '@/composables/usePagination.js'
 import SearchBar from '@/components/common/SearchBar.vue'
 import SortDropdown from '@/components/common/SortDropdown.vue'
@@ -51,6 +54,8 @@ const { t } = useI18n()
 const searchQuery = ref('')
 const sortBy = ref('default')
 const activeCategory = ref('all')
+const spaces = ref([])
+const loading = ref(false)
 
 const translatedCategories = computed(() => [
   { value: 'all', label: t('spaces.categories.all') },
@@ -73,8 +78,29 @@ function selectCategory(cat) {
   activeCategory.value = cat
 }
 
+// Load spaces from API
+async function loadSpaces() {
+  loading.value = true
+  try {
+    const params = {}
+    if (activeCategory.value !== 'all') {
+      params.category = activeCategory.value
+    }
+    const data = await spaceApi.getSpaces(params)
+    spaces.value = data
+  } catch (error) {
+    console.error('Failed to load spaces:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  loadSpaces()
+})
+
 const filtered = computed(() => {
-  let result = [...spaces]
+  let result = [...spaces.value]
 
   if (activeCategory.value !== 'all') {
     result = result.filter(s => s.category === activeCategory.value)
@@ -104,7 +130,12 @@ const filtered = computed(() => {
 
 const { currentPage, totalPages, paginatedItems, totalItems } = usePagination(filtered, 12)
 
-watch([activeCategory, searchQuery], () => {
+watch([activeCategory], () => {
+  currentPage.value = 1
+  loadSpaces()
+})
+
+watch([searchQuery], () => {
   currentPage.value = 1
 })
 </script>
