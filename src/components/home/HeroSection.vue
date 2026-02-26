@@ -60,10 +60,10 @@
 
 <script setup>
 const exampleQueries = [
-  '@arxiv-stem-papers what are recent advances on superconductivity',
-  'Generate SFT data from @k12-science-textbooks',
-  'Extract knowledge graphs from @chemistry-books',
-  'Finetune a model on @math-proofs-corpus'
+  '#arxiv-stem-papers what are recent advances on superconductivity?',
+  '@DataFlow generate CoT SFT data from #k12-science-textbooks',
+  '@DataFlow extract knowledge graphs from #chemistry-books',
+  '@LoopAI finetune a model on #math-proofs-corpus'
 ]
 
 const handleQueryClick = (query) => {
