@@ -2,7 +2,7 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{vue,js}"
+    "./frontend/**/*.{vue,js}"
   ],
   theme: {
     extend: {

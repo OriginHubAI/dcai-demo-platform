@@ -52,7 +52,7 @@ Sci-DCAI (Scientific Data-Centric AI) Platform is a comprehensive AI community h
 
 ```
 .
-├── src/                          # Frontend source code
+├── frontend/                     # Frontend source code
 │   ├── assets/                   # Static assets (CSS, images)
 │   ├── components/               # Vue components
 │   │   ├── apps/                 # App-related components
