@@ -14,7 +14,7 @@
     "expandSidebar": "展開側邊欄"
   },
   "app": {
-    "title": "Sci-DCAI",
+    "title": "DCAI",
     "subtitle": "數據為中心的 AI 平台"
   },
   "header": {
@@ -31,7 +31,7 @@
     "title": "訪問令牌",
     "userAccessTokens": "用戶訪問令牌",
     "createNewToken": "創建新令牌",
-    "description": "訪問令牌向 Sci-DCAI 平台驗證您的身份，並允許應用程序基於令牌權限執行操作。",
+    "description": "訪問令牌向 DCAI 平台驗證您的身份，並允許應用程序基於令牌權限執行操作。",
     "warning": "請勿與任何人分享您的訪問令牌；我們會定期檢查洩露的訪問令牌並立即刪除。",
     "name": "名稱",
     "value": "值",

@@ -14,7 +14,7 @@
     "expandSidebar": "Expand Sidebar"
   },
   "app": {
-    "title": "Sci-DCAI",
+    "title": "DCAI",
     "subtitle": "Data-Centric AI Platform"
   },
   "header": {
@@ -31,7 +31,7 @@
     "title": "Access Tokens",
     "userAccessTokens": "User Access Tokens",
     "createNewToken": "Create new token",
-    "description": "Access tokens authenticate your identity to the Sci-DCAI Platform and allow applications to perform actions based on token permissions.",
+    "description": "Access tokens authenticate your identity to the DCAI Platform and allow applications to perform actions based on token permissions.",
     "warning": "Do not share your Access Tokens with anyone; we regularly check for leaked Access Tokens and remove them immediately.",
     "name": "Name",
     "value": "Value",

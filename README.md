@@ -1,10 +1,10 @@
-# Sci-DCAI Platform
+# DCAI Platform
 
 A Hugging Face-style AI community platform built with Vue 3 + Vite (Frontend) and Django + FastAPI (Backend). Browse models, datasets, and apps with search, filtering, sorting, and pagination.
 
 ## Table of Contents
 
-- [Sci-DCAI Platform](#sci-dcai-platform)
+- [DCAI Platform](#dcai-platform)
   - [Table of Contents](#table-of-contents)
   - [Project Overview](#project-overview)
   - [Tech Stack](#tech-stack)
@@ -23,7 +23,7 @@ A Hugging Face-style AI community platform built with Vue 3 + Vite (Frontend) an
 
 ## Project Overview
 
-Sci-DCAI (Scientific Data-Centric AI) Platform is a comprehensive AI community hub that provides:
+DCAI (Data-Centric AI) Platform is a comprehensive AI community hub that provides:
 
 - **Models**: Browse and discover AI models for various tasks
 - **Datasets**: Access and share datasets for training and evaluation
