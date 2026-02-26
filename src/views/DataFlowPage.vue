@@ -38,9 +38,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { dataflowPackages } from '@/data/dataflow.js'
+import { dataflowApi } from '@/services/api.js'
 import { usePagination } from '@/composables/usePagination.js'
 import SearchBar from '@/components/common/SearchBar.vue'
 import SortDropdown from '@/components/common/SortDropdown.vue'
@@ -51,6 +51,19 @@ const { t } = useI18n()
 const searchQuery = ref('')
 const sortBy = ref('downloads')
 const activeCategory = ref('all')
+const dataflowPackages = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    dataflowPackages.value = await dataflowApi.getPackages()
+  } catch (error) {
+    console.error('Failed to load packages:', error)
+  } finally {
+    loading.value = false
+  }
+})
 
 const translatedCategories = computed(() => [
   { value: 'all', label: t('packages.categories.all') },
@@ -70,7 +83,7 @@ function selectCategory(cat) {
 }
 
 const filtered = computed(() => {
-  let result = [...dataflowPackages]
+  let result = [...dataflowPackages.value]
 
   if (activeCategory.value !== 'all') {
     result = result.filter(p => p.category === activeCategory.value)

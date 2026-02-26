@@ -54,9 +54,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { datasets } from '@/data/datasets.js'
+import { datasetApi } from '@/services/api.js'
 import { sortOptions } from '@/data/filters.js'
 import { useSearch } from '@/composables/useSearch.js'
 import { usePagination } from '@/composables/usePagination.js'
@@ -68,6 +68,19 @@ import DatasetFilters from '@/components/datasets/DatasetFilters.vue'
 
 const { t } = useI18n()
 const showMobileFilters = ref(false)
+const datasets = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    datasets.value = await datasetApi.getDatasets()
+  } catch (error) {
+    console.error('Failed to load datasets:', error)
+  } finally {
+    loading.value = false
+  }
+})
 
 const { searchQuery, filters, sortBy, filtered, clearFilters, activeFilterCount } = useSearch(datasets)
 const { currentPage, totalPages, paginatedItems, totalItems } = usePagination(filtered, 12)

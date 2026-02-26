@@ -42,9 +42,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { tasks } from '@/data/tasks.js'
+import { taskApi } from '@/services/api.js'
 import SearchBar from '@/components/common/SearchBar.vue'
 import SortDropdown from '@/components/common/SortDropdown.vue'
 import TaskCard from '@/components/dataflow/TaskCard.vue'
@@ -53,6 +53,20 @@ const { t } = useI18n()
 const searchQuery = ref('')
 const activeStatus = ref('all')
 const sortBy = ref('recent')
+const tasks = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const response = await taskApi.getTasks()
+    tasks.value = response.list || []
+  } catch (error) {
+    console.error('Failed to load tasks:', error)
+  } finally {
+    loading.value = false
+  }
+})
 
 const translatedStatusFilters = computed(() => [
   { value: 'all', label: t('tasks.status.all') },
@@ -68,11 +82,11 @@ const translatedSortOptions = computed(() => [
 ])
 
 function statusCount(status) {
-  return tasks.filter(t => t.status === status).length
+  return tasks.value.filter(t => t.status === status).length
 }
 
 const filteredTasks = computed(() => {
-  let result = [...tasks]
+  let result = [...tasks.value]
 
   if (activeStatus.value !== 'all') {
     result = result.filter(t => t.status === activeStatus.value)

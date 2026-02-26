@@ -42,6 +42,9 @@ urlpatterns = [
     # API v2 endpoints
     path('api/v2/', include('dataset.urls_v2')),
     path('api/v2/', include('task.urls_v2')),
+    path('api/v2/dataflow/', include('dataflow.urls')),
+    path('api/v2/', include('knowledgebase.urls')),
+    path('api/v2/', include('spaces.urls')),
     
     # API admin endpoints
     path('api/admin/', include('customadmin.urls')),

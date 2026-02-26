@@ -91,9 +91,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { knowledgeBases, kbStatusMap, kbTypeMap } from '@/data/knowledgeBase.js'
+import { knowledgeBaseApi } from '@/services/api.js'
+import { kbStatusMap, kbTypeMap } from '@/data/knowledgeBase.js'
 import { usePagination } from '@/composables/usePagination.js'
 import SearchBar from '@/components/common/SearchBar.vue'
 import SortDropdown from '@/components/common/SortDropdown.vue'
@@ -105,6 +106,19 @@ const { t } = useI18n()
 const showCreateModal = ref(false)
 const showGraphModal = ref(false)
 const selectedKb = ref(null)
+const knowledgeBases = ref([])
+const loading = ref(false)
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    knowledgeBases.value = await knowledgeBaseApi.getKnowledgeBases()
+  } catch (error) {
+    console.error('Failed to load knowledge bases:', error)
+  } finally {
+    loading.value = false
+  }
+})
 
 // Search and sort
 const searchQuery = ref('')
@@ -118,7 +132,7 @@ const sortOptions = computed(() => [
 
 // Filter logic
 const filtered = computed(() => {
-  let result = [...knowledgeBases]
+  let result = [...knowledgeBases.value]
 
   // Search
   if (searchQuery.value.trim()) {
