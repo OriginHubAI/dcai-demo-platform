@@ -17,6 +17,7 @@ const routes = [
   { path: '/spaces/:id(.*)', redirect: '/apps/:id' },
   { path: '/access-tokens', name: 'access-tokens', component: () => import('../views/AccessTokensPage.vue') },
   { path: '/knowledge-base', name: 'knowledge-base', component: () => import('../views/KnowledgeBasePage.vue') },
+  { path: '/mcp', name: 'mcp', component: () => import('../views/MCPPage.vue') },
 ]
 
 const router = createRouter({

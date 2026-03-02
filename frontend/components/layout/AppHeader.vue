@@ -143,6 +143,10 @@
                 <KeyIcon class="w-4 h-4 text-slate-400" />
                 {{ t('header.accessTokens') }}
               </router-link>
+              <router-link to="/mcp" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-dc-primary transition-colors">
+                <SparklesIcon class="w-4 h-4 text-slate-400" />
+                MCP
+              </router-link>
             </div>
             <div class="border-t border-slate-100 mt-1 pt-1">
               <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
@@ -231,6 +235,10 @@ const CoinIcon = () => h('svg', { class: 'w-5 h-5', fill: 'none', stroke: 'curre
 
 const CrownIcon = () => h('svg', { class: 'w-5 h-5', fill: 'currentColor', viewBox: '0 0 24 24' }, [
   h('path', { d: 'M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm2-2h10v2H7v-2z' })
+])
+
+const SparklesIcon = () => h('svg', { class: 'w-4 h-4', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+  h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z' })
 ])
 
 // Page title based on route
