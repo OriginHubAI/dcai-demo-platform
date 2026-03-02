@@ -1,6 +1,6 @@
 # MCP (Model Context Protocol) 集成指南
 
-本文档描述如何将 MCP 服务集成到 HF-Frontend 项目中，以便 AI 助手能够访问 Dataset 和 Knowledge Base 数据。
+本文档描述如何将 MCP 服务集成到 DCAI-Platform 项目中，以便 AI 助手能够访问 Dataset 和 Knowledge Base 数据。
 
 ## 什么是 MCP?
 
@@ -188,7 +188,7 @@ curl http://localhost:8001/api/v2/mcp/knowledgebase/kb-medical-research
 ```json
 {
   "mcpServers": {
-    "hf-frontend": {
+    "dcai-platform": {
       "command": "python",
       "args": ["/path/to/mcp-server/server.py", "--transport", "stdio"],
       "env": {
@@ -210,7 +210,7 @@ curl http://localhost:8001/api/v2/mcp/knowledgebase/kb-medical-research
 ```json
 {
   "mcpServers": {
-    "hf-frontend": {
+    "dcai-platform": {
       "command": "python",
       "args": ["/path/to/mcp-server/server.py", "--transport", "stdio"],
       "env": {

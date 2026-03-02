@@ -70,7 +70,7 @@ class MCPToolInfo(BaseModel):
 
 class MCPDiscoveryResponse(BaseModel):
     """MCP 发现响应"""
-    server_name: str = Field("hf-frontend-mcp", description="MCP 服务器名称")
+    server_name: str = Field("dcai-platform-mcp", description="MCP 服务器名称")
     version: str = Field("1.0.0", description="MCP 服务器版本")
     tools: List[MCPToolInfo] = Field(..., description="可用工具列表")
     endpoints: Dict[str, str] = Field(..., description="API 端点")
@@ -160,7 +160,7 @@ async def mcp_discovery():
     返回 MCP 服务器信息和可用工具列表
     """
     return MCPDiscoveryResponse(
-        server_name="hf-frontend-mcp",
+        server_name="dcai-platform-mcp",
         version="1.0.0",
         tools=[
             # Dataset Tools

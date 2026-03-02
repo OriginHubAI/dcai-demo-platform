@@ -1,5 +1,5 @@
 """
-MCP Server for HF-Frontend
+MCP Server for DCAI-Platform
 提供 Dataset 和 Knowledge Base 的 Model Context Protocol 接口
 
 运行方式:
@@ -24,7 +24,7 @@ from fastmcp.transports.sse import SSETransport
 from tools import register_dataset_tools, register_knowledgebase_tools
 
 # MCP 服务器配置
-MCP_SERVER_NAME = "hf-frontend-mcp"
+MCP_SERVER_NAME = "dcai-platform-mcp"
 MCP_SERVER_VERSION = "1.0.0"
 
 
@@ -39,7 +39,7 @@ def create_mcp_server() -> FastMCP:
     mcp = FastMCP(
         MCP_SERVER_NAME,
         instructions="""
-        HF-Frontend MCP Server 提供对 Dataset 和 Knowledge Base 的访问能力。
+        DCAI-Platform MCP Server 提供对 Dataset 和 Knowledge Base 的访问能力。
         
         ## Dataset 工具
         - list_datasets: 获取数据集列表，支持分页和筛选
@@ -149,7 +149,7 @@ def run_sse_server(host: str = "0.0.0.0", port: int = 8080):
 def main():
     """主入口函数"""
     parser = argparse.ArgumentParser(
-        description="HF-Frontend MCP Server",
+        description="DCAI-Platform MCP Server",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
