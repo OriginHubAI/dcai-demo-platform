@@ -1,0 +1,1 @@
+../AReaL/docs/architecture.md
