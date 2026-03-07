@@ -1,7 +1,7 @@
 <template>
   <span
-    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-    :class="colorClass"
+    class="inline-flex items-center px-2 py-0.5 rounded-full font-medium whitespace-nowrap"
+    :class="[colorClass, sizeClass]"
   >
     {{ label }}
   </span>
@@ -12,7 +12,8 @@ import { computed } from 'vue'
 
 const props = defineProps({
   label: { type: String, required: true },
-  color: { type: String, default: 'blue' }
+  color: { type: String, default: 'blue' },
+  size: { type: String, default: 'xs' }
 })
 
 const colorMap = {
@@ -29,4 +30,11 @@ const colorMap = {
 }
 
 const colorClass = computed(() => colorMap[props.color] || colorMap.blue)
+
+const sizeMap = {
+  xs: 'text-xs',
+  '2xs': 'text-[10px]'
+}
+
+const sizeClass = computed(() => sizeMap[props.size] || sizeMap.xs)
 </script>

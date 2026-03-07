@@ -22,7 +22,7 @@
             v-if="dataset.readonly"
             label="Read-only" 
             color="red" 
-            size="xs"
+            size="2xs"
           />
         </div>
         <p class="text-xs text-gray-500 line-clamp-2 mt-1">{{ dataset.description }}</p>
