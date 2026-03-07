@@ -171,6 +171,24 @@ SAMPLE_APPS = [
         'tags': ['chemistry', 'cot', 'training-data', 'llm'],
         'license': 'apache-2.0',
     },
+    {
+        'id': 'OpenDCAI/Image-Captioner',
+        'author': 'OpenDCAI',
+        'title': 'Image Captioner',
+        'emoji': '🖼️',
+        'colorFrom': 'violet',
+        'colorTo': 'fuchsia',
+        'description': 'Generate high-quality image captions using Vision-Language Models (VLM). Supports batch processing for dataset annotation and multimodal training data preparation.',
+        'category': 'image-generation',
+        'sdk': 'gradio',
+        'likes': 2650,
+        'status': 'running',
+        'hardware': 'A100',
+        'downloads': 72000,
+        'lastModified': '2025-04-17',
+        'tags': ['image-captioning', 'vlm', 'multimodal', 'dataset-annotation', 'vision-language'],
+        'license': 'apache-2.0',
+    },
 ]
 
 
