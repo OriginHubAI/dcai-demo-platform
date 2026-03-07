@@ -82,6 +82,6 @@ onMounted(async () => {
   }
 })
 
-const { searchQuery, filters, sortBy, filtered, clearFilters, activeFilterCount } = useSearch(datasets)
+const { searchQuery, filters, sortBy, filtered, clearFilters, activeFilterCount } = useSearch(datasets, { defaultSort: 'default' })
 const { currentPage, totalPages, paginatedItems, totalItems } = usePagination(filtered, 12)
 </script>
