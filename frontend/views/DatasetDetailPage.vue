@@ -7,6 +7,21 @@
         <span>/</span>
         <span class="text-gray-900">{{ dataset.id }}</span>
       </div>
+      
+      <!-- Readonly Warning Banner -->
+      <div v-if="dataset.readonly" class="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+        <div class="flex items-center space-x-2">
+          <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <span class="text-amber-800 font-medium">Read-only Derived Dataset</span>
+        </div>
+        <p class="text-sm text-amber-700 mt-1">
+          This is a processed dataset derived from <router-link :to="`/datasets/${dataset.parentDataset}`" class="underline">{{ dataset.parentDataset }}</router-link>. 
+          It cannot be modified directly. To make changes, process the original dataset through a DataFlow-MM pipeline.
+        </p>
+      </div>
+
       <div class="lg:grid lg:grid-cols-3 lg:gap-8">
         <!-- Main content -->
         <div class="lg:col-span-2">
@@ -15,15 +30,152 @@
               {{ dataset.author.charAt(0).toUpperCase() }}
             </div>
             <div>
-              <h1 class="text-xl font-bold text-gray-900">{{ dataset.name }}</h1>
+              <div class="flex items-center space-x-2">
+                <h1 class="text-xl font-bold text-gray-900">{{ dataset.name }}</h1>
+                <TagBadge v-if="dataset.datasetType" :label="dataset.datasetType === 'original' ? 'Original' : 'Derived'" :color="datasetTypeColorMap[dataset.datasetType] || 'gray'" />
+              </div>
               <span class="text-sm text-gray-500">by {{ dataset.author }}</span>
             </div>
           </div>
+          
+          <!-- Dataset Relationships -->
+          <div v-if="dataset.parentDataset || (dataset.derivedDatasets && dataset.derivedDatasets.length)" class="mb-6 p-4 bg-gray-50 rounded-lg">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">Dataset Relationships</h3>
+            <div v-if="dataset.parentDataset" class="text-sm text-gray-600 mb-1">
+              <span class="text-gray-500">Parent Dataset:</span>
+              <router-link :to="`/datasets/${dataset.parentDataset}`" class="text-blue-600 hover:underline ml-1">{{ dataset.parentDataset }}</router-link>
+            </div>
+            <div v-if="dataset.derivedDatasets && dataset.derivedDatasets.length" class="text-sm text-gray-600">
+              <span class="text-gray-500">Derived Datasets:</span>
+              <div class="flex flex-wrap gap-2 mt-1">
+                <router-link 
+                  v-for="derivedId in dataset.derivedDatasets" 
+                  :key="derivedId"
+                  :to="`/datasets/${derivedId}`"
+                  class="text-blue-600 hover:underline text-xs bg-blue-50 px-2 py-1 rounded"
+                >
+                  {{ derivedId }}
+                </router-link>
+              </div>
+            </div>
+          </div>
+
           <div class="flex items-center flex-wrap gap-2 mb-6">
             <TagBadge :label="dataset.task" :color="taskColorMap[dataset.task] || 'gray'" />
             <TagBadge :label="dataset.modality" color="teal" />
             <TagBadge :label="dataset.language" color="indigo" />
           </div>
+
+          <!-- Autonomous Driving Metadata -->
+          <div v-if="dataset.domain === 'autonomous-driving' && dataset.metadata" class="mb-6">
+            <div class="border border-gray-200 rounded-lg bg-white overflow-hidden">
+              <div class="border-b border-gray-200 px-4 py-3 bg-gray-50">
+                <h2 class="font-semibold text-gray-900 flex items-center space-x-2">
+                  <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0121 18.382V7.618a1 1 0 01-.447-.894L15 7m0 13V7m0 0L9.553 4.553A1 1 0 009 4.118v.004" />
+                  </svg>
+                  <span>Spatial & Temporal Metadata</span>
+                </h2>
+              </div>
+              <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Time Range -->
+                <div v-if="dataset.metadata.timeRange" class="space-y-2">
+                  <h4 class="text-sm font-medium text-gray-700 flex items-center space-x-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Time Range</span>
+                  </h4>
+                  <div class="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                    <div>{{ dataset.metadata.timeRange.start }} to {{ dataset.metadata.timeRange.end }}</div>
+                    <div class="text-xs text-gray-500">Timezone: {{ dataset.metadata.timeRange.timezone }}</div>
+                  </div>
+                </div>
+
+                <!-- Spatial Coverage -->
+                <div v-if="dataset.metadata.spatial" class="space-y-2">
+                  <h4 class="text-sm font-medium text-gray-700 flex items-center space-x-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>Spatial Coverage</span>
+                  </h4>
+                  <div class="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                    <div>Regions: {{ dataset.metadata.spatial.regions.join(', ') }}</div>
+                    <div class="text-xs text-gray-500">{{ dataset.metadata.spatial.coverage }}</div>
+                    <div v-if="dataset.metadata.spatial.coordinates" class="text-xs text-gray-400 mt-1">
+                      Lat: {{ dataset.metadata.spatial.coordinates.lat.join(' to ') }}<br>
+                      Lon: {{ dataset.metadata.spatial.coordinates.lon.join(' to ') }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sensors -->
+                <div v-if="dataset.metadata.sensors" class="space-y-2">
+                  <h4 class="text-sm font-medium text-gray-700">Sensors</h4>
+                  <div class="flex flex-wrap gap-1">
+                    <span v-for="sensor in dataset.metadata.sensors" :key="sensor" class="text-xs bg-teal-50 text-teal-700 px-2 py-1 rounded">
+                      {{ sensor }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Conditions -->
+                <div v-if="dataset.metadata.conditions" class="space-y-2">
+                  <h4 class="text-sm font-medium text-gray-700">Conditions</h4>
+                  <div class="flex flex-wrap gap-1">
+                    <span v-for="condition in dataset.metadata.conditions" :key="condition" class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                      {{ condition }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Annotations -->
+                <div v-if="dataset.metadata.annotations" class="space-y-2">
+                  <h4 class="text-sm font-medium text-gray-700">Annotations</h4>
+                  <div class="flex flex-wrap gap-1">
+                    <span v-for="ann in dataset.metadata.annotations" :key="ann" class="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded">
+                      {{ ann }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Processing Pipeline -->
+                <div v-if="dataset.processingPipeline" class="space-y-2">
+                  <h4 class="text-sm font-medium text-gray-700">Processing Pipeline</h4>
+                  <div class="text-sm text-gray-600 font-mono bg-gray-100 px-2 py-1 rounded">
+                    {{ dataset.processingPipeline }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Semantic Index -->
+          <div v-if="dataset.semanticIndex" class="mb-6">
+            <div class="border border-gray-200 rounded-lg bg-white overflow-hidden">
+              <div class="border-b border-gray-200 px-4 py-3 bg-gray-50">
+                <h2 class="font-semibold text-gray-900 flex items-center space-x-2">
+                  <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                  <span>Semantic Search Index</span>
+                </h2>
+              </div>
+              <div class="p-4 space-y-3">
+                <div v-for="(values, key) in dataset.semanticIndex" :key="key" class="space-y-1">
+                  <h4 class="text-sm font-medium text-gray-700 capitalize">{{ key.replace(/-/g, ' ') }}</h4>
+                  <div class="flex flex-wrap gap-1">
+                    <span v-for="value in values" :key="value" class="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded hover:bg-purple-100 cursor-pointer transition-colors">
+                      {{ value }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Dataset Card content -->
           <div class="border border-gray-200 rounded-lg bg-white">
             <div class="border-b border-gray-200 px-4 py-3">
@@ -46,11 +198,36 @@
 dataset = load_dataset("{{ dataset.id }}")
 print(dataset)
 print(dataset["train"][0])</code></pre>
+              
+              <!-- Time/Space/Label/Semantic Search Examples for Autodriving -->
+              <div v-if="dataset.domain === 'autonomous-driving'">
+                <h3>Advanced Search Examples</h3>
+                <div class="space-y-2 text-sm">
+                  <div class="bg-gray-50 p-3 rounded">
+                    <strong>Time-based Search:</strong>
+                    <code class="block mt-1 text-xs">dataset.filter(lambda x: x['timestamp'] >= '2025-01-01' and x['timestamp'] <= '2025-03-15')</code>
+                  </div>
+                  <div class="bg-gray-50 p-3 rounded">
+                    <strong>Spatial Search:</strong>
+                    <code class="block mt-1 text-xs">dataset.filter(lambda x: 1.2 <= x['latitude'] <= 42.4 and 71.1 <= x['longitude'] <= 103.8)</code>
+                  </div>
+                  <div class="bg-gray-50 p-3 rounded">
+                    <strong>Label-based Search:</strong>
+                    <code class="block mt-1 text-xs">dataset.filter(lambda x: 'car' in x['objects'] and x['weather'] == 'clear')</code>
+                  </div>
+                  <div class="bg-gray-50 p-3 rounded">
+                    <strong>Semantic Search:</strong>
+                    <code class="block mt-1 text-xs">dataset.semantic_search("vehicles at intersection during nighttime")</code>
+                  </div>
+                </div>
+              </div>
+              
               <h3>Citation</h3>
               <p class="text-gray-500 italic">Please refer to the original paper for citation information.</p>
             </div>
           </div>
         </div>
+
         <!-- Sidebar -->
         <aside class="mt-6 lg:mt-0">
           <div class="border border-gray-200 rounded-lg bg-white p-4 space-y-4 sticky top-20">
@@ -84,9 +261,17 @@ print(dataset["train"][0])</code></pre>
                 <span class="text-gray-500">Last updated</span>
                 <span class="font-medium text-gray-900">{{ dataset.lastModified }}</span>
               </div>
+              <div v-if="dataset.datasetType" class="flex justify-between">
+                <span class="text-gray-500">Type</span>
+                <span class="font-medium" :class="dataset.datasetType === 'original' ? 'text-green-600' : 'text-blue-600'">{{ dataset.datasetType }}</span>
+              </div>
             </div>
-            <button class="w-full py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">
-              Use this dataset
+            <button 
+              class="w-full py-2 text-white text-sm font-medium rounded-lg transition-colors"
+              :class="dataset.readonly ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-900 hover:bg-gray-800'"
+              :disabled="dataset.readonly"
+            >
+              {{ dataset.readonly ? 'Read-only Dataset' : 'Use this dataset' }}
             </button>
           </div>
         </aside>
@@ -103,7 +288,7 @@ print(dataset["train"][0])</code></pre>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { getDatasetById } from '@/data/datasets.js'
-import { taskColorMap } from '@/data/filters.js'
+import { taskColorMap, domainColorMap, datasetTypeColorMap } from '@/data/filters.js'
 import TagBadge from '@/components/common/TagBadge.vue'
 import StatBadge from '@/components/common/StatBadge.vue'
 

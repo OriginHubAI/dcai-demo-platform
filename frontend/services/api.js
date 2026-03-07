@@ -118,6 +118,27 @@ export const datasetApi = {
     const response = await fetchWithAuth(url)
     return response.data
   },
+  
+  /**
+   * Get dataset relationships (parent and derived datasets)
+   * @param {string} datasetId
+   */
+  async getDatasetRelationships(datasetId) {
+    if (isMockMode()) {
+      const { getDatasetById } = await import('@/data/datasets.js')
+      const dataset = getDatasetById(datasetId)
+      if (!dataset) return null
+      
+      return {
+        parent: dataset.parentDataset ? { id: dataset.parentDataset } : null,
+        derived: dataset.derivedDatasets?.map(id => ({ id })) || []
+      }
+    }
+    
+    const url = getApiUrl(`/datasets/${datasetId}/relationships`)
+    const response = await fetchWithAuth(url)
+    return response.data
+  },
 }
 
 /**

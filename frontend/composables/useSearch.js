@@ -20,9 +20,26 @@ export function useSearch(items, options = {}) {
       })
     }
 
-    // Filters
+    // Standard Filters
     for (const [key, values] of Object.entries(filters.value)) {
       if (values && values.length > 0) {
+        // Handle datasetType filter (maps to datasetType field)
+        if (key === 'datasetType') {
+          result = result.filter(item => values.includes(item.datasetType))
+          continue
+        }
+        
+        // Handle autodriving-specific metadata filters
+        if (['timeRange', 'weather', 'sceneType'].includes(key)) {
+          result = result.filter(item => {
+            if (!item.metadata) return false
+            const itemConditions = item.metadata.conditions || []
+            return values.some(v => itemConditions.includes(v))
+          })
+          continue
+        }
+        
+        // Standard filters
         result = result.filter(item => {
           const itemVal = item[key]
           if (Array.isArray(itemVal)) {
@@ -31,6 +48,40 @@ export function useSearch(items, options = {}) {
           return values.includes(itemVal)
         })
       }
+    }
+    
+    // Semantic Search Query
+    if (filters.value.semanticQuery) {
+      const semanticQ = filters.value.semanticQuery.toLowerCase()
+      result = result.filter(item => {
+        // Search in semantic index
+        if (item.semanticIndex) {
+          const semanticText = JSON.stringify(item.semanticIndex).toLowerCase()
+          if (semanticText.includes(semanticQ)) return true
+        }
+        // Search in description
+        if (item.description?.toLowerCase().includes(semanticQ)) return true
+        // Search in metadata annotations
+        if (item.metadata?.annotations) {
+          const annText = item.metadata.annotations.join(' ').toLowerCase()
+          if (annText.includes(semanticQ)) return true
+        }
+        return false
+      })
+    }
+    
+    // Spatial Search Query
+    if (filters.value.spatialQuery) {
+      const spatialQ = filters.value.spatialQuery.toLowerCase()
+      result = result.filter(item => {
+        if (!item.metadata?.spatial) return false
+        const spatial = item.metadata.spatial
+        // Search in regions
+        if (spatial.regions?.some(r => r.toLowerCase().includes(spatialQ))) return true
+        // Search in coverage description
+        if (spatial.coverage?.toLowerCase().includes(spatialQ)) return true
+        return false
+      })
     }
 
     // Sort - only if not default sort
@@ -55,7 +106,17 @@ export function useSearch(items, options = {}) {
   }
 
   const activeFilterCount = computed(() => {
-    return Object.values(filters.value).reduce((sum, arr) => sum + (arr ? arr.length : 0), 0)
+    let count = 0
+    for (const [key, values] of Object.entries(filters.value)) {
+      if (values) {
+        if (Array.isArray(values)) {
+          count += values.length
+        } else if (typeof values === 'string' && values.trim()) {
+          count += 1
+        }
+      }
+    }
+    return count
   })
 
   return { searchQuery, filters, sortBy, filtered, clearFilters, activeFilterCount }

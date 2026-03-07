@@ -685,6 +685,322 @@ export const datasets = [
     license: 'apache-2.0',
     description: 'Multi-modal sensor data from robotic platforms including LiDAR point clouds, IMU readings, force-torque measurements, and joint encoder states.'
   },
+  // Autonomous Driving Datasets - Original
+  {
+    id: 'autodrive-raw-nuscenes',
+    author: 'motional-labs',
+    name: 'AutoDrive Raw - nuScenes',
+    task: 'object-detection',
+    domain: 'autonomous-driving',
+    downloads: 2100000,
+    likes: 4200,
+    lastModified: '2025-03-15',
+    rows: 1400000,
+    size: '680GB',
+    modality: 'multimodal',
+    language: 'en',
+    license: 'cc-by-nc-sa-4.0',
+    description: 'Original raw autonomous driving dataset from nuScenes. Contains 1000 scenes of multimodal sensor data including 6 cameras, 1 LiDAR, 5 radar, GPS and IMU. Supports 3D object detection, tracking, and trajectory prediction tasks.',
+    datasetType: 'original',
+    derivedDatasets: ['autodrive-derived-nuscenes-filtered', 'autodrive-derived-nuscenes-labeled'],
+    metadata: {
+      timeRange: { start: '2025-01-01', end: '2025-03-15', timezone: 'UTC' },
+      spatial: {
+        regions: ['boston', 'singapore'],
+        coverage: 'urban and suburban areas',
+        coordinates: { lat: [1.2, 42.4], lon: [103.8, 71.1] }
+      },
+      sensors: ['camera', 'lidar', 'radar', 'gps', 'imu'],
+      conditions: ['day', 'night', 'rain', 'clear'],
+      annotations: ['raw', 'unannotated']
+    }
+  },
+  {
+    id: 'autodrive-raw-kitti-360',
+    author: 'kit-vision',
+    name: 'AutoDrive Raw - KITTI-360',
+    task: 'object-detection',
+    domain: 'autonomous-driving',
+    downloads: 1850000,
+    likes: 3800,
+    lastModified: '2025-02-28',
+    rows: 980000,
+    size: '520GB',
+    modality: 'multimodal',
+    language: 'en',
+    license: 'cc-by-nc-sa-3.0',
+    description: 'Original raw 360-degree autonomous driving dataset extending KITTI. Contains rich sensory data with 2 fisheye cameras, 2 perspective cameras, and 1 Velodyne LiDAR. Supports 360-degree perception and dense annotation tasks.',
+    datasetType: 'original',
+    derivedDatasets: ['autodrive-derived-kitti360-processed', 'autodrive-derived-kitti360-semantic'],
+    metadata: {
+      timeRange: { start: '2024-06-01', end: '2024-12-31', timezone: 'CET' },
+      spatial: {
+        regions: ['karlsruhe', 'germany'],
+        coverage: 'urban, highway, and rural roads',
+        coordinates: { lat: [49.0, 49.02], lon: [8.4, 8.42] }
+      },
+      sensors: ['camera', 'lidar', 'gps', 'imu'],
+      conditions: ['day', 'clear', 'overcast'],
+      annotations: ['raw', 'unannotated']
+    }
+  },
+  {
+    id: 'autodrive-raw-waymo-open',
+    author: 'waymo-research',
+    name: 'AutoDrive Raw - Waymo Open',
+    task: 'object-detection',
+    domain: 'autonomous-driving',
+    downloads: 3200000,
+    likes: 5800,
+    lastModified: '2025-03-20',
+    rows: 2300000,
+    size: '1.2TB',
+    modality: 'multimodal',
+    language: 'en',
+    license: 'cc-by-nc-4.0',
+    description: 'Original raw autonomous driving dataset from Waymo. High-resolution sensor data with 5 LiDARs and 5 cameras covering 360 degrees. Includes diverse geographic locations and weather conditions for robust perception research.',
+    datasetType: 'original',
+    derivedDatasets: ['autodrive-derived-waymo-motion', 'autodrive-derived-waymo-perception'],
+    metadata: {
+      timeRange: { start: '2024-01-01', end: '2025-03-20', timezone: 'America/Los_Angeles' },
+      spatial: {
+        regions: ['phoenix', 'san-francisco', 'mountain-view', 'los-angeles'],
+        coverage: 'urban, suburban, highway',
+        coordinates: { lat: [33.4, 37.8], lon: [112.0, 122.4] }
+      },
+      sensors: ['camera', 'lidar', 'radar'],
+      conditions: ['day', 'night', 'dawn', 'dusk', 'rain', 'clear', 'overcast'],
+      annotations: ['raw', 'unannotated']
+    }
+  },
+  // Autonomous Driving Datasets - Derived (Read-only)
+  {
+    id: 'autodrive-derived-nuscenes-filtered',
+    author: 'autodrive-ai',
+    name: 'AutoDrive Derived - nuScenes Filtered',
+    task: 'object-detection',
+    domain: 'autonomous-driving',
+    downloads: 890000,
+    likes: 2100,
+    lastModified: '2025-03-18',
+    rows: 850000,
+    size: '280GB',
+    modality: 'multimodal',
+    language: 'en',
+    license: 'cc-by-nc-sa-4.0',
+    description: 'Filtered and quality-enhanced version of nuScenes. High-quality scenes selected using DataFlow-MM pipeline with aesthetic filtering, deduplication, and quality scoring. Ready for training with clean annotations.',
+    datasetType: 'derived',
+    parentDataset: 'autodrive-raw-nuscenes',
+    readonly: true,
+    processingPipeline: 'nuscenes_quality_filter_pipeline',
+    metadata: {
+      timeRange: { start: '2025-01-01', end: '2025-03-15', timezone: 'UTC' },
+      spatial: {
+        regions: ['boston', 'singapore'],
+        coverage: 'filtered urban scenes',
+        coordinates: { lat: [1.2, 42.4], lon: [103.8, 71.1] }
+      },
+      sensors: ['camera', 'lidar', 'radar'],
+      conditions: ['day', 'night', 'clear', 'light-rain'],
+      annotations: ['3d-bbox', 'tracking-id', 'velocity'],
+      filterCriteria: {
+        minQualityScore: 0.85,
+        deduplication: true,
+        blurRemoval: true
+      }
+    },
+    semanticIndex: {
+      objects: ['car', 'truck', 'bus', 'pedestrian', 'cyclist', 'motorcycle', 'traffic-cone', 'barrier'],
+      scenes: ['intersection', 'highway-merge', 'parking-lot', 'residential', 'commercial'],
+      actions: ['moving', 'stopped', 'turning', 'parked']
+    }
+  },
+  {
+    id: 'autodrive-derived-nuscenes-labeled',
+    author: 'autodrive-ai',
+    name: 'AutoDrive Derived - nuScenes Labeled',
+    task: 'image-segmentation',
+    domain: 'autonomous-driving',
+    downloads: 760000,
+    likes: 1850,
+    lastModified: '2025-03-16',
+    rows: 620000,
+    size: '340GB',
+    modality: 'multimodal',
+    language: 'en',
+    license: 'cc-by-nc-sa-4.0',
+    description: 'VLM-enhanced labeled version of nuScenes with semantic segmentation masks and natural language descriptions. Generated using Qwen2.5-VL for detailed scene understanding and caption generation.',
+    datasetType: 'derived',
+    parentDataset: 'autodrive-raw-nuscenes',
+    readonly: true,
+    processingPipeline: 'nuscenes_vlm_labeling_pipeline',
+    metadata: {
+      timeRange: { start: '2025-01-01', end: '2025-03-15', timezone: 'UTC' },
+      spatial: {
+        regions: ['boston', 'singapore'],
+        coverage: 'urban annotated scenes',
+        coordinates: { lat: [1.2, 42.4], lon: [103.8, 71.1] }
+      },
+      sensors: ['camera', 'lidar'],
+      conditions: ['day', 'clear', 'overcast'],
+      annotations: ['semantic-seg', 'instance-seg', 'caption', 'qa-pairs'],
+      vlmModel: 'Qwen2.5-VL-3B-Instruct'
+    },
+    semanticIndex: {
+      objects: ['vehicle', 'person', 'road', 'sidewalk', 'building', 'vegetation', 'traffic-sign', 'traffic-light'],
+      attributes: ['color', 'size', 'orientation', 'occlusion-level'],
+      relationships: ['in-front-of', 'behind', 'next-to', 'on-road', 'crossing']
+    }
+  },
+  {
+    id: 'autodrive-derived-kitti360-processed',
+    author: 'autodrive-ai',
+    name: 'AutoDrive Derived - KITTI-360 Processed',
+    task: 'object-detection',
+    domain: 'autonomous-driving',
+    downloads: 650000,
+    likes: 1580,
+    lastModified: '2025-03-10',
+    rows: 720000,
+    size: '210GB',
+    modality: 'multimodal',
+    language: 'en',
+    license: 'cc-by-nc-sa-3.0',
+    description: 'Processed KITTI-360 with enhanced annotations and 360-degree consistency checks. Includes refined 3D bounding boxes and improved temporal tracking across all camera views.',
+    datasetType: 'derived',
+    parentDataset: 'autodrive-raw-kitti-360',
+    readonly: true,
+    processingPipeline: 'kitti360_enhancement_pipeline',
+    metadata: {
+      timeRange: { start: '2024-06-01', end: '2024-12-31', timezone: 'CET' },
+      spatial: {
+        regions: ['karlsruhe'],
+        coverage: 'processed urban scenes',
+        coordinates: { lat: [49.0, 49.02], lon: [8.4, 8.42] }
+      },
+      sensors: ['camera', 'lidar'],
+      conditions: ['day', 'clear'],
+      annotations: ['3d-bbox', 'tracking-id', '360-aligned']
+    },
+    semanticIndex: {
+      objects: ['car', 'van', 'truck', 'pedestrian', 'cyclist', 'tram'],
+      scenes: ['city-street', 'highway', 'country-road'],
+      temporal: ['static', 'moving', 'parked']
+    }
+  },
+  {
+    id: 'autodrive-derived-kitti360-semantic',
+    author: 'autodrive-ai',
+    name: 'AutoDrive Derived - KITTI-360 Semantic',
+    task: 'image-segmentation',
+    domain: 'autonomous-driving',
+    downloads: 540000,
+    likes: 1320,
+    lastModified: '2025-03-08',
+    rows: 680000,
+    size: '185GB',
+    modality: 'multimodal',
+    language: 'en',
+    license: 'cc-by-nc-sa-3.0',
+    description: 'Dense semantic segmentation dataset derived from KITTI-360. Pixel-level annotations for 64 semantic classes using automated labeling with human-in-the-loop validation.',
+    datasetType: 'derived',
+    parentDataset: 'autodrive-raw-kitti-360',
+    readonly: true,
+    processingPipeline: 'kitti360_semantic_pipeline',
+    metadata: {
+      timeRange: { start: '2024-06-01', end: '2024-12-31', timezone: 'CET' },
+      spatial: {
+        regions: ['karlsruhe'],
+        coverage: 'semantically annotated areas',
+        coordinates: { lat: [49.0, 49.02], lon: [8.4, 8.42] }
+      },
+      sensors: ['camera'],
+      conditions: ['day', 'clear'],
+      annotations: ['semantic-seg', 'panoptic-seg'],
+      classes: 64
+    },
+    semanticIndex: {
+      stuff: ['road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic-light', 'traffic-sign', 'vegetation', 'terrain', 'sky'],
+      things: ['person', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle', 'caravan', 'trailer'],
+      parts: ['license-plate', 'wheel', 'headlight', 'door']
+    }
+  },
+  {
+    id: 'autodrive-derived-waymo-motion',
+    author: 'autodrive-ai',
+    name: 'AutoDrive Derived - Waymo Motion',
+    task: 'feature-extraction',
+    domain: 'autonomous-driving',
+    downloads: 1200000,
+    likes: 2850,
+    lastModified: '2025-03-22',
+    rows: 1450000,
+    size: '480GB',
+    modality: 'multimodal',
+    language: 'en',
+    license: 'cc-by-nc-4.0',
+    description: 'Motion prediction dataset derived from Waymo Open. 9-second trajectory futures for all agents with map information. Optimized for motion forecasting and behavior prediction models.',
+    datasetType: 'derived',
+    parentDataset: 'autodrive-raw-waymo-open',
+    readonly: true,
+    processingPipeline: 'waymo_motion_forecasting_pipeline',
+    metadata: {
+      timeRange: { start: '2024-01-01', end: '2025-03-20', timezone: 'America/Los_Angeles' },
+      spatial: {
+        regions: ['phoenix', 'san-francisco', 'mountain-view', 'los-angeles'],
+        coverage: 'motion-rich scenarios',
+        coordinates: { lat: [33.4, 37.8], lon: [112.0, 122.4] }
+      },
+      sensors: ['lidar', 'camera'],
+      conditions: ['all-conditions'],
+      annotations: ['trajectory', 'intent', 'interaction-graph'],
+      predictionHorizon: '9s'
+    },
+    semanticIndex: {
+      agentTypes: ['vehicle', 'pedestrian', 'cyclist'],
+      behaviors: ['stationary', 'straight', 'turn-left', 'turn-right', 'u-turn', 'lane-change'],
+      scenarios: ['intersection', 'merging', 'roundabout', 'parking-lot', 'highway'],
+      interactions: ['leader-follower', 'merging', 'crossing', 'yielding']
+    }
+  },
+  {
+    id: 'autodrive-derived-waymo-perception',
+    author: 'autodrive-ai',
+    name: 'AutoDrive Derived - Waymo Perception',
+    task: 'object-detection',
+    domain: 'autonomous-driving',
+    downloads: 980000,
+    likes: 2400,
+    lastModified: '2025-03-21',
+    rows: 1680000,
+    size: '620GB',
+    modality: 'multimodal',
+    language: 'en',
+    license: 'cc-by-nc-4.0',
+    description: 'High-quality perception dataset derived from Waymo Open. Multi-frame temporal consistency and camera-LiDAR fusion annotations. Optimized for 3D detection and tracking tasks.',
+    datasetType: 'derived',
+    parentDataset: 'autodrive-raw-waymo-open',
+    readonly: true,
+    processingPipeline: 'waymo_perception_enhancement_pipeline',
+    metadata: {
+      timeRange: { start: '2024-01-01', end: '2025-03-20', timezone: 'America/Los_Angeles' },
+      spatial: {
+        regions: ['phoenix', 'san-francisco', 'mountain-view', 'los-angeles'],
+        coverage: 'diverse perception scenarios',
+        coordinates: { lat: [33.4, 37.8], lon: [112.0, 122.4] }
+      },
+      sensors: ['camera', 'lidar'],
+      conditions: ['day', 'night', 'rain', 'clear', 'overcast'],
+      annotations: ['3d-bbox', 'tracking-id', 'velocity', 'acceleration'],
+      temporalWindow: '5-frames'
+    },
+    semanticIndex: {
+      objects: ['vehicle', 'pedestrian', 'cyclist', 'sign', 'traffic-light'],
+      difficulty: ['easy', 'medium', 'hard'],
+      occlusion: ['none', 'partial', 'heavy'],
+      distance: ['0-30m', '30-50m', '50m+']
+    }
+  },
 ]
 
 export function getDatasetById(id) {

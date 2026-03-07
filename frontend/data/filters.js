@@ -12,6 +12,7 @@ export const domainFilters = [
   { value: 'education', label: 'Education', count: 56 },
   { value: 'energy', label: 'Energy', count: 24 },
   { value: 'engineering', label: 'Engineering', count: 47 },
+  { value: 'autonomous-driving', label: 'Autonomous Driving', count: 12 },
 ]
 
 export const taskFilters = [
@@ -123,4 +124,51 @@ export const domainColorMap = {
   'education': 'yellow',
   'energy': 'orange',
   'engineering': 'teal',
+  'autonomous-driving': 'cyan',
+}
+
+// Dataset type filters
+export const datasetTypeFilters = [
+  { value: 'original', label: 'Original', count: 85 },
+  { value: 'derived', label: 'Derived (Read-only)', count: 42 },
+]
+
+// Autodriving specific filters
+export const timeRangeFilters = [
+  { value: 'day', label: 'Daytime', count: 5200000 },
+  { value: 'night', label: 'Nighttime', count: 1800000 },
+  { value: 'dawn-dusk', label: 'Dawn/Dusk', count: 950000 },
+  { value: 'all', label: 'All Conditions', count: 7950000 },
+]
+
+export const weatherFilters = [
+  { value: 'clear', label: 'Clear', count: 4200000 },
+  { value: 'rainy', label: 'Rainy', count: 1200000 },
+  { value: 'snowy', label: 'Snowy', count: 580000 },
+  { value: 'foggy', label: 'Foggy', count: 420000 },
+  { value: 'overcast', label: 'Overcast', count: 1550000 },
+]
+
+export const sceneTypeFilters = [
+  { value: 'highway', label: 'Highway', count: 2800000 },
+  { value: 'urban', label: 'Urban', count: 3200000 },
+  { value: 'suburban', label: 'Suburban', count: 1200000 },
+  { value: 'rural', label: 'Rural', count: 750000 },
+  { value: 'tunnel', label: 'Tunnel', count: 180000 },
+  { value: 'parking', label: 'Parking', count: 420000 },
+]
+
+export const annotationTypeFilters = [
+  { value: '3d-bbox', label: '3D Bounding Boxes', count: 5200000 },
+  { value: '2d-bbox', label: '2D Bounding Boxes', count: 6800000 },
+  { value: 'segmentation', label: 'Instance Segmentation', count: 3200000 },
+  { value: 'trajectory', label: 'Trajectory', count: 1800000 },
+  { value: 'lane', label: 'Lane Marking', count: 4200000 },
+  { value: 'depth', label: 'Depth Map', count: 2100000 },
+]
+
+// Color maps for new filters
+export const datasetTypeColorMap = {
+  'original': 'green',
+  'derived': 'blue',
 }

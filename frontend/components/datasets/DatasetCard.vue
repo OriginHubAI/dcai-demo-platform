@@ -10,6 +10,20 @@
             {{ dataset.author.charAt(0).toUpperCase() }}
           </div>
           <span class="text-sm font-semibold text-gray-900 truncate">{{ dataset.id }}</span>
+          <!-- Dataset Type Badge -->
+          <TagBadge 
+            v-if="dataset.datasetType"
+            :label="dataset.datasetType === 'original' ? 'Original' : 'Derived'" 
+            :color="datasetTypeColorMap[dataset.datasetType] || 'gray'" 
+            size="xs"
+          />
+          <!-- Readonly Badge -->
+          <TagBadge 
+            v-if="dataset.readonly"
+            label="Read-only" 
+            color="red" 
+            size="xs"
+          />
         </div>
         <p class="text-xs text-gray-500 line-clamp-2 mt-1">{{ dataset.description }}</p>
       </div>
@@ -19,6 +33,15 @@
       <TagBadge :label="dataset.modality" color="teal" />
       <TagBadge :label="dataset.task" :color="taskColorMap[dataset.task] || 'gray'" />
       <span class="text-xs text-gray-400">{{ dataset.size }}</span>
+    </div>
+    <!-- Metadata Preview for Autonomous Driving -->
+    <div v-if="dataset.domain === 'autonomous-driving' && dataset.metadata" class="flex items-center flex-wrap gap-1 mt-2">
+      <span v-if="dataset.metadata.sensors" class="text-xs text-gray-500">
+        {{ dataset.metadata.sensors.join(', ') }}
+      </span>
+      <span v-if="dataset.metadata.conditions" class="text-xs text-gray-400">
+        • {{ dataset.metadata.conditions.slice(0, 3).join(', ') }}
+      </span>
     </div>
     <div class="flex items-center space-x-4 mt-2">
       <StatBadge icon="download" :value="dataset.downloads" />
@@ -31,7 +54,7 @@
 <script setup>
 import TagBadge from '@/components/common/TagBadge.vue'
 import StatBadge from '@/components/common/StatBadge.vue'
-import { taskColorMap, domainColorMap } from '@/data/filters.js'
+import { taskColorMap, domainColorMap, datasetTypeColorMap } from '@/data/filters.js'
 
 defineProps({
   dataset: { type: Object, required: true }

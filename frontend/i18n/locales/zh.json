@@ -85,7 +85,30 @@
     "count": "{count} 个数据集",
     "searchPlaceholder": "筛选数据集...",
     "noResults": "未找到数据集",
-    "noResultsHint": "尝试调整搜索或筛选条件"
+    "noResultsHint": "尝试调整搜索或筛选条件",
+    "types": {
+      "original": "原始数据集",
+      "derived": "派生数据集",
+      "readonly": "只读"
+    },
+    "filters": {
+      "datasetType": "数据集类型",
+      "timeRange": "时间范围",
+      "weather": "天气",
+      "sceneType": "场景类型",
+      "semanticSearch": "语义搜索",
+      "spatialSearch": "空间搜索"
+    },
+    "autodriving": {
+      "title": "自动驾驶",
+      "timeConditions": "时间条件",
+      "weatherConditions": "天气条件",
+      "sceneTypes": "场景类型",
+      "annotationTypes": "标注类型",
+      "sensors": "传感器",
+      "spatialCoverage": "空间覆盖",
+      "semanticIndex": "语义索引"
+    }
   },
   "apps": {
     "title": "应用",

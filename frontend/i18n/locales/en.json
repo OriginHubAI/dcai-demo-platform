@@ -85,7 +85,30 @@
     "count": "{count} datasets",
     "searchPlaceholder": "Filter datasets...",
     "noResults": "No datasets found",
-    "noResultsHint": "Try adjusting your search or filters"
+    "noResultsHint": "Try adjusting your search or filters",
+    "types": {
+      "original": "Original",
+      "derived": "Derived",
+      "readonly": "Read-only"
+    },
+    "filters": {
+      "datasetType": "Dataset Type",
+      "timeRange": "Time Range",
+      "weather": "Weather",
+      "sceneType": "Scene Type",
+      "semanticSearch": "Semantic Search",
+      "spatialSearch": "Spatial Search"
+    },
+    "autodriving": {
+      "title": "Autonomous Driving",
+      "timeConditions": "Time Conditions",
+      "weatherConditions": "Weather Conditions",
+      "sceneTypes": "Scene Types",
+      "annotationTypes": "Annotation Types",
+      "sensors": "Sensors",
+      "spatialCoverage": "Spatial Coverage",
+      "semanticIndex": "Semantic Index"
+    }
   },
   "apps": {
     "title": "Apps",
