@@ -10,6 +10,24 @@ from rest_framework.response import Response
 # Sample Apps data
 SAMPLE_APPS = [
     {
+        'id': 'OpenDCAI/DocDancer-DataGenerator',
+        'author': 'OpenDCAI',
+        'title': 'DocDancer Data Generator',
+        'emoji': '📚',
+        'colorFrom': 'amber',
+        'colorTo': 'orange',
+        'description': 'Generate high-quality reinforcement learning training data for document understanding agents using multi-modal trajectory synthesis and QA generation.',
+        'category': 'agent-based',
+        'sdk': 'gradio',
+        'likes': 3800,
+        'status': 'running',
+        'hardware': 'A100',
+        'downloads': 98000,
+        'lastModified': '2025-04-16',
+        'tags': ['document-understanding', 'rl-data', 'agent-training', 'multimodal', 'trajectory-synthesis'],
+        'license': 'apache-2.0',
+    },
+    {
         'id': 'OpenDCAI/Open-NotebookLM',
         'author': 'OpenDCAI',
         'title': 'Open-NotebookLM',
