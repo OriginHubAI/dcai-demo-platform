@@ -64,10 +64,10 @@
           <div v-if="dataset.relatedTasks && dataset.relatedTasks.length" class="mb-6 p-4 bg-gray-50 rounded-lg">
             <h3 class="text-sm font-semibold text-gray-700 mb-2">{{ $t('datasets.relatedTasks.title') }}</h3>
             <div class="space-y-2">
-              <router-link 
-                v-for="task in dataset.relatedTasks" 
+              <router-link
+                v-for="task in dataset.relatedTasks"
                 :key="task.id"
-                :to="`/tasks/${task.id}`"
+                :to="`/dataflow/tasks/${task.id}`"
                 class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all group"
               >
                 <div class="flex items-center gap-3">
