@@ -266,7 +266,7 @@
           </div>
 
           <!-- Data Studio Tab Content -->
-          <div v-if="activeTab === 'datastudio'" class="data-studio-container">
+          <div v-if="activeTab === 'datastudio'" class="data-studio-container border border-gray-200 rounded-lg bg-white p-4">
             <DataStudio :dataset-id="dataset.id" />
           </div>
 
