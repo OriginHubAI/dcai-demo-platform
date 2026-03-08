@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="225" viewBox="0 0 400 225" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-motorcycle-cyclist-pedestrian" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A5568;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4A5568;stop-opacity:0.7" />
+    </linearGradient>
+    <filter id="shadow-motorcycle-cyclist-pedestrian" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="225" fill="url(#bg-motorcycle-cyclist-pedestrian)"/>
+  
+  <!-- Road/Scene indicator -->
+  <rect x="0" y="160" width="400" height="65" fill="#1A202C" opacity="0.3"/>
+  <line x1="0" y1="180" x2="400" y2="180" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="20,10" opacity="0.4"/>
+  
+  <!-- Object Icons -->
+  
+      <g transform="translate(60, 60) scale(0.7)" style="color: #F6AD55">
+        <circle cx="40" cy="95" r="12" fill="none" stroke="currentColor" stroke-width="6"/><circle cx="80" cy="95" r="12" fill="none" stroke="currentColor" stroke-width="6"/><path d="M40 95 L55 75 L65 75 L80 95" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><path d="M55 75 L50 55 L70 55" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+      </g>
+    
+      <g transform="translate(180, 60) scale(0.7)" style="color: #68D391">
+        <circle cx="45" cy="90" r="10" fill="none" stroke="currentColor" stroke-width="4"/><circle cx="85" cy="90" r="10" fill="none" stroke="currentColor" stroke-width="4"/><path d="M45 90 L60 70 L75 70 L85 90 M60 70 L55 50 L70 50" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><circle cx="60" cy="45" r="8" fill="currentColor"/>
+      </g>
+    
+      <g transform="translate(300, 60) scale(0.7)" style="color: #68D391">
+        <circle cx="60" cy="45" r="12" fill="currentColor"/><path d="M60 60 L60 100 M60 65 L45 85 M60 65 L75 85 M45 110 L60 100 L75 110" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+      </g>
+    
+  
+  <!-- Scene label background -->
+  <rect x="10" y="10" width="173" height="28" rx="4" fill="#1A202C" opacity="0.7"/>
+  
+  <!-- Object labels -->
+  <text x="20" y="29" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="600" fill="white" letter-spacing="0.5">MOTO • BIKE • PED</text>
+  
+  <!-- Bottom description hint -->
+  <text x="390" y="215" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="white" opacity="0.6" text-anchor="end">AutoDrive Scene</text>
+</svg>

@@ -1038,108 +1038,108 @@ export function getDatasetById(id) {
   return datasets.find(d => d.id === id)
 }
 
-// Thumbnail mapping - local images downloaded from free sources
-// Use scripts/download-thumbnails.sh to regenerate
+// Thumbnail mapping - SVG images generated for autodrive scenarios
+// Use scripts/generate-autodrive-thumbnails.js to regenerate
 const thumbnailMapping = {
   'bus-barrier': {
     objects: ['bus', 'barrier'],
     description: 'Bus stopped at intersection with construction barriers on the roadside. Urban transit scene.',
-    path: '/images/thumbnails/bus-barrier.jpg'
+    path: '/images/thumbnails/bus-barrier.svg'
   },
   'motorcycle-truck': {
     objects: ['motorcycle', 'truck'],
     description: 'Motorcycle passing a large truck on highway. Clear visibility with moderate traffic flow.',
-    path: '/images/thumbnails/motorcycle-truck.jpg'
+    path: '/images/thumbnails/motorcycle-truck.svg'
   },
   'motorcycle-barrier-cone': {
     objects: ['motorcycle', 'barrier', 'traffic-cone'],
     description: 'Motorcycle navigating through road work zone with traffic cones and barriers.',
-    path: '/images/thumbnails/motorcycle-barrier-cone.jpg'
+    path: '/images/thumbnails/motorcycle-barrier-cone.svg'
   },
   'motorcycle-pedestrian': {
     objects: ['motorcycle', 'pedestrian'],
     description: 'Motorcycle waiting at crosswalk with pedestrians crossing. Urban intersection scene.',
-    path: '/images/thumbnails/motorcycle-pedestrian.jpg'
+    path: '/images/thumbnails/motorcycle-pedestrian.svg'
   },
   'pedestrian-cone-cyclist': {
     objects: ['pedestrian', 'traffic-cone', 'cyclist'],
     description: 'Cyclist and pedestrians sharing path near construction cones. Shared urban space.',
-    path: '/images/thumbnails/pedestrian-cone-cyclist.jpg'
+    path: '/images/thumbnails/pedestrian-cone-cyclist.svg'
   },
   'car-motorcycle': {
     objects: ['car', 'motorcycle'],
     description: 'Car and motorcycle side by side at traffic light. Downtown urban traffic scene.',
-    path: '/images/thumbnails/car-motorcycle.jpg'
+    path: '/images/thumbnails/car-motorcycle.svg'
   },
   'cone-bus-motorcycle': {
     objects: ['traffic-cone', 'bus', 'motorcycle'],
     description: 'Bus and motorcycle navigating through temporary traffic cone lane markers.',
-    path: '/images/thumbnails/cone-bus-motorcycle.jpg'
+    path: '/images/thumbnails/cone-bus-motorcycle.svg'
   },
   'car-truck-barrier': {
     objects: ['car', 'truck', 'barrier'],
     description: 'Car following truck on highway with concrete barriers. Heavy vehicle traffic scene.',
-    path: '/images/thumbnails/car-truck-barrier.jpg'
+    path: '/images/thumbnails/car-truck-barrier.svg'
   },
   'pedestrian-car': {
     objects: ['pedestrian', 'car'],
     description: 'Pedestrians crossing street while car waits at crosswalk. Urban intersection.',
-    path: '/images/thumbnails/pedestrian-car.jpg'
+    path: '/images/thumbnails/pedestrian-car.svg'
   },
   'cyclist-car-cone': {
     objects: ['cyclist', 'car', 'traffic-cone'],
     description: 'Cyclist in bike lane with cars passing by. Road work cones marking construction area.',
-    path: '/images/thumbnails/cyclist-car-cone.jpg'
+    path: '/images/thumbnails/cyclist-car-cone.svg'
   },
   'truck-barrier': {
     objects: ['truck', 'barrier'],
     description: 'Large commercial truck navigating through construction barriers. Industrial area.',
-    path: '/images/thumbnails/truck-barrier.jpg'
+    path: '/images/thumbnails/truck-barrier.svg'
   },
   'bus-pedestrian-cyclist': {
     objects: ['bus', 'pedestrian', 'cyclist'],
     description: 'Bus at bus stop with cyclists passing and pedestrians boarding. Transit hub scene.',
-    path: '/images/thumbnails/bus-pedestrian-cyclist.jpg'
+    path: '/images/thumbnails/bus-pedestrian-cyclist.svg'
   },
   'motorcycle-cone': {
     objects: ['motorcycle', 'traffic-cone'],
     description: 'Motorcycle rider weaving through traffic cone marked temporary lanes.',
-    path: '/images/thumbnails/motorcycle-cone.jpg'
+    path: '/images/thumbnails/motorcycle-cone.svg'
   },
   'car-pedestrian-barrier': {
     objects: ['car', 'pedestrian', 'barrier'],
     description: 'Car stopped at barrier-guarded pedestrian zone. Downtown shopping district.',
-    path: '/images/thumbnails/car-pedestrian-barrier.jpg'
+    path: '/images/thumbnails/car-pedestrian-barrier.svg'
   },
   'truck-cyclist': {
     objects: ['truck', 'cyclist'],
     description: 'Cyclist sharing road with delivery truck. Urban delivery route scene.',
-    path: '/images/thumbnails/truck-cyclist.jpg'
+    path: '/images/thumbnails/truck-cyclist.svg'
   },
   'bus-car': {
     objects: ['bus', 'car'],
     description: 'Bus in dedicated lane with cars in adjacent lanes. Public transit corridor.',
-    path: '/images/thumbnails/bus-car.jpg'
+    path: '/images/thumbnails/bus-car.svg'
   },
   'motorcycle-cyclist-pedestrian': {
     objects: ['motorcycle', 'cyclist', 'pedestrian'],
     description: 'Mixed traffic with motorcycle, cyclist, and pedestrians. Shared urban street.',
-    path: '/images/thumbnails/motorcycle-cyclist-pedestrian.jpg'
+    path: '/images/thumbnails/motorcycle-cyclist-pedestrian.svg'
   },
   'cone-barrier-car': {
     objects: ['traffic-cone', 'barrier', 'car'],
     description: 'Cars navigating through construction zone with barriers and cones. Road work area.',
-    path: '/images/thumbnails/cone-barrier-car.jpg'
+    path: '/images/thumbnails/cone-barrier-car.svg'
   },
   'truck-motorcycle-cone': {
     objects: ['truck', 'motorcycle', 'traffic-cone'],
     description: 'Truck and motorcycle on road marked with traffic cones. Lane restriction zone.',
-    path: '/images/thumbnails/truck-motorcycle-cone.jpg'
+    path: '/images/thumbnails/truck-motorcycle-cone.svg'
   },
   'pedestrian-cyclist-barrier': {
     objects: ['pedestrian', 'cyclist', 'barrier'],
     description: 'Pedestrians and cyclists on separated path with barrier protection. Safe corridor.',
-    path: '/images/thumbnails/pedestrian-cyclist-barrier.jpg'
+    path: '/images/thumbnails/pedestrian-cyclist-barrier.svg'
   }
 }
 
