@@ -306,14 +306,8 @@
               
               <!-- Semantic Vector Column -->
               <td class="px-4 py-3">
-                <div class="flex items-center space-x-2">
-                  <div class="flex-1 h-6 flex items-end space-x-px">
-                    <div v-for="(val, i) in row.semantic.vector.slice(0, 20)" :key="i"
-                      class="w-1 bg-gradient-to-t from-orange-400 to-orange-200 rounded-t"
-                      :style="{ height: ((val + 1) / 2 * 100) + '%', opacity: 0.5 + Math.abs(val) * 0.5 }"
-                    ></div>
-                  </div>
-                  <span class="text-xs text-gray-400">{{ row.semantic.vector.length }}d</span>
+                <div class="text-xs font-mono text-gray-600 truncate max-w-[200px]" :title="formatVector(row.semantic.vector)">
+                  {{ formatVector(row.semantic.vector) }}
                 </div>
               </td>
             </tr>
@@ -374,13 +368,8 @@
             </span>
           </div>
           <div class="mt-2 flex items-center justify-between">
-            <div class="flex items-center space-x-1">
-              <div class="h-4 flex items-end space-x-px">
-                <div v-for="(val, i) in row.semantic.vector.slice(0, 10)" :key="i"
-                  class="w-0.5 bg-orange-400 rounded-t"
-                  :style="{ height: ((val + 1) / 2 * 100) + '%' }"
-                ></div>
-              </div>
+            <div class="text-xs font-mono text-gray-500 truncate max-w-[150px]" :title="formatVector(row.semantic.vector)">
+              {{ formatVector(row.semantic.vector) }}
             </div>
             <span class="text-xs text-gray-400 font-mono">{{ row.id.slice(-8) }}</span>
           </div>
@@ -446,12 +435,8 @@
           
           <div class="mt-4">
             <h4 class="text-sm font-medium text-gray-700 mb-2">Semantic Vector (384-dim)</h4>
-            <div class="h-16 flex items-end space-x-px bg-gray-50 rounded-lg p-2">
-              <div v-for="(val, i) in selectedRow.semantic.vector" :key="i"
-                class="flex-1 bg-gradient-to-t from-orange-500 to-orange-200 rounded-t"
-                :style="{ height: ((val + 1) / 2 * 100) + '%', opacity: 0.4 + Math.abs(val) * 0.6 }"
-                :title="`dim-${i}: ${val.toFixed(4)}`"
-              ></div>
+            <div class="bg-gray-50 rounded-lg p-3 overflow-auto">
+              <code class="text-xs font-mono text-gray-700 break-all">{{ formatVector(selectedRow.semantic.vector, 10) }}</code>
             </div>
           </div>
         </div>
@@ -632,6 +617,15 @@ function formatRows(n) {
   if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M'
   if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
   return n.toString()
+}
+
+function formatVector(vector, maxItems = 5) {
+  if (!vector || vector.length === 0) return '[]'
+  const items = vector.slice(0, maxItems).map(v => v.toFixed(2))
+  if (vector.length > maxItems) {
+    return `[${items.join(', ')}, ...]`
+  }
+  return `[${items.join(', ')}]`
 }
 
 function openImageModal(row) {
