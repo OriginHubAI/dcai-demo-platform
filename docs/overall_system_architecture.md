@@ -134,7 +134,7 @@ graph TD
 
 #### 网关层组件
 
-- **Django API Gateway (v1)**:
+- **Django API Gateway**:
   - 作为系统的统一入口网关，负责所有 HTTP/WebSocket/SSE 请求的接入与路由
   - 承担认证与授权职责：JWT Token 验证、User 会话管理、权限校验
   - 实现 **Agent Router** 功能：解析用户对话中的 `@mention` 命令（如 `@DFAgent`、`@loopai`），根据 `AGENT_REGISTRY` 路由表将请求分发至对应的 SubAgent
@@ -142,7 +142,7 @@ graph TD
   - 管理 Operator Workbench 的生命周期：按需分配端口、启停 Code-Server 沙箱环境
   - 提供 Admin 后台管理界面，处理业务逻辑与配置管理
 
-- **FastAPI Services (v2 / Type B Apps)**:
+- **FastAPI Services**:
   - 独立部署的高性能异步服务，通过 Django 代理层接入系统
   - **DataFlow-WebUI (:8002)**: 提供 Pipeline 组装、DAG 控制、任务状态查询等数据流编排能力
   - **LoopAI (:8003)**: 智能微调训练平台，提供 SSE 流式进度播报与交互式对话
@@ -268,13 +268,13 @@ graph TD
 
 ### 4.2 代理子服务网关接口 (Type B App API Middleware)
 
-*部署在 `/api/v2/{service_name}/`，由 Django httpx 中间件转发：*
-- **`/api/v2/dataflow/*` (DataFlow WebUI 代理)**:
+*部署在 `/api/v1/{service_name}/`，由 Django httpx 中间件转发：*
+- **`/api/v1/dataflow/*` (DataFlow WebUI 代理)**:
   - 路由至 `:8002`，暴露 Pipeline 组装 (`/pipelines/create`)、Task 查询 (`/tasks/{id}`)。
   - 底层调用 `dataflow-system` 相关接口，实现高性能、可扩展服务。
-- **`/api/v2/loopai/*` (LoopAI 平台代理)**:
+- **`/api/v1/loopai/*` (LoopAI 平台代理)**:
   - 路由至 `:8003`，透传 `starter/agent/message/stream` SSE 数据进行智能微调训练的互动进度播报。
-- **`/api/v2/dfagent/*`, `/api/v2/paper2any/*`**: 依同样逻辑透传对应独立 Python/Gradio 进程的请求。
+- **`/api/v1/dfagent/*`, `/api/v1/paper2any/*`**: 依同样逻辑透传对应独立 Python/Gradio 进程的请求。
 
 ### 4.3 数据集高性能检索接口 (数据查询 API)
 
