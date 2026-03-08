@@ -11,12 +11,15 @@ from drf_spectacular.views import (
     SpectacularRedocView,
 )
 
+from .views import services_health
+
 urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
     
     # Health check
     path('health/', lambda request: __import__('django.http', fromlist=['HttpResponse']).HttpResponse('OK'), name='health'),
+    path('api/v2/services/health', services_health, name='services-health'),
     
     # API Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
@@ -43,6 +46,8 @@ urlpatterns = [
     path('api/v2/', include('dataset.urls_v2')),
     path('api/v2/', include('task.urls_v2')),
     path('api/v2/dataflow/', include('dataflow.urls')),
+    path('api/v2/loopai/', include('loopai_proxy.urls')),
+    path('api/v2/dfagent/', include('dfagent_proxy.urls')),
     path('api/v2/', include('knowledgebase.urls')),
     path('api/v2/', include('apps.urls')),
     

@@ -6,8 +6,13 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BASE_DIR.parent
+
+load_dotenv(PROJECT_ROOT / '.env')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-change-in-production')
@@ -42,6 +47,7 @@ INSTALLED_APPS = [
     'knowledgebase',
     'document',
     'dataset',
+    'dataflow',
     'task',
     'template',
     'organization',
@@ -53,6 +59,8 @@ INSTALLED_APPS = [
     'llm_chat',
     'train',
     'dataflow',
+    'loopai_proxy',
+    'dfagent_proxy',
 ]
 
 MIDDLEWARE = [
@@ -182,6 +190,27 @@ CACHES = {
         }
     }
 }
+
+# External Agent Services
+DATAFLOW_BACKEND_URL = os.environ.get('DATAFLOW_BACKEND_URL', 'http://localhost:8002')
+LOOPAI_BACKEND_URL = os.environ.get('LOOPAI_BACKEND_URL', 'http://localhost:8003')
+DFAGENT_BACKEND_URL = os.environ.get('DFAGENT_BACKEND_URL', 'http://localhost:7860')
+DATAFLOW_OPERATORS_ROOT = os.environ.get(
+    'DATAFLOW_OPERATORS_ROOT',
+    str(BASE_DIR.parent.parent / 'DataFlow' / 'dataflow' / 'operators'),
+)
+CODE_SERVER_BASE_PORT = int(os.environ.get('CODE_SERVER_BASE_PORT', '18080'))
+PROXY_TIMEOUT = int(os.environ.get('PROXY_TIMEOUT', '120'))
+
+LLM_PROVIDER_BASE_URL = os.environ.get('LLM_PROVIDER_BASE_URL', '')
+LLM_PROVIDER_API_KEY = os.environ.get('LLM_PROVIDER_API_KEY', '')
+LLM_DEFAULT_MODEL = os.environ.get('LLM_DEFAULT_MODEL', 'gpt-4o')
+LLM_AVAILABLE_MODELS = [
+    model.strip()
+    for model in os.environ.get('LLM_AVAILABLE_MODELS', '').split(',')
+    if model.strip()
+]
+LLM_REQUEST_TIMEOUT = int(os.environ.get('LLM_REQUEST_TIMEOUT', '120'))
 
 # Logging
 LOGGING = {
