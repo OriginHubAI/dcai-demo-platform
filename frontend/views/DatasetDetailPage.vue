@@ -42,41 +42,44 @@
         </nav>
       </div>
       
-      <!-- Readonly Warning Banner -->
-      <div v-if="dataset.readonly" class="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-        <div class="flex items-center space-x-2">
-          <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          <span class="text-amber-800 font-medium">Read-only Derived Dataset</span>
-        </div>
-        <p class="text-sm text-amber-700 mt-1">
-          This is a processed dataset derived from <router-link :to="`/datasets/${dataset.parentDataset}`" class="underline">{{ dataset.parentDataset }}</router-link>. 
-          It cannot be modified directly. To make changes, process the original dataset through a DataFlow-MM pipeline.
-        </p>
-      </div>
-
       <div class="lg:grid lg:gap-8" :class="activeTab === 'datastudio' ? 'lg:grid-cols-1' : 'lg:grid-cols-3'">
         <!-- Main content -->
         <div :class="activeTab === 'datastudio' ? 'lg:col-span-1' : 'lg:col-span-2'">
-          <div class="flex items-center space-x-3 mb-4">
-            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-lg font-bold text-green-700">
-              {{ dataset.author.charAt(0).toUpperCase() }}
-            </div>
-            <div>
+          <!-- Dataset Header - only show in Dataset Card tab -->
+          <template v-if="activeTab === 'card'">
+            <!-- Readonly Warning Banner -->
+            <div v-if="dataset.readonly" class="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
               <div class="flex items-center space-x-2">
-                <h1 class="text-xl font-bold text-gray-900">{{ dataset.name }}</h1>
-                <TagBadge v-if="dataset.datasetType" :label="dataset.datasetType === 'original' ? 'Original' : 'Derived'" :color="datasetTypeColorMap[dataset.datasetType] || 'gray'" />
+                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <span class="text-amber-800 font-medium">Read-only Derived Dataset</span>
               </div>
-              <span class="text-sm text-gray-500">by {{ dataset.author }}</span>
+              <p class="text-sm text-amber-700 mt-1">
+                This is a processed dataset derived from <router-link :to="`/datasets/${dataset.parentDataset}`" class="underline">{{ dataset.parentDataset }}</router-link>.
+                It cannot be modified directly. To make changes, process the original dataset through a DataFlow-MM pipeline.
+              </p>
             </div>
-          </div>
 
-          <div class="flex items-center flex-wrap gap-2 mb-6">
-            <TagBadge :label="dataset.task" :color="taskColorMap[dataset.task] || 'gray'" />
-            <TagBadge :label="dataset.modality" color="teal" />
-            <TagBadge :label="dataset.language" color="indigo" />
-          </div>
+            <div class="flex items-center space-x-3 mb-4">
+              <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-lg font-bold text-green-700">
+                {{ dataset.author.charAt(0).toUpperCase() }}
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h1 class="text-xl font-bold text-gray-900">{{ dataset.name }}</h1>
+                  <TagBadge v-if="dataset.datasetType" :label="dataset.datasetType === 'original' ? 'Original' : 'Derived'" :color="datasetTypeColorMap[dataset.datasetType] || 'gray'" />
+                </div>
+                <span class="text-sm text-gray-500">by {{ dataset.author }}</span>
+              </div>
+            </div>
+
+            <div class="flex items-center flex-wrap gap-2 mb-6">
+              <TagBadge :label="dataset.task" :color="taskColorMap[dataset.task] || 'gray'" />
+              <TagBadge :label="dataset.modality" color="teal" />
+              <TagBadge :label="dataset.language" color="indigo" />
+            </div>
+          </template>
 
           <!-- Autonomous Driving Metadata - only show in Dataset Card tab -->
           <div v-if="activeTab === 'card' && dataset.domain === 'autonomous-driving' && dataset.metadata" class="mb-6">
