@@ -65,6 +65,84 @@ export const datasets = [
     license: 'cc-by-4.0',
     description: 'Fluorescence and electron microscopy images of cells with instance segmentation masks for nuclei, organelles, and membrane boundaries.'
   },
+  // autodrive datasets
+  {
+    id: 'autodrive-raw-nuscenes',
+    author: 'motional-labs',
+    name: 'AutoDrive Raw - nuScenes',
+    task: 'object-detection',
+    domain: 'autonomous-driving',
+    downloads: 2100000,
+    likes: 4200,
+    lastModified: '2025-03-15',
+    rows: 1400000,
+    size: '680GB',
+    modality: 'multimodal',
+    language: 'en',
+    license: 'cc-by-nc-sa-4.0',
+    description: 'Original raw autonomous driving dataset from nuScenes. Contains 1000 scenes of multimodal sensor data including 6 cameras, 1 LiDAR, 5 radar, GPS and IMU. Supports 3D object detection, tracking, and trajectory prediction tasks.',
+    datasetType: 'original',
+    derivedDatasets: ['autodrive-derived-nuscenes-filtered', 'autodrive-derived-nuscenes-labeled'],
+    relatedTasks: [
+      { id: 'task-nuscenes-filter', name: 'nuScenes Quality Filtering Pipeline', type: 'Data Processing', status: 'completed', progress: 100, isOutput: true, startedAt: '2025-03-15T08:00:00Z', endedAt: '2025-03-15T14:30:00Z', duration: '6h 30m' },
+      { id: 'task-nuscenes-label', name: 'nuScenes VLM Labeling Pipeline', type: 'Data Processing', status: 'completed', progress: 100, isOutput: true, startedAt: '2025-03-14T10:00:00Z', endedAt: '2025-03-15T02:15:00Z', duration: '16h 15m' }
+    ],
+    metadata: {
+      timeRange: { start: '2025-01-01', end: '2025-03-15', timezone: 'UTC' },
+      spatial: {
+        regions: ['boston', 'singapore'],
+        coverage: 'urban and suburban areas',
+        coordinates: { lat: [1.2, 42.4], lon: [103.8, 71.1] }
+      },
+      sensors: ['camera', 'lidar', 'radar', 'gps', 'imu'],
+      conditions: ['day', 'night', 'rain', 'clear'],
+      annotations: ['raw', 'unannotated']
+    }
+  },  
+  {
+    id: 'autodrive-derived-nuscenes-filtered',
+    author: 'autodrive-ai',
+    name: 'AutoDrive Derived - nuScenes Filtered',
+    task: 'object-detection',
+    domain: 'autonomous-driving',
+    downloads: 890000,
+    likes: 2100,
+    lastModified: '2025-03-18',
+    rows: 850000,
+    size: '280GB',
+    modality: 'multimodal',
+    language: 'en',
+    license: 'cc-by-nc-sa-4.0',
+    description: 'Filtered and quality-enhanced version of nuScenes. High-quality scenes selected using DataFlow-MM pipeline with aesthetic filtering, deduplication, and quality scoring. Ready for training with clean annotations.',
+    datasetType: 'derived',
+    parentDataset: 'autodrive-raw-nuscenes',
+    readonly: true,
+    processingPipeline: 'nuscenes_quality_filter_pipeline',
+    relatedTasks: [
+      { id: 'task-nuscenes-filter', name: 'nuScenes Quality Filtering Pipeline', type: 'Data Processing', status: 'completed', progress: 100, isInput: true, startedAt: '2025-03-15T08:00:00Z', endedAt: '2025-03-15T14:30:00Z', duration: '6h 30m' }
+    ],
+    metadata: {
+      timeRange: { start: '2025-01-01', end: '2025-03-15', timezone: 'UTC' },
+      spatial: {
+        regions: ['boston', 'singapore'],
+        coverage: 'filtered urban scenes',
+        coordinates: { lat: [1.2, 42.4], lon: [103.8, 71.1] }
+      },
+      sensors: ['camera', 'lidar', 'radar'],
+      conditions: ['day', 'night', 'clear', 'light-rain'],
+      annotations: ['3d-bbox', 'tracking-id', 'velocity'],
+      filterCriteria: {
+        minQualityScore: 0.85,
+        deduplication: true,
+        blurRemoval: true
+      }
+    },
+    semanticIndex: {
+      objects: ['car', 'truck', 'bus', 'pedestrian', 'cyclist', 'motorcycle', 'traffic-cone', 'barrier'],
+      scenes: ['intersection', 'highway-merge', 'parking-lot', 'residential', 'commercial'],
+      actions: ['moving', 'stopped', 'turning', 'parked']
+    }
+  },
   // SFT/RL Datasets for AgentFlow
   {
     id: 'doc-dancer-sft-multimodal',
@@ -687,39 +765,6 @@ export const datasets = [
   },
   // Autonomous Driving Datasets - Original
   {
-    id: 'autodrive-raw-nuscenes',
-    author: 'motional-labs',
-    name: 'AutoDrive Raw - nuScenes',
-    task: 'object-detection',
-    domain: 'autonomous-driving',
-    downloads: 2100000,
-    likes: 4200,
-    lastModified: '2025-03-15',
-    rows: 1400000,
-    size: '680GB',
-    modality: 'multimodal',
-    language: 'en',
-    license: 'cc-by-nc-sa-4.0',
-    description: 'Original raw autonomous driving dataset from nuScenes. Contains 1000 scenes of multimodal sensor data including 6 cameras, 1 LiDAR, 5 radar, GPS and IMU. Supports 3D object detection, tracking, and trajectory prediction tasks.',
-    datasetType: 'original',
-    derivedDatasets: ['autodrive-derived-nuscenes-filtered', 'autodrive-derived-nuscenes-labeled'],
-    relatedTasks: [
-      { id: 'task-nuscenes-filter', name: 'nuScenes Quality Filtering Pipeline', type: 'Data Processing', status: 'completed', progress: 100, isOutput: true, startedAt: '2025-03-15T08:00:00Z', endedAt: '2025-03-15T14:30:00Z', duration: '6h 30m' },
-      { id: 'task-nuscenes-label', name: 'nuScenes VLM Labeling Pipeline', type: 'Data Processing', status: 'completed', progress: 100, isOutput: true, startedAt: '2025-03-14T10:00:00Z', endedAt: '2025-03-15T02:15:00Z', duration: '16h 15m' }
-    ],
-    metadata: {
-      timeRange: { start: '2025-01-01', end: '2025-03-15', timezone: 'UTC' },
-      spatial: {
-        regions: ['boston', 'singapore'],
-        coverage: 'urban and suburban areas',
-        coordinates: { lat: [1.2, 42.4], lon: [103.8, 71.1] }
-      },
-      sensors: ['camera', 'lidar', 'radar', 'gps', 'imu'],
-      conditions: ['day', 'night', 'rain', 'clear'],
-      annotations: ['raw', 'unannotated']
-    }
-  },
-  {
     id: 'autodrive-raw-kitti-360',
     author: 'kit-vision',
     name: 'AutoDrive Raw - KITTI-360',
@@ -786,50 +831,6 @@ export const datasets = [
     }
   },
   // Autonomous Driving Datasets - Derived (Read-only)
-  {
-    id: 'autodrive-derived-nuscenes-filtered',
-    author: 'autodrive-ai',
-    name: 'AutoDrive Derived - nuScenes Filtered',
-    task: 'object-detection',
-    domain: 'autonomous-driving',
-    downloads: 890000,
-    likes: 2100,
-    lastModified: '2025-03-18',
-    rows: 850000,
-    size: '280GB',
-    modality: 'multimodal',
-    language: 'en',
-    license: 'cc-by-nc-sa-4.0',
-    description: 'Filtered and quality-enhanced version of nuScenes. High-quality scenes selected using DataFlow-MM pipeline with aesthetic filtering, deduplication, and quality scoring. Ready for training with clean annotations.',
-    datasetType: 'derived',
-    parentDataset: 'autodrive-raw-nuscenes',
-    readonly: true,
-    processingPipeline: 'nuscenes_quality_filter_pipeline',
-    relatedTasks: [
-      { id: 'task-nuscenes-filter', name: 'nuScenes Quality Filtering Pipeline', type: 'Data Processing', status: 'completed', progress: 100, isInput: true, startedAt: '2025-03-15T08:00:00Z', endedAt: '2025-03-15T14:30:00Z', duration: '6h 30m' }
-    ],
-    metadata: {
-      timeRange: { start: '2025-01-01', end: '2025-03-15', timezone: 'UTC' },
-      spatial: {
-        regions: ['boston', 'singapore'],
-        coverage: 'filtered urban scenes',
-        coordinates: { lat: [1.2, 42.4], lon: [103.8, 71.1] }
-      },
-      sensors: ['camera', 'lidar', 'radar'],
-      conditions: ['day', 'night', 'clear', 'light-rain'],
-      annotations: ['3d-bbox', 'tracking-id', 'velocity'],
-      filterCriteria: {
-        minQualityScore: 0.85,
-        deduplication: true,
-        blurRemoval: true
-      }
-    },
-    semanticIndex: {
-      objects: ['car', 'truck', 'bus', 'pedestrian', 'cyclist', 'motorcycle', 'traffic-cone', 'barrier'],
-      scenes: ['intersection', 'highway-merge', 'parking-lot', 'residential', 'commercial'],
-      actions: ['moving', 'stopped', 'turning', 'parked']
-    }
-  },
   {
     id: 'autodrive-derived-nuscenes-labeled',
     author: 'autodrive-ai',
