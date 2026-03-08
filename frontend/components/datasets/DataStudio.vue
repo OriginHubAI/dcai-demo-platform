@@ -129,26 +129,94 @@
     </div>
 
     <!-- Column Statistics Summary -->
-    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 mb-4">
-      <div v-for="col in columnStats" :key="col.name" class="bg-gray-50 rounded-lg p-3 border border-gray-100">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-medium text-gray-600">{{ col.label }}</span>
-          <span class="text-xs text-gray-400">{{ col.type }}</span>
-        </div>
-        <div v-if="col.visualization === 'histogram'" class="h-8 flex items-end space-x-0.5">
-          <div v-for="(bar, i) in col.distribution" :key="i" 
-            class="flex-1 bg-blue-400 rounded-t"
-            :style="{ height: bar + '%', opacity: 0.3 + (i / col.distribution.length) * 0.7 }"
-          ></div>
-        </div>
-        <div v-else-if="col.visualization === 'progress'" class="h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div class="h-full bg-blue-500 rounded-full" :style="{ width: col.progress + '%' }"></div>
-        </div>
-        <div v-else-if="col.visualization === 'range'" class="text-xs text-gray-500">
-          {{ col.min }} ~ {{ col.max }}
-        </div>
-        <div class="text-xs text-gray-500 mt-1">{{ col.stats }}</div>
-      </div>
+    <div class="mb-4 border border-gray-200 rounded-lg overflow-hidden">
+      <table class="min-w-full">
+        <thead>
+          <tr>
+            <!-- ID Column -->
+            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200" style="width: 120px;">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-medium text-gray-600">ID</span>
+                <span class="text-xs text-gray-400">string</span>
+              </div>
+              <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div class="h-full bg-blue-500 rounded-full" style="width: 100%"></div>
+              </div>
+              <div class="text-xs text-gray-500 mt-1">unique</div>
+            </th>
+            <!-- Timestamp Column -->
+            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200" style="min-width: 160px;">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-medium text-gray-600">Timestamp</span>
+                <span class="text-xs text-gray-400">datetime</span>
+              </div>
+              <div class="h-8 flex items-end space-x-0.5">
+                <div v-for="(bar, i) in [30, 45, 60, 80, 100, 85, 70, 50, 35, 25]" :key="i"
+                  class="flex-1 bg-blue-400 rounded-t"
+                  :style="{ height: bar + '%', opacity: 0.3 + (i / 10) * 0.7 }"
+                ></div>
+              </div>
+              <div class="text-xs text-gray-500 mt-1">2025-01 ~ 2025-03</div>
+            </th>
+            <!-- Location Column -->
+            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200" style="min-width: 160px;">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-medium text-gray-600">Location</span>
+                <span class="text-xs text-gray-400">geo</span>
+              </div>
+              <div class="text-xs text-gray-500">1.2°N ~ 42.4°N</div>
+              <div class="text-xs text-gray-500 mt-1">Boston, Singapore</div>
+            </th>
+            <!-- Description Column -->
+            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200" style="width: 448px;">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-medium text-gray-600">Description</span>
+                <span class="text-xs text-gray-400">text</span>
+              </div>
+              <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div class="h-full bg-blue-500 rounded-full" style="width: 100%"></div>
+              </div>
+              <div class="text-xs text-gray-500 mt-1">avg 156 chars</div>
+            </th>
+            <!-- Image Column -->
+            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200" style="width: 120px;">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-medium text-gray-600">Image</span>
+                <span class="text-xs text-gray-400">image</span>
+              </div>
+              <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div class="h-full bg-blue-500 rounded-full" style="width: 100%"></div>
+              </div>
+              <div class="text-xs text-gray-500 mt-1">1600×900</div>
+            </th>
+            <!-- Objects Column -->
+            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200" style="width: 200px;">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-medium text-gray-600">Objects</span>
+                <span class="text-xs text-gray-400">semantic</span>
+              </div>
+              <div class="h-8 flex items-end space-x-0.5">
+                <div v-for="(bar, i) in [20, 40, 60, 80, 100, 90, 70, 50, 30, 20]" :key="i"
+                  class="flex-1 bg-blue-400 rounded-t"
+                  :style="{ height: bar + '%', opacity: 0.3 + (i / 10) * 0.7 }"
+                ></div>
+              </div>
+              <div class="text-xs text-gray-500 mt-1">8 classes</div>
+            </th>
+            <!-- Vector Column -->
+            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200" style="min-width: 160px;">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-medium text-gray-600">Vector</span>
+                <span class="text-xs text-gray-400">vector</span>
+              </div>
+              <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div class="h-full bg-blue-500 rounded-full" style="width: 100%"></div>
+              </div>
+              <div class="text-xs text-gray-500 mt-1">384-dim</div>
+            </th>
+          </tr>
+        </thead>
+      </table>
     </div>
 
     <!-- Table View -->
@@ -432,35 +500,40 @@ const columns = [
 ]
 
 const columnStats = computed(() => [
-  { 
-    name: 'id', label: 'ID', type: 'string', 
-    visualization: 'progress', progress: 100, 
-    stats: 'unique' 
+  {
+    name: 'id', label: 'ID', type: 'string',
+    visualization: 'progress', progress: 100,
+    stats: 'unique'
   },
-  { 
-    name: 'timestamp', label: 'Timestamp', type: 'datetime', 
+  {
+    name: 'timestamp', label: 'Timestamp', type: 'datetime',
     visualization: 'histogram', distribution: [30, 45, 60, 80, 100, 85, 70, 50, 35, 25],
-    stats: '2025-01 ~ 2025-03' 
+    stats: '2025-01 ~ 2025-03'
   },
-  { 
-    name: 'location', label: 'Location', type: 'geo', 
+  {
+    name: 'location', label: 'Location', type: 'geo',
     visualization: 'range', min: '1.2°N', max: '42.4°N',
-    stats: 'Boston, Singapore' 
+    stats: 'Boston, Singapore'
   },
-  { 
-    name: 'description', label: 'Description', type: 'text', 
+  {
+    name: 'description', label: 'Description', type: 'text',
     visualization: 'progress', progress: 100,
-    stats: 'avg 156 chars' 
+    stats: 'avg 156 chars'
   },
-  { 
-    name: 'image', label: 'Image', type: 'image', 
+  {
+    name: 'image', label: 'Image', type: 'image',
     visualization: 'progress', progress: 100,
-    stats: '1600×900' 
+    stats: '1600×900'
   },
-  { 
-    name: 'semantic', label: 'Semantic', type: 'vector', 
+  {
+    name: 'semantic_objects', label: 'Objects', type: 'semantic',
     visualization: 'histogram', distribution: [20, 40, 60, 80, 100, 90, 70, 50, 30, 20],
-    stats: '8 classes' 
+    stats: '8 classes'
+  },
+  {
+    name: 'semantic_vector', label: 'Vector', type: 'vector',
+    visualization: 'progress', progress: 100,
+    stats: '384-dim'
   }
 ])
 
