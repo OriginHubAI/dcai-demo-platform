@@ -1,0 +1,82 @@
+{
+  "bus-barrier": {
+    "objects": ["bus","barrier"],
+    "path": "/images/thumbnails/bus-barrier.jpg"
+  },
+  "motorcycle-truck": {
+    "objects": ["motorcycle","truck"],
+    "path": "/images/thumbnails/motorcycle-truck.jpg"
+  },
+  "motorcycle-barrier-cone": {
+    "objects": ["motorcycle","barrier","traffic-cone"],
+    "path": "/images/thumbnails/motorcycle-barrier-cone.jpg"
+  },
+  "motorcycle-pedestrian": {
+    "objects": ["motorcycle","pedestrian"],
+    "path": "/images/thumbnails/motorcycle-pedestrian.jpg"
+  },
+  "pedestrian-cone-cyclist": {
+    "objects": ["pedestrian","traffic-cone","cyclist"],
+    "path": "/images/thumbnails/pedestrian-cone-cyclist.jpg"
+  },
+  "car-motorcycle": {
+    "objects": ["car","motorcycle"],
+    "path": "/images/thumbnails/car-motorcycle.jpg"
+  },
+  "cone-bus-motorcycle": {
+    "objects": ["traffic-cone","bus","motorcycle"],
+    "path": "/images/thumbnails/cone-bus-motorcycle.jpg"
+  },
+  "car-truck-barrier": {
+    "objects": ["car","truck","barrier"],
+    "path": "/images/thumbnails/car-truck-barrier.jpg"
+  },
+  "pedestrian-car": {
+    "objects": ["pedestrian","car"],
+    "path": "/images/thumbnails/pedestrian-car.jpg"
+  },
+  "cyclist-car-cone": {
+    "objects": ["cyclist","car","traffic-cone"],
+    "path": "/images/thumbnails/cyclist-car-cone.jpg"
+  },
+  "truck-barrier": {
+    "objects": ["truck","barrier"],
+    "path": "/images/thumbnails/truck-barrier.jpg"
+  },
+  "bus-pedestrian-cyclist": {
+    "objects": ["bus","pedestrian","cyclist"],
+    "path": "/images/thumbnails/bus-pedestrian-cyclist.jpg"
+  },
+  "motorcycle-cone": {
+    "objects": ["motorcycle","traffic-cone"],
+    "path": "/images/thumbnails/motorcycle-cone.jpg"
+  },
+  "car-pedestrian-barrier": {
+    "objects": ["car","pedestrian","barrier"],
+    "path": "/images/thumbnails/car-pedestrian-barrier.jpg"
+  },
+  "truck-cyclist": {
+    "objects": ["truck","cyclist"],
+    "path": "/images/thumbnails/truck-cyclist.jpg"
+  },
+  "bus-car": {
+    "objects": ["bus","car"],
+    "path": "/images/thumbnails/bus-car.jpg"
+  },
+  "motorcycle-cyclist-pedestrian": {
+    "objects": ["motorcycle","cyclist","pedestrian"],
+    "path": "/images/thumbnails/motorcycle-cyclist-pedestrian.jpg"
+  },
+  "cone-barrier-car": {
+    "objects": ["traffic-cone","barrier","car"],
+    "path": "/images/thumbnails/cone-barrier-car.jpg"
+  },
+  "truck-motorcycle-cone": {
+    "objects": ["truck","motorcycle","traffic-cone"],
+    "path": "/images/thumbnails/truck-motorcycle-cone.jpg"
+  },
+  "pedestrian-cyclist-barrier": {
+    "objects": ["pedestrian","cyclist","barrier"],
+    "path": "/images/thumbnails/pedestrian-cyclist-barrier.jpg"
+  }
+}

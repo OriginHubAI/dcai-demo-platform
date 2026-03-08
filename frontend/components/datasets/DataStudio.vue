@@ -683,13 +683,26 @@ function openImageModal(row) {
 }
 
 function handleImageError(event, row) {
-  // Fallback to a generated placeholder if the image fails to load
+  // Fallback to a colored placeholder with object labels
   const objects = row?.semantic?.objects || ['scene']
   const objectLabels = objects.slice(0, 2).map(obj => obj.charAt(0).toUpperCase() + obj.slice(1)).join('+')
   const label = encodeURIComponent(objectLabels || 'Scene')
-  const bgColor = '6C757D'
-  const textColor = 'FFFFFF'
-  event.target.src = `https://placehold.co/400x225/${bgColor}/${textColor}?text=${label}&font=roboto`
+  
+  // Generate a deterministic background color based on the first object
+  const objectColors = {
+    'bus': 'FF6B35',
+    'motorcycle': '4ECDC4',
+    'truck': '95E1D3',
+    'car': 'F38181',
+    'pedestrian': 'AA96DA',
+    'cyclist': 'FCBAD3',
+    'traffic-cone': 'F39422',
+    'barrier': 'A8D8EA'
+  }
+  const primaryObject = objects[0] || 'scene'
+  const bgColor = objectColors[primaryObject] || '6C757D'
+  
+  event.target.src = `https://placehold.co/400x225/${bgColor}/FFFFFF?text=${label}&font=roboto`
 }
 
 // Reset page when search changes

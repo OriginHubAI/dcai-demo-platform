@@ -1038,6 +1038,138 @@ export function getDatasetById(id) {
   return datasets.find(d => d.id === id)
 }
 
+// Thumbnail mapping - local images downloaded from free sources
+// Use scripts/download-thumbnails.sh to regenerate
+const thumbnailMapping = {
+  'bus-barrier': {
+    objects: ['bus', 'barrier'],
+    description: 'Bus stopped at intersection with construction barriers on the roadside. Urban transit scene.',
+    path: '/images/thumbnails/bus-barrier.jpg'
+  },
+  'motorcycle-truck': {
+    objects: ['motorcycle', 'truck'],
+    description: 'Motorcycle passing a large truck on highway. Clear visibility with moderate traffic flow.',
+    path: '/images/thumbnails/motorcycle-truck.jpg'
+  },
+  'motorcycle-barrier-cone': {
+    objects: ['motorcycle', 'barrier', 'traffic-cone'],
+    description: 'Motorcycle navigating through road work zone with traffic cones and barriers.',
+    path: '/images/thumbnails/motorcycle-barrier-cone.jpg'
+  },
+  'motorcycle-pedestrian': {
+    objects: ['motorcycle', 'pedestrian'],
+    description: 'Motorcycle waiting at crosswalk with pedestrians crossing. Urban intersection scene.',
+    path: '/images/thumbnails/motorcycle-pedestrian.jpg'
+  },
+  'pedestrian-cone-cyclist': {
+    objects: ['pedestrian', 'traffic-cone', 'cyclist'],
+    description: 'Cyclist and pedestrians sharing path near construction cones. Shared urban space.',
+    path: '/images/thumbnails/pedestrian-cone-cyclist.jpg'
+  },
+  'car-motorcycle': {
+    objects: ['car', 'motorcycle'],
+    description: 'Car and motorcycle side by side at traffic light. Downtown urban traffic scene.',
+    path: '/images/thumbnails/car-motorcycle.jpg'
+  },
+  'cone-bus-motorcycle': {
+    objects: ['traffic-cone', 'bus', 'motorcycle'],
+    description: 'Bus and motorcycle navigating through temporary traffic cone lane markers.',
+    path: '/images/thumbnails/cone-bus-motorcycle.jpg'
+  },
+  'car-truck-barrier': {
+    objects: ['car', 'truck', 'barrier'],
+    description: 'Car following truck on highway with concrete barriers. Heavy vehicle traffic scene.',
+    path: '/images/thumbnails/car-truck-barrier.jpg'
+  },
+  'pedestrian-car': {
+    objects: ['pedestrian', 'car'],
+    description: 'Pedestrians crossing street while car waits at crosswalk. Urban intersection.',
+    path: '/images/thumbnails/pedestrian-car.jpg'
+  },
+  'cyclist-car-cone': {
+    objects: ['cyclist', 'car', 'traffic-cone'],
+    description: 'Cyclist in bike lane with cars passing by. Road work cones marking construction area.',
+    path: '/images/thumbnails/cyclist-car-cone.jpg'
+  },
+  'truck-barrier': {
+    objects: ['truck', 'barrier'],
+    description: 'Large commercial truck navigating through construction barriers. Industrial area.',
+    path: '/images/thumbnails/truck-barrier.jpg'
+  },
+  'bus-pedestrian-cyclist': {
+    objects: ['bus', 'pedestrian', 'cyclist'],
+    description: 'Bus at bus stop with cyclists passing and pedestrians boarding. Transit hub scene.',
+    path: '/images/thumbnails/bus-pedestrian-cyclist.jpg'
+  },
+  'motorcycle-cone': {
+    objects: ['motorcycle', 'traffic-cone'],
+    description: 'Motorcycle rider weaving through traffic cone marked temporary lanes.',
+    path: '/images/thumbnails/motorcycle-cone.jpg'
+  },
+  'car-pedestrian-barrier': {
+    objects: ['car', 'pedestrian', 'barrier'],
+    description: 'Car stopped at barrier-guarded pedestrian zone. Downtown shopping district.',
+    path: '/images/thumbnails/car-pedestrian-barrier.jpg'
+  },
+  'truck-cyclist': {
+    objects: ['truck', 'cyclist'],
+    description: 'Cyclist sharing road with delivery truck. Urban delivery route scene.',
+    path: '/images/thumbnails/truck-cyclist.jpg'
+  },
+  'bus-car': {
+    objects: ['bus', 'car'],
+    description: 'Bus in dedicated lane with cars in adjacent lanes. Public transit corridor.',
+    path: '/images/thumbnails/bus-car.jpg'
+  },
+  'motorcycle-cyclist-pedestrian': {
+    objects: ['motorcycle', 'cyclist', 'pedestrian'],
+    description: 'Mixed traffic with motorcycle, cyclist, and pedestrians. Shared urban street.',
+    path: '/images/thumbnails/motorcycle-cyclist-pedestrian.jpg'
+  },
+  'cone-barrier-car': {
+    objects: ['traffic-cone', 'barrier', 'car'],
+    description: 'Cars navigating through construction zone with barriers and cones. Road work area.',
+    path: '/images/thumbnails/cone-barrier-car.jpg'
+  },
+  'truck-motorcycle-cone': {
+    objects: ['truck', 'motorcycle', 'traffic-cone'],
+    description: 'Truck and motorcycle on road marked with traffic cones. Lane restriction zone.',
+    path: '/images/thumbnails/truck-motorcycle-cone.jpg'
+  },
+  'pedestrian-cyclist-barrier': {
+    objects: ['pedestrian', 'cyclist', 'barrier'],
+    description: 'Pedestrians and cyclists on separated path with barrier protection. Safe corridor.',
+    path: '/images/thumbnails/pedestrian-cyclist-barrier.jpg'
+  }
+}
+
+// Helper function to get local thumbnail images for autonomous driving scenes
+// Returns paths to locally downloaded images based on object combinations
+function getObjectPlaceholderUrl(objects, index) {
+  // Find matching scenario based on primary objects
+  // This maps object combinations to local thumbnail paths
+
+  const normalizedObjects = objects.slice().sort()
+
+  // Find the best matching scenario from our thumbnail mapping
+  for (const [key, scenario] of Object.entries(thumbnailMapping)) {
+    const scenarioObjects = scenario.objects.slice().sort()
+    // Check if the first 1-2 objects match
+    if (normalizedObjects[0] === scenarioObjects[0]) {
+      if (normalizedObjects.length === 1 ||
+          scenarioObjects.length === 1 ||
+          normalizedObjects[1] === scenarioObjects[1]) {
+        return scenario.path
+      }
+    }
+  }
+
+  // Fallback to a default scenario based on index
+  const keys = Object.keys(thumbnailMapping)
+  const fallbackKey = keys[index % keys.length]
+  return thumbnailMapping[fallbackKey].path
+}
+
 // Generate mock autonomous driving data for DataStudio
 export function generateAutodrivingData(datasetId) {
   const regions = ['boston', 'singapore']
@@ -1045,132 +1177,31 @@ export function generateAutodrivingData(datasetId) {
   const scenes = ['intersection', 'highway-merge', 'parking-lot', 'residential', 'commercial']
   const weather = ['clear', 'light-rain', 'overcast', 'night']
   const actions = ['moving', 'stopped', 'turning', 'parked']
-  
-  // Object combinations with matching descriptions and image themes
-  const objectScenarios = [
-    {
-      objects: ['bus', 'barrier'],
-      description: 'Bus stopped at intersection with construction barriers on the roadside. Urban transit scene.',
-      imageKeyword: 'bus-city-street-road-barrier'
-    },
-    {
-      objects: ['motorcycle', 'truck'],
-      description: 'Motorcycle passing a large truck on highway. Clear visibility with moderate traffic flow.',
-      imageKeyword: 'motorcycle-truck-highway-traffic'
-    },
-    {
-      objects: ['motorcycle', 'barrier', 'traffic-cone'],
-      description: 'Motorcycle navigating through road work zone with traffic cones and barriers.',
-      imageKeyword: 'motorcycle-road-construction-barrier'
-    },
-    {
-      objects: ['motorcycle', 'pedestrian'],
-      description: 'Motorcycle waiting at crosswalk with pedestrians crossing. Urban intersection scene.',
-      imageKeyword: 'motorcycle-pedestrian-crosswalk-city'
-    },
-    {
-      objects: ['pedestrian', 'traffic-cone', 'cyclist'],
-      description: 'Cyclist and pedestrians sharing path near construction cones. Shared urban space.',
-      imageKeyword: 'cyclist-pedestrian-city-street'
-    },
-    {
-      objects: ['car', 'motorcycle'],
-      description: 'Car and motorcycle side by side at traffic light. Downtown urban traffic scene.',
-      imageKeyword: 'car-motorcycle-traffic-city'
-    },
-    {
-      objects: ['traffic-cone', 'bus', 'motorcycle'],
-      description: 'Bus and motorcycle navigating through temporary traffic cone lane markers.',
-      imageKeyword: 'bus-motorcycle-traffic-cones'
-    },
-    {
-      objects: ['car', 'truck', 'barrier'],
-      description: 'Car following truck on highway with concrete barriers. Heavy vehicle traffic scene.',
-      imageKeyword: 'car-truck-highway-barrier'
-    },
-    {
-      objects: ['pedestrian', 'car'],
-      description: 'Pedestrians crossing street while car waits at crosswalk. Urban intersection.',
-      imageKeyword: 'pedestrian-crossing-car-city'
-    },
-    {
-      objects: ['cyclist', 'car', 'traffic-cone'],
-      description: 'Cyclist in bike lane with cars passing by. Road work cones marking construction area.',
-      imageKeyword: 'cyclist-bike-lane-car-city'
-    },
-    {
-      objects: ['truck', 'barrier'],
-      description: 'Large commercial truck navigating through construction barriers. Industrial area.',
-      imageKeyword: 'truck-construction-barrier-industrial'
-    },
-    {
-      objects: ['bus', 'pedestrian', 'cyclist'],
-      description: 'Bus at bus stop with cyclists passing and pedestrians boarding. Transit hub scene.',
-      imageKeyword: 'bus-stop-pedestrian-cyclist-city'
-    },
-    {
-      objects: ['motorcycle', 'traffic-cone'],
-      description: 'Motorcycle rider weaving through traffic cone marked temporary lanes.',
-      imageKeyword: 'motorcycle-traffic-cones-road'
-    },
-    {
-      objects: ['car', 'pedestrian', 'barrier'],
-      description: 'Car stopped at barrier-guarded pedestrian zone. Downtown shopping district.',
-      imageKeyword: 'car-pedestrian-barrier-shopping'
-    },
-    {
-      objects: ['truck', 'cyclist'],
-      description: 'Cyclist sharing road with delivery truck. Urban delivery route scene.',
-      imageKeyword: 'truck-cyclist-city-delivery'
-    },
-    {
-      objects: ['bus', 'car'],
-      description: 'Bus in dedicated lane with cars in adjacent lanes. Public transit corridor.',
-      imageKeyword: 'bus-car-traffic-urban'
-    },
-    {
-      objects: ['motorcycle', 'cyclist', 'pedestrian'],
-      description: 'Mixed traffic with motorcycle, cyclist, and pedestrians. Shared urban street.',
-      imageKeyword: 'motorcycle-cyclist-pedestrian-street'
-    },
-    {
-      objects: ['traffic-cone', 'barrier', 'car'],
-      description: 'Cars navigating through construction zone with barriers and cones. Road work area.',
-      imageKeyword: 'car-construction-zone-barrier'
-    },
-    {
-      objects: ['truck', 'motorcycle', 'traffic-cone'],
-      description: 'Truck and motorcycle on road marked with traffic cones. Lane restriction zone.',
-      imageKeyword: 'truck-motorcycle-traffic-cone'
-    },
-    {
-      objects: ['pedestrian', 'cyclist', 'barrier'],
-      description: 'Pedestrians and cyclists on separated path with barrier protection. Safe corridor.',
-      imageKeyword: 'pedestrian-cyclist-barrier-path'
-    }
-  ]
-  
+
+  // Convert mapping to array for easy access
+  const objectScenarios = Object.values(thumbnailMapping)
+
   // Generate 50 sample records
   return Array.from({ length: 50 }, (_, i) => {
     const region = regions[Math.floor(Math.random() * regions.length)]
     const baseLat = region === 'boston' ? 42.36 : 1.35
     const baseLon = region === 'boston' ? -71.05 : 103.87
-    
+
     // Generate random semantic vector (384 dimensions, normalized)
     const vector = Array.from({ length: 384 }, () => (Math.random() - 0.5) * 2)
     const norm = Math.sqrt(vector.reduce((sum, v) => sum + v * v, 0))
     const normalizedVector = vector.map(v => v / norm)
-    
+
     // Select scenario based on index to ensure variety, or random for remaining
-    const scenario = i < objectScenarios.length 
-      ? objectScenarios[i] 
+    const scenario = i < objectScenarios.length
+      ? objectScenarios[i]
       : objectScenarios[Math.floor(Math.random() * objectScenarios.length)]
-    
+
     // Generate timestamp within the dataset time range
     const startDate = new Date('2025-01-01')
     const endDate = new Date('2025-03-15')
     const timestamp = new Date(startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime()))
-    
+
     // Select additional random objects to add variety
     const numExtraObjects = Math.floor(Math.random() * 2)
     const extraObjects = []
@@ -1181,11 +1212,11 @@ export function generateAutodrivingData(datasetId) {
       }
     }
     const sceneObjects = [...scenario.objects, ...extraObjects]
-    
+
     // Generate placeholder image with object labels
     // Using placehold.co to create images that visually match the objects
     const imageUrl = getObjectPlaceholderUrl(scenario.objects, i)
-    
+
     return {
       id: `sample-${String(i + 1).padStart(6, '0')}`,
       timestamp: timestamp.toISOString(),
@@ -1213,36 +1244,4 @@ export function generateAutodrivingData(datasetId) {
       }
     }
   })
-}
-
-// Helper function to get real autonomous driving scene images
-// Using reliable placeholder service with object type labels
-function getObjectPlaceholderUrl(objects, index) {
-  // Use placehold.co for stable placeholder images with text labels
-  // This ensures all images can load without external dependencies
-  
-  const objectColors = {
-    'bus': 'FF6B35',
-    'motorcycle': '4ECDC4',
-    'truck': '95E1D3',
-    'car': 'F38181',
-    'pedestrian': 'AA96DA',
-    'cyclist': 'FCBAD3',
-    'traffic-cone': 'FFFFD2',
-    'barrier': 'A8D8EA'
-  }
-  
-  const primaryObject = objects[0] || 'scene'
-  const color = objectColors[primaryObject] || '6C757D'
-  
-  // Create a descriptive label for the image
-  const objectLabels = objects.slice(0, 2).map(obj => obj.charAt(0).toUpperCase() + obj.slice(1)).join('+')
-  const label = encodeURIComponent(objectLabels || 'Scene')
-  
-  // Generate a deterministic "random" background color variation based on index
-  const bgColors = ['1a1a2e', '16213e', '0f3460', '533483', 'f39422', '16c79a', 'ef476f', '118ab2']
-  const bgColor = bgColors[index % bgColors.length]
-  
-  // Use placehold.co with text overlay - reliable and always available
-  return `https://placehold.co/400x225/${bgColor}/${color}?text=${label}&font=roboto`
 }
