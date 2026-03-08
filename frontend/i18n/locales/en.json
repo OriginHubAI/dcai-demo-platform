@@ -86,6 +86,25 @@
     "searchPlaceholder": "Filter datasets...",
     "noResults": "No datasets found",
     "noResultsHint": "Try adjusting your search or filters",
+    "tabs": {
+      "datasetCard": "Dataset Card",
+      "files": "Files",
+      "dataStudio": "Data Studio"
+    },
+    "files": {
+      "contributors": "contributors",
+      "history": "History",
+      "commits": "commits",
+      "contribute": "Contribute",
+      "name": "Name",
+      "size": "Size",
+      "lastCommit": "Last commit",
+      "updated": "Updated",
+      "emptyFolder": "This folder is empty",
+      "download": "Download",
+      "safe": "Safe",
+      "viewRaw": "View raw"
+    },
     "types": {
       "original": "Original",
       "derived": "Derived",

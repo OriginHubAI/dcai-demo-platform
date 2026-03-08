@@ -8,8 +8,8 @@
         <span class="text-gray-900">{{ dataset.id }}</span>
       </div>
       
-      <!-- Tab Navigation for Autodriving Datasets -->
-      <div v-if="showDataStudioTab" class="mb-6 border-b border-gray-200">
+      <!-- Tab Navigation -->
+      <div class="mb-6 border-b border-gray-200">
         <nav class="-mb-px flex space-x-8">
           <button
             @click="activeTab = 'card'"
@@ -26,6 +26,21 @@
             <span>Dataset Card</span>
           </button>
           <button
+            @click="activeTab = 'files'"
+            :class="[
+              activeTab === 'files'
+                ? 'border-dc-primary text-dc-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+              'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2'
+            ]"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>Files</span>
+          </button>
+          <button
+            v-if="showDataStudioTab"
             @click="activeTab = 'datastudio'"
             :class="[
               activeTab === 'datastudio'
@@ -42,9 +57,9 @@
         </nav>
       </div>
       
-      <div class="lg:grid lg:gap-8" :class="activeTab === 'datastudio' ? 'lg:grid-cols-1' : 'lg:grid-cols-3'">
+      <div class="lg:grid lg:gap-8" :class="(activeTab === 'datastudio' || activeTab === 'files') ? 'lg:grid-cols-1' : 'lg:grid-cols-3'">
         <!-- Main content -->
-        <div :class="activeTab === 'datastudio' ? 'lg:col-span-1' : 'lg:col-span-2'">
+        <div :class="(activeTab === 'datastudio' || activeTab === 'files') ? 'lg:col-span-1' : 'lg:col-span-2'">
           <!-- Dataset Header - only show in Dataset Card tab -->
           <template v-if="activeTab === 'card'">
             <!-- Readonly Warning Banner -->
@@ -196,6 +211,11 @@
             <DataStudio :dataset-id="dataset.id" />
           </div>
 
+          <!-- Files Tab Content -->
+          <div v-else-if="activeTab === 'files'" class="files-container">
+            <DatasetFiles :dataset-id="dataset.id" />
+          </div>
+
           <!-- Dataset Card content -->
           <div v-else class="border border-gray-200 rounded-lg bg-white">
             <div class="border-b border-gray-200 px-4 py-3">
@@ -248,7 +268,7 @@ print(dataset["train"][0])</code></pre>
           </div>
         </div>
 
-        <!-- Sidebar - hidden in Data Studio tab -->
+        <!-- Sidebar - hidden in Data Studio and Files tab -->
         <aside v-if="activeTab === 'card'" class="mt-6 lg:mt-0">
           <div class="border border-gray-200 rounded-lg bg-white p-4 space-y-4 sticky top-20">
             <div class="flex items-center justify-between">
@@ -399,6 +419,7 @@ import { taskColorMap, domainColorMap, datasetTypeColorMap } from '@/data/filter
 import TagBadge from '@/components/common/TagBadge.vue'
 import StatBadge from '@/components/common/StatBadge.vue'
 import DataStudio from '@/components/datasets/DataStudio.vue'
+import DatasetFiles from '@/components/datasets/DatasetFiles.vue'
 
 const route = useRoute()
 const dataset = computed(() => getDatasetById(route.params.id))
