@@ -294,21 +294,31 @@ print(dataset["train"][0])</code></pre>
 
           <!-- Dataset Relationships -->
           <div v-if="dataset.parentDataset || (dataset.derivedDatasets && dataset.derivedDatasets.length)" class="mt-4 p-4 bg-gray-50 rounded-lg">
-            <h3 class="text-sm font-semibold text-gray-700 mb-2">{{ $t('datasets.relationships.title') }}</h3>
             <div v-if="dataset.parentDataset" class="text-sm text-gray-600 mb-3">
               <span class="text-gray-500">{{ $t('datasets.relationships.parentDataset') }}:</span>
               <router-link :to="`/datasets/${dataset.parentDataset}`" class="text-blue-600 hover:underline ml-1 font-medium">{{ dataset.parentDataset }}</router-link>
             </div>
-            <div v-if="dataset.derivedDatasets && dataset.derivedDatasets.length" class="text-sm text-gray-600">
-              <span class="text-gray-500">{{ $t('datasets.relationships.derivedDatasets') }}:</span>
-              <div class="flex flex-wrap gap-2 mt-1">
-                <router-link 
-                  v-for="derivedId in dataset.derivedDatasets" 
+            <div v-if="dataset.derivedDatasets && dataset.derivedDatasets.length">
+              <h3 class="text-sm font-semibold text-gray-700 mb-2">{{ $t('datasets.relationships.derivedDatasets') }}</h3>
+              <div class="space-y-2">
+                <router-link
+                  v-for="derivedId in dataset.derivedDatasets"
                   :key="derivedId"
                   :to="`/datasets/${derivedId}`"
-                  class="text-blue-600 hover:underline text-xs bg-blue-50 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100 transition-colors"
+                  class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all group"
                 >
-                  {{ derivedId }}
+                  <div class="flex items-center gap-3">
+                    <div class="flex-shrink-0">
+                      <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                    </div>
+                    <div>
+                      <div class="text-sm font-medium text-gray-900 group-hover:text-blue-600">{{ derivedId }}</div>
+                      <div class="text-xs text-gray-500">{{ $t('datasets.relationships.derivedDataset') }}</div>
+                    </div>
+                  </div>
+                  <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
                 </router-link>
               </div>
             </div>

@@ -95,6 +95,7 @@
       "title": "Dataset Relationships",
       "parentDataset": "Parent Dataset",
       "derivedDatasets": "Derived Datasets",
+      "derivedDataset": "Derived Dataset",
       "viewDataset": "View Dataset"
     },
     "relatedTasks": {

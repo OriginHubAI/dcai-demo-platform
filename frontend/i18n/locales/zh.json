@@ -95,6 +95,7 @@
       "title": "数据集关联",
       "parentDataset": "父数据集",
       "derivedDatasets": "派生数据集",
+      "derivedDataset": "派生数据集",
       "viewDataset": "查看数据集"
     },
     "relatedTasks": {
