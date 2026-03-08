@@ -26,7 +26,10 @@
       <SortDropdown v-model="sortBy" :options="translatedSortOptions" />
     </div>
     <!-- Results -->
-    <div v-if="paginatedItems.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div v-if="loading" class="text-center py-16 text-gray-500">
+      <p class="text-lg">Loading package workspace...</p>
+    </div>
+    <div v-else-if="paginatedItems.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <DataFlowCard v-for="pkg in paginatedItems" :key="pkg.id" :pkg="pkg" />
     </div>
     <div v-else class="text-center py-16 text-gray-500">
@@ -34,11 +37,19 @@
       <p class="text-sm mt-1">{{ $t('packages.noResultsHint') }}</p>
     </div>
     <PaginationBar v-model="currentPage" :total-pages="totalPages" />
+
+    <VSCodeEditorDialog
+      v-if="selectedPackage"
+      v-model:visible="showEditor"
+      :pkg="selectedPackage"
+      @close="closeEditor"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { dataflowApi } from '@/services/api.js'
 import { usePagination } from '@/composables/usePagination.js'
@@ -46,13 +57,18 @@ import SearchBar from '@/components/common/SearchBar.vue'
 import SortDropdown from '@/components/common/SortDropdown.vue'
 import PaginationBar from '@/components/common/PaginationBar.vue'
 import DataFlowCard from '@/components/dataflow/DataFlowCard.vue'
+import VSCodeEditorDialog from '@/components/dataflow/VSCodeEditorDialog.vue'
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const searchQuery = ref('')
 const sortBy = ref('downloads')
 const activeCategory = ref('all')
 const dataflowPackages = ref([])
 const loading = ref(false)
+const showEditor = ref(false)
+const selectedPackage = ref(null)
 
 onMounted(async () => {
   loading.value = true
@@ -67,9 +83,11 @@ onMounted(async () => {
 
 const translatedCategories = computed(() => [
   { value: 'all', label: t('packages.categories.all') },
-  { value: 'multimodal', label: t('packages.categories.multimodal') },
+  { value: 'core', label: 'Core' },
+  { value: 'training', label: 'Training' },
+  { value: 'rag', label: 'RAG' },
   { value: 'science', label: t('packages.categories.science') },
-  { value: 'time-series', label: t('packages.categories.timeSeries') },
+  { value: 'multimodal', label: t('packages.categories.multimodal') },
 ])
 
 const translatedSortOptions = computed(() => [
@@ -115,4 +133,27 @@ const { currentPage, totalPages, paginatedItems, totalItems } = usePagination(fi
 watch([activeCategory, searchQuery], () => {
   currentPage.value = 1
 })
+
+watch(
+  () => [route.query.editorPackage, dataflowPackages.value.length],
+  () => {
+    const packageId = route.query.editorPackage
+    if (!packageId) return
+    const match = dataflowPackages.value.find((item) => item.id === packageId)
+    if (!match) return
+    selectedPackage.value = match
+    showEditor.value = true
+  },
+  { immediate: true },
+)
+
+function closeEditor() {
+  showEditor.value = false
+  selectedPackage.value = null
+  if (route.query.editorPackage) {
+    const query = { ...route.query }
+    delete query.editorPackage
+    router.replace({ query })
+  }
+}
 </script>

@@ -10,6 +10,8 @@ router.register(r'chat/conversations', views.ConversationViewSet, basename='conv
 router.register(r'chat/share', views.ChatShareViewSet, basename='chat-share')
 
 urlpatterns = [
+    path('chat/models', views.ChatModelsView.as_view(), name='chat-models'),
+    path('chat/stream', views.ChatStreamView.as_view(), name='chat-stream'),
     path('chat', views.ChatMessageView.as_view(), name='chat-message'),
     path('chat/conversations/<str:conversation_id>/questions', views.QuestionListView.as_view(), name='question-list'),
     path('', include(router.urls)),

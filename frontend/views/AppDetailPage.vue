@@ -4,72 +4,30 @@
       <p class="text-lg text-gray-500">Loading...</p>
     </div>
     <div v-else-if="app">
-      <!-- Breadcrumb -->
       <div class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
         <router-link to="/apps" class="hover:text-gray-700">Apps</router-link>
         <span>/</span>
         <span class="text-gray-900">{{ app.id }}</span>
       </div>
-      <!-- Gradient header -->
-      <div
-        class="rounded-xl h-40 flex items-center justify-center mb-6"
-        :style="gradientStyle"
-      >
-        <span class="text-6xl">{{ app.emoji }}</span>
-      </div>
-      <div class="lg:grid lg:grid-cols-3 lg:gap-8">
-        <!-- Main content -->
-        <div class="lg:col-span-2">
-          <div class="flex items-center space-x-3 mb-2">
-            <h1 class="text-2xl font-bold text-gray-900">{{ app.title }}</h1>
-            <span
-              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-              :class="app.status === 'running' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'"
-            >
-              {{ app.status === 'running' ? 'Running' : 'Offline' }}
-            </span>
-          </div>
-          <p class="text-sm text-gray-500 mb-6">by {{ app.author }}</p>
-          <!-- App preview placeholder -->
-          <div class="border border-gray-200 rounded-lg bg-white overflow-hidden">
-            <div class="border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-              <h2 class="font-semibold text-gray-900">App</h2>
-              <span class="text-xs text-gray-400">{{ app.sdk }} · {{ app.hardware }}</span>
-            </div>
-            <div class="bg-gray-50 flex items-center justify-center h-80">
-              <div class="text-center">
-                <span class="text-5xl block mb-4">{{ app.emoji }}</span>
-                <p class="text-gray-500 text-sm">Interactive app preview</p>
-                <p class="text-gray-400 text-xs mt-1">This is a demo clone — the actual app would be embedded here</p>
-                <button class="mt-4 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors">
-                  Open in new tab
-                </button>
-              </div>
-            </div>
-          </div>
-          <!-- Description -->
-          <div class="border border-gray-200 rounded-lg bg-white mt-6">
-            <div class="border-b border-gray-200 px-4 py-3">
-              <h2 class="font-semibold text-gray-900">About</h2>
-            </div>
-            <div class="p-6 prose prose-sm max-w-none">
-              <p>{{ app.description }}</p>
-              <h3>How to Use</h3>
-              <p>Visit this App to interact with the application directly in your browser. No installation or setup required.</p>
-              <h3>Technical Details</h3>
-              <ul>
-                <li><strong>SDK:</strong> {{ app.sdk }}</li>
-                <li><strong>Hardware:</strong> {{ app.hardware }}</li>
-                <li><strong>Category:</strong> {{ app.category.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }}</li>
-              </ul>
-            </div>
+
+      <div v-if="app.type === 'proxied'" class="space-y-6">
+        <div class="rounded-xl h-32 flex items-center justify-center" :style="gradientStyle">
+          <div class="text-center text-white">
+            <span class="text-5xl block">{{ app.emoji }}</span>
+            <p class="text-lg font-semibold mt-2">{{ app.title }}</p>
           </div>
         </div>
-        <!-- Sidebar -->
-        <aside class="mt-6 lg:mt-0">
-          <div class="border border-gray-200 rounded-lg bg-white p-4 space-y-4 sticky top-20">
-            <div class="flex items-center justify-between">
-              <StatBadge icon="like" :value="app.likes" />
+        <component :is="appComponent" v-if="appComponent" :app="app" />
+      </div>
+
+      <div v-else>
+        <div class="rounded-xl h-40 flex items-center justify-center mb-6" :style="gradientStyle">
+          <span class="text-6xl">{{ app.emoji }}</span>
+        </div>
+        <div class="lg:grid lg:grid-cols-3 lg:gap-8">
+          <div class="lg:col-span-2">
+            <div class="flex items-center space-x-3 mb-2">
+              <h1 class="text-2xl font-bold text-gray-900">{{ app.title }}</h1>
               <span
                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
                 :class="app.status === 'running' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'"
@@ -77,34 +35,28 @@
                 {{ app.status === 'running' ? 'Running' : 'Offline' }}
               </span>
             </div>
-            <hr class="border-gray-200" />
-            <div class="space-y-3 text-sm">
-              <div class="flex justify-between">
-                <span class="text-gray-500">Author</span>
-                <span class="font-medium text-gray-900">{{ app.author }}</span>
+            <p class="text-sm text-gray-500 mb-6">by {{ app.author }}</p>
+            <div class="border border-gray-200 rounded-lg bg-white overflow-hidden">
+              <div class="border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+                <h2 class="font-semibold text-gray-900">App</h2>
+                <span class="text-xs text-gray-400">{{ app.sdk }} · {{ app.hardware }}</span>
               </div>
-              <div class="flex justify-between">
-                <span class="text-gray-500">SDK</span>
-                <span class="font-medium text-gray-900">{{ app.sdk }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-500">Hardware</span>
-                <span class="font-medium text-gray-900">{{ app.hardware }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-500">Category</span>
-                <span class="font-medium text-gray-900">{{ app.category.replace(/-/g, ' ') }}</span>
+              <div class="bg-gray-50 flex items-center justify-center h-80">
+                <div class="text-center">
+                  <span class="text-5xl block mb-4">{{ app.emoji }}</span>
+                  <p class="text-gray-500 text-sm">Interactive app preview</p>
+                  <p class="text-gray-400 text-xs mt-1">This app does not expose an embedded workspace yet.</p>
+                </div>
               </div>
             </div>
-            <hr class="border-gray-200" />
-            <button class="w-full py-2 bg-dc-primary text-white text-sm font-semibold rounded-lg hover:bg-dc-primary-dark transition-colors">
-              ❤️ Like
-            </button>
-            <button class="w-full py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">
-              Duplicate this App
-            </button>
           </div>
-        </aside>
+          <aside class="mt-6 lg:mt-0">
+            <div class="border border-gray-200 rounded-lg bg-white p-4 space-y-4 sticky top-20">
+              <div class="text-sm text-slate-700">{{ app.description }}</div>
+              <div class="text-xs text-slate-500">{{ app.tags?.join(' · ') }}</div>
+            </div>
+          </aside>
+        </div>
       </div>
     </div>
     <div v-else class="text-center py-20">
@@ -115,10 +67,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+
 import { appApi } from '@/services/api.js'
-import StatBadge from '@/components/common/StatBadge.vue'
+import DFAgentApp from '@/components/apps/DFAgentApp.vue'
+import LoopAIApp from '@/components/apps/LoopAIApp.vue'
+import PackageEditorApp from '@/components/apps/PackageEditorApp.vue'
 
 const route = useRoute()
 const app = ref(null)
@@ -136,8 +91,9 @@ onMounted(async () => {
 
 const colorValues = {
   red: '#ef4444', orange: '#f97316', yellow: '#eab308', green: '#22c55e',
+  emerald: '#10b981',
   teal: '#14b8a6', cyan: '#06b6d4', blue: '#3b82f6', indigo: '#6366f1',
-  purple: '#a855f7', pink: '#ec4899',
+  purple: '#a855f7', pink: '#ec4899', slate: '#475569',
 }
 
 const gradientStyle = computed(() => {
@@ -145,5 +101,13 @@ const gradientStyle = computed(() => {
   const from = colorValues[app.value.colorFrom] || '#6366f1'
   const to = colorValues[app.value.colorTo] || '#3b82f6'
   return { background: `linear-gradient(135deg, ${from}, ${to})` }
+})
+
+const appComponent = computed(() => {
+  if (!app.value?.integration?.kind) return null
+  if (app.value.integration.kind === 'loopai') return LoopAIApp
+  if (app.value.integration.kind === 'dfagent') return DFAgentApp
+  if (app.value.integration.kind === 'package-editor') return PackageEditorApp
+  return null
 })
 </script>
