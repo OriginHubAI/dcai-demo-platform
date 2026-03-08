@@ -2,9 +2,11 @@
 
 ## 1. 架构愿景与系统概述
 
-DCAI (Data-Centric AI) 平台是一个兼具模型浏览、数据集托管、智能体应用（Agent）及知识库检索分析的综合性 AI 社区平台。系统旨在解决超大规模多模态数据集的管理、复杂工作流的处理编排以及高并发场景下的 AI 对话与大模型服务能力。
+DCAI (Data-Centric AI) 平台是一个兼具模型浏览、数据集托管、智能体应用（Spaces/Apps）及知识库检索分析的综合性 AI 社区平台。系统旨在解决超大规模多模态数据集的管理、复杂工作流的处理编排以及高并发场景下的 AI 对话与大模型服务能力。
 
-为达到这一目标，平台采用了现代化的微服务与混合架构设计，结合了稳定强大的 Web 框架与云原生大数据与 AI 处理组件，核心底座包括 **Django + FastAPI** 混合后端、用于数据处理与算子分发的 **DataFlow-System（DataFlow + Ray + Prefect）**，以及保障海量多模态数据版本存储与极速检索的 **MyScale + LakeFS** 组合。
+平台的核心资产流转链路为：**Datasets（数据集） -> Tasks（处理/训练/评估任务） -> Spaces/Apps（智能应用）**。首页 **DataMaster** 作为统一对话入口，连接 AI 开发者、数据科学家与领域专家，并支持通过 `@SubAgent` 模式调用强大的下层子系统进行协助。
+
+为达到这一目标，平台采用了现代化的微服务与混合架构设计，结合了稳定强大的 Web 框架与云原生大数据与 AI 处理组件，核心底座包括作为统一 API 网关与业务大闸的 **Django**，用于被代理集成和独立计算的 **FastAPI** 节点，用于数据处理与算子分发的 **DataFlow-System（DataFlow + Ray + Prefect）**，以及保障海量多模态数据版本存储与极速检索的 **MyScale + LakeFS** 组合。
 
 ---
 
@@ -16,21 +18,27 @@ DCAI (Data-Centric AI) 平台是一个兼具模型浏览、数据集托管、智
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                         User Interface (Frontend)                          │
 │     Vue 3 + Vite | Tailwind CSS | Vue Router | Vue I18n                    │
-│     [Models]  [Datasets]  [Apps/Agent]  [DataFlow UI]  [Knowledge Base]    │
+│                                                                            │
+│  [DataMaster Home] @mention Agent Router  (Unified Chat Entry)             │
+│  [Models] [Datasets] [Tasks] [Spaces/Apps] [DataFlow UI] [Knowledge Base]  │
 └──────────────────────────────────────┬─────────────────────────────────────┘
-                                       │ HTTP / SSE / WebSocket
+                                       │ HTTP / SSE / WebSocket / iframe
                                        ▼
 ┌────────────────────────────────────────────────────────────────────────────┐
-│                             Backend API Layer                              │
+│                  Backend API Gateway Layer (Django v1)                     │
 │                                                                            │
-│  ┌──────────────────────────┐                 ┌─────────────────────────┐  │
-│  │ Django (v1 APIs)         │                 │ FastAPI (v2 APIs)       │  │
-│  │ - Auth / User Mgmt       │◀ ─ ─ ─ ─ ─ ─ ─ ▶│ - High Throughput API   │  │
-│  │ - Admin & Business       │   Auth Sync     │ - Agent SSE Chat        │  │
-│  │ - Knowledge Base & Doc   │                 │ - Async / DataFlow      │  │
-│  └──────────────────────────┘                 └─────────────────────────┘  │
+│ - Auth & JWT Mgmt               - Agent Router (@SubAgent Dispatch)        │
+│ - Admin & Business Logic        - Code-Server Mgmt (Operator Workbench)    │
+│ - Knowledge Base & Doc          - HTTPX Async Proxy Layer (v2 APIs)        │
 └─────────┬────────────────────────────┬────────────────────────────┬────────┘
-          │                            │                            │
+          │ (Auth Sync / Proxy)        │ (Proxy)                    │ (Proxy)
+          ▼                            ▼                            ▼ 
+┌──────────────────┐  ┌────────────────────────────────┐  ┌──────────────────┐
+│ Spaces/Apps      │  │ Spaces/Apps(DataFlow)          │  │ Spaces/Apps      │
+│ Paper2Any        │  │ DataFlow-WebUI (:8002)         │  │ LoopAI (:8003)   │
+│ FastAPI (:8004)  │  │ FastAPI (Async / DAG Ctrl)     │  │ FastAPI          │
+└─────────┬────────┘  └────────────────┬───────────────┘  └─────────┬────────┘
+          │                            │                            │·
           ▼                            ▼                            ▼ 
 ┌──────────────────┐  ┌────────────────────────────────┐  ┌──────────────────┐
 │ Relational & MQ  │  │     Search & Vector Engine     │  │ Data Processing  │
@@ -45,7 +53,6 @@ DCAI (Data-Centric AI) 平台是一个兼具模型浏览、数据集托管、智
 │                         Storage Layer (Data Lake)                          │
 │  ┌────────────────────────────────────────────────────────(S3/OSS/MinIO)┐  │
 │  │ LakeFS (Data-as-Code): Commits, Branches, Zero-copy snapshots        │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -54,26 +61,36 @@ DCAI (Data-Centric AI) 平台是一个兼具模型浏览、数据集托管、智
 ## 3. 核心子系统与功能模块划分
 
 ### 3.1 前端应用模块 (Frontend)
-前端基于 `Vue 3 + Vite` 构建，通过 `Vue Router` 划分为多个核心功能视图：`apps/` (智能体应用), `datasets/` (数据集), `dataflow/`, `knowledgeBase/` (知识库), 与 `models/` (模型)。
-支持多语言切换 (`Vue I18n`)，并通过环境变量（如 `VITE_DATA_MODE`）动态切换 Mock 数据或请求真实的后端 API。
 
-### 3.2 混合后端架构模块 (Backend)
-通过 Nginx 路由代理或 ASGI 混合挂载等模式将 Django 和 FastAPI 紧密结合：
-- **user & organization**: 处理基于手机、邮箱、第三方社交账号（WeChat/GitHub）的用户注册、认证及鉴权体系，利用 JWT 并在双框架间共享认证态。
-- **dataset**: 数据集及相关的对象存储配置管理，支持数据集的文件托管。
-- **agent**: 管理智能体（Agent）配置，包括预设提示词配置、可用调用的第三方 OpenAPI 工具能力。
-- **chat / llm_chat**: 核心对话引擎，支持与系统预设智能体或自定义 Agent 的对话交互，并支持通过流式协议（Server-Sent Events）输出。
-- **knowledgebase / document**: 支持知识库内文件的解析、片段（Chunks）切分、及全局的相似度文档检索。
+前端基于 `Vue 3 + Vite` 构建。核心视图包括 `apps/` (Spaces/智能体应用)、`datasets/` (数据集)、`tasks/`、`dataflow/`、`knowledgeBase/` 与 `models/`。
+首页 **DataMaster** 为全局统一对话入口，用户可通过文本指令、`#Dataset` 数据引用、`@SubAgent`（如 `@DFAgent`、`@loopai`、`@Paper2Any`）快捷调用底层功能。
 
-### 3.3 数据版本与高性能检索子系统 (MyScale + LakeFS)
-为突破原生 Hugging Face 数据集的 Viewer 性能与版本管理瓶颈，平台深度集成了以下数据层：
-- **LakeFS Storage Gateway**: 在底层 S3 对象存储之上实现 Git-like 的数据版本控制（分支、Commit、Rollback）。配合 `lakefs-spec` 实现大文件的直接拦截与挂载。
-- **MyScale Query Service**: 用作原 HF Viewer 的升级替换，基于 `VersionedS3MergeTree` 引擎。结合 LakeFS 的零拷贝优势，支持百亿级规模的结构化过滤、时空数据分析、关键字检索、高维向量及跨模态特征对象的快速混合查询（Hybrid Search）。
+### 3.2 混合网关与代理后端架构 (Backend Gateway)
 
-### 3.4 分布式流水线驱动引擎 (DataFlow-System)
-替换传统的简单后台 worker 队列，处理底层复杂的数据清洗、图谱化执行逻辑：
-- **分布式计算池 (Ray)**: 承接并并发式扩展各类处理算子（`Operators`）。如文档切分映射、向 AI API 服务请求 Embedding 等重负荷工作以及数据向 S3/Parquet 和 MyScale 数据库格式的最后回写与写入。
-- **控制与编排平台 (Prefect)**: 负责用户构建的 DAG 网络图执行顺序调度、拓扑排序、运行容错重试和运行回调。
+系统以 Django 为主网关入口，摒弃了强耦合设计，代之以 `httpx` 异步代理机制，在不改动外部组件架构的情况下，统一收敛了鉴权与通讯：
+- **认证代理 (Auth & JWT)**: Django 统一验证 User 会话与 Token，验证通过后请求经代理透传至各独立服务，双框架共享认证信息。
+- **动态应用挂载 (Spaces/Apps 引擎)**: Web 平台 Apps 按属性主要分为两类：
+  - **Type A (Built-in)**: 调用本平台自有 API 实现的应用 (如 Open-NotebookLM)。
+  - **Type B (Proxied Services)**: 具有独立后端的外部服务 (如 DataFlow-WebUI, LoopAI, Paper2Any)，经由 Django `httpx` 反向代理接入，前端呈现原生体验。提供 REST 及 WebSocket、SSE 流式透传支持。
+- **Agent Router**: 解析对话中的意图与 `@mention` 命令，通过路由表 (`AGENT_REGISTRY`) 将对话转发给指定 SubAgent，以 `stream_agent` 执行后台推理或 `open_app`/`open_iframe` 跳转前端页面工作台。
+
+### 3.3 算子包智能开发工作台 (Operator Workbench)
+
+针对框架底层的算子开发闭环设计的独立服务环境：
+- 使用 **code-server (VSCode Web)** 挂载特定的算子包代码目录（如 `/dataflow/operators/`）。
+- Django 负责进程的"按需启停"分配 (管理 `package_id` 到独立 `8010+` 端口的映射与销毁)。
+- 嵌入 AI 编程 Agent (内嵌 Claude Code 或 OpenCode CLI)，开发者可通过自然语言一键构建算子骨架代码、发起 `DataFlow CLI` 实时测试，并提交 PR 自动更新至线上 DataFlow 画布，实现“开发-测试-上线”在独立沙箱内的极致内聚。
+
+### 3.4 数据版本与高性能检索子系统 (MyScale + LakeFS)
+
+- **LakeFS Storage Gateway**: 承担 Git 操作语义的对象存储管理，提供不可变版本号，DataFlow 系统产出 Parquet 直接零拷贝封版。
+- **MyScale Query Service**: 构建基于 `VersionedS3MergeTree` 的矢量结构检索后端。处理基于多模态向量特征搜、元数据复杂过滤查询以替代传统 HF Viewer 性能瓶颈。
+
+### 3.5 分布式流水线驱动引擎 (DataFlow-System)
+
+用于应对后台 AI 构建与数据清洗图架构：
+- **分布式计算池 (Ray)** 承载超大规模高吞吐 Operator 节点计算负载。
+- **控制与编排平台 (Prefect)**: 控制 DAG 回调机制、并发排队、容错及调度依赖。
 
 ---
 
@@ -81,50 +98,53 @@ DCAI (Data-Centric AI) 平台是一个兼具模型浏览、数据集托管、智
 
 系统提供了丰富的接口用于服务间路由与前端渲染，以下按域梳理核心接口：
 
-### 4.1 基础业务与平台 API (面向前端/第三方)
-*主要部署在 `/api/v1/` 和 `/api/v2/` 路径下：*
+### 4.1 基础业务与平台 API (面向前端主体)
 
-- **用户身份与鉴权 API**:
-  - `POST /api/v1/login` (邮箱/账户鉴权请求，返回 JWT Token)
-  - `GET /api/v1/github/auth/generate` (第三方 OAuth)
-- **知识库与内容管理 API**:
-  - `GET|POST /api/v1/knowledge-base` (增删改查及知识库维护)
-  - `POST /api/v1/knowledge-base/<kb_id>/files` (上传存储文件，放入解析队列)
-  - `POST /api/v1/knowledge-base/search` (根据 Prompt 或内容进行知识库内向量检索)
-- **智能体管理与对话流 API**:
-  - `GET|POST /api/v1/agents` (Agent 基本资源维护)
-  - `POST /api/v1/agents/tools` (配置基于 OpenAPI JSON 的大模型工具解析)
-  - `POST /api/v1/chat` (向 Agent 发起带有上下文的对话请求，并返回 `text/event-stream` 流响应)
-  - `POST /api/v1/chat/share` (生成聊天对外分享链接)
+*部署在 `/api/v1/` 路径下：*
+- **知识库/对话交互 API**:
+  - `POST /api/v1/chat` (DataMaster 对话主入口，带上下文。解析并路由至 AgentRegistry 返回结构化指令或 SSE 流)
+  - `GET|POST /api/v1/knowledge-base`，涉及文件上传切割与入库。
+- **代码云开发环境 (Operator Workbench)**:
+  - `GET /api/v1/packages/`: 拉取算子包列表数据。
+  - `POST /api/v1/packages/{id}/editor/start`: 为请求动态分配并启动 Code-Server Sandbox 进程并返回挂载。
+  - `POST /api/v1/packages/{id}/editor/stop`: 关闭闲置 Code-Server。
+  - `POST /api/v1/packages/{id}/test`: 调用 dataflow 测试子进程并反馈通过率。
 
-### 4.2 数据集高性能检索接口 (数据查询 API)
-*由网关结合 MyScale Query Service 对外暴露的大尺度数据检索请求：*
+### 4.2 代理子服务网关接口 (Type B App API Middleware)
 
-- **`/search` 及向量检索接口**: 相比原生文本匹配，具备打分检索能力。
-  - 请求入口: `GET /search?dataset=my_dataset&query=ML&where=year>=2020`
-  - 内部响应: 结合 LLM 计算文本向量后组装 SQL (`... ORDER BY distance(...) LIMIT ...`) 获取数据特征响应给前端。
-- **`/filter` 数据过滤**: 结合 SQL `where` 的查询下发。
-- **`/rows` & `/size` 资源池读取**: 读取元数据并下发布局分页 (`LIMIT OFFSET`)。
+*部署在 `/api/v2/{service_name}/`，由 Django httpx 中间件转发：*
+- **`/api/v2/dataflow/*` (DataFlow WebUI 代理)**:
+  - 路由至 `:8002`，暴露 Pipeline 组装 (`/pipelines/create`)、Task 查询 (`/tasks/{id}`)。
+  - 底层调用 `dataflow-system` 相关接口，实现高性能、可扩展服务。
+- **`/api/v2/loopai/*` (LoopAI 平台代理)**:
+  - 路由至 `:8003`，透传 `starter/agent/message/stream` SSE 数据进行智能微调训练的互动进度播报。
+- **`/api/v2/dfagent/*`, `/api/v2/paper2any/*`**: 依同样逻辑透传对应独立 Python/Gradio 进程的请求。
 
-### 4.3 DataFlow 数据流编排系统接口
-*操作底座及声明式 DAG 控制接口，多由 FastAPI 暴露：*
+### 4.3 数据集高性能检索接口 (数据查询 API)
 
-- **REST 编排层接口**:
-  - `POST /api/v1/pipelines/create`: 接收外部图状 Pipeline UI 产生的图谱 JSON (Nodes 与 Edges) 请求，启动 Prefect 的引擎创建 `FlowRun` 并落地至 PostgreSQL 执行表。
-  - `GET /api/v1/pipelines/{pipeline_id}/status`: 返回状态更新同步至客户端。
-  - `GET /api/v2/dataflow/packages` / `/api/v1/operators`: 获取注册的可用算子及算子表单规约。
-- **核心算子与调度内部接口 (Python)**:
-  - `PipelineDAG`: `__init__(nodes, edges)` 解析拓扑；`get_execution_order() -> List[NodeInfo]` 按拓扑排序返回调度策略。
-  - `OperatorABC`: 继承制基类引擎。需实现 `run(storage, input_key, output_key, **kwargs) -> List[str]` 方法，实现对存储读写的屏蔽并产出特定特征的字段在 Ray 内执行。
+- **`/search` 及向量检索接口**: `/search?dataset=my_dataset&query=ML&where=year>=2020`，结合 LLM 结构化解析下发到底层 SQL。
 
 ---
 
 ## 5. 核心业务交互流转示意 (System Interaction Workflow)
 
-以 **"大规模多模态数据集入库分析与上线检索"** 场景为例，其系统交互跨度如下：
+### 场景 1: DataMaster 唤出 SubAgent (智能交互流)
 
-1. **触发与登记**：用户通过 Vue 前端新建一笔 Dataset 并上传了原始文件至对象存储 LakeFS `main` 主干分支上。系统随后将事件组装发给后端。此动作回调 DataFlow-System （`POST /api/v1/pipelines/create`）。
-2. **编排与清洗执行**：DataFlow 系统在背后将预设工作流构建 DAG：
-   - Prefect Orchestrator 将算子提交给 Ray Cluster 执行。
-   - `ParseDatasetOperator` 将文件解析和规范化（基于 Arrow）； `VectorEmbeddingOperator` 对文本和图像进行统一地高纬度 Embedding 编码，并将 Parquet 固定回写到 LakeFS 执行不可变提交；最后通过 `ImportToMyScaleOperator` 将向量写向 MyScale 以生成倒排及 HNSW 索引。
-3. **极速检索与响应**：此时，前端页面调用数据集检索。FastAPI 中间件接受查询后代理请求到底层 MyScale，依据其内部构造完成超十亿级别数据的混合查询并立等返回，而无需等待繁重缓慢的本地全量数据同步。
+1. **触发**: 用户在首页对话框输入 `@loopai 帮我基于 M1 数据集微调一个代码排序模型`。
+2. **意图路由**: `chat/views.py` 命中 `AgentRouter` 中配置的 `LoopAI-Agent` 规则。
+3. **响应动作**: 系统判定动作类型返回 `action: stream_agent` 和流式地址。前端界面展开 LoopAI SidePanel 组件，并连接透传的 SSE `stream_url`；代理层安全传送后续对话以完成底层微调任务调度。
+
+### 场景 2: 算子包智能在线编程开发与上线 (工作流集成)
+
+1. **环境准备**: 用户在 "算子包" 子应用列表进入 `dataflow-core-text` 详情并点击 `Open Editor`。Django 为其分配端口 `:8010` 启动 Code-Server 并 iframe 挂载回显。
+2. **AI 代写补全**: 用户向侧边栏 AI Agent (Claude/OpenCode) 发送业务要求“增加一个新算子清洗脏词”，Agent 获取编辑器文件树上下文注入代码到文件。
+3. **单元沙箱测试**: 用户调用页面内 Run Test(`POST /v1/packages/{id}/test`) ，后端拉起子进程 `dataflow.cli test`。
+4. **生效上线**: 算子自动写入代码库并经重载识别注册于 `OPERATOR_REGISTRY` 内。此时刷新 DataFlow Canvas，左侧算子库即刻显示该刚写好的最新算子拖拽使用。
+
+### 场景 3: 科学/自动驾驶领域衍生数据集生成与深度检索 (多模态数据加工与应用)
+
+1. **数据接入与基础托管**: 用户上传原始科学数据或自动驾驶采集的多模态语料（如视频、传感器数据及标注文档）至 LakeFS。系统将其初始登记为平台的基础 Dataset，并支持简单的元数据检索。
+2. **构建管线与衍生数据生成**: 用户在 DataFlow Canvas 中，利用预置的领域专用算子包（如 `DataFlow-Material` 或多模态 `DataFlow-MM`）构建数据处理 DAG。底层引擎（Prefect/Ray）开启并发异步解析、数据清洗、多模态 Embedding 与特征提取，最终将清洗或提纯后的结果封装为 **衍生数据集 (Derived Dataset)** 或持久化为专门的知识库表征存储入 MyScaleDB。
+3. **衍生数据集的高效语义检索**:
+   - 依赖 MyScale 底层强大的结构化过滤及海量多模态数据混合近邻搜索能力，此时的数据集不再仅支持表面元数据（如大小、格式）维度上的筛选。
+   - 科研人员、自动驾驶评估系统或后续关联应用中的模型分析工具（如 `LoopAI Analyzer`）、DataMaster 对话查询等，均可直接对衍生数据集执行高精度的语义检索指令与关键字筛选（如快速定位包含特定天气的帧段、提取具备罕见特征的高潜长尾数据），以此高效支撑长尾数据发现、靶向性数据回流清洗及精准的模型评估迭代。
