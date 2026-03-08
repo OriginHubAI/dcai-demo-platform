@@ -111,6 +111,7 @@ graph TD
     BackEnd --> BackendCode
     
     BackendDatasets -->|Search & Query Datasets| MyScale
+    BackendDatasets -->|Read Datasets          | LakeFS
     
     BackendTasks <-->|Submit Tasks & Query State| Prefect
     BackendModels --> Prefect
