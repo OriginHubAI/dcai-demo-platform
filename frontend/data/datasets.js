@@ -1036,3 +1036,77 @@ export const datasets = [
 export function getDatasetById(id) {
   return datasets.find(d => d.id === id)
 }
+
+// Generate mock autonomous driving data for DataStudio
+export function generateAutodrivingData(datasetId) {
+  const regions = ['boston', 'singapore']
+  const objects = ['car', 'truck', 'bus', 'pedestrian', 'cyclist', 'motorcycle', 'traffic-cone', 'barrier']
+  const scenes = ['intersection', 'highway-merge', 'parking-lot', 'residential', 'commercial']
+  const weather = ['clear', 'light-rain', 'overcast', 'night']
+  const actions = ['moving', 'stopped', 'turning', 'parked']
+  
+  const descriptions = [
+    'Urban intersection with multiple vehicles and pedestrians crossing. Traffic light is green.',
+    'Highway merge scenario with a truck entering from the ramp. Clear visibility conditions.',
+    'Residential street with parked cars on both sides. Cyclist moving in the bike lane.',
+    'Commercial area with heavy pedestrian traffic. Multiple traffic cones indicating road work.',
+    'Night scene at a well-lit intersection. Vehicle stopped at red light, pedestrians waiting.',
+    'Parking lot with vehicles maneuvering into spots. Barriers marking construction zone.',
+    'Highway segment with moderate traffic. Bus in the HOV lane, cars in regular lanes.',
+    'Downtown area with mixed traffic including motorcycles and bicycles. Traffic signals active.',
+    'Suburban intersection with school zone signage. Pedestrians on sidewalks, vehicles stopped.',
+    'Industrial area with trucks entering and exiting. Wide lanes, clear road markings.'
+  ]
+  
+  // Generate 50 sample records
+  return Array.from({ length: 50 }, (_, i) => {
+    const region = regions[Math.floor(Math.random() * regions.length)]
+    const baseLat = region === 'boston' ? 42.36 : 1.35
+    const baseLon = region === 'boston' ? -71.05 : 103.87
+    
+    // Generate random semantic vector (384 dimensions, normalized)
+    const vector = Array.from({ length: 384 }, () => (Math.random() - 0.5) * 2)
+    const norm = Math.sqrt(vector.reduce((sum, v) => sum + v * v, 0))
+    const normalizedVector = vector.map(v => v / norm)
+    
+    // Select random objects for this scene
+    const numObjects = 2 + Math.floor(Math.random() * 4)
+    const sceneObjects = []
+    for (let j = 0; j < numObjects; j++) {
+      const obj = objects[Math.floor(Math.random() * objects.length)]
+      if (!sceneObjects.includes(obj)) sceneObjects.push(obj)
+    }
+    
+    // Generate timestamp within the dataset time range
+    const startDate = new Date('2025-01-01')
+    const endDate = new Date('2025-03-15')
+    const timestamp = new Date(startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime()))
+    
+    return {
+      id: `sample-${String(i + 1).padStart(6, '0')}`,
+      timestamp: timestamp.toISOString(),
+      location: {
+        region: region,
+        lat: baseLat + (Math.random() - 0.5) * 0.1,
+        lon: baseLon + (Math.random() - 0.5) * 0.1
+      },
+      description: descriptions[Math.floor(Math.random() * descriptions.length)],
+      imageUrl: `https://picsum.photos/seed/${datasetId}-${i}/400/225`,
+      semantic: {
+        objects: sceneObjects,
+        attributes: [
+          weather[Math.floor(Math.random() * weather.length)],
+          scenes[Math.floor(Math.random() * scenes.length)],
+          actions[Math.floor(Math.random() * actions.length)]
+        ],
+        vector: normalizedVector
+      },
+      metadata: {
+        camera: 'front_center',
+        resolution: '1600x900',
+        weather: weather[Math.floor(Math.random() * weather.length)],
+        scene: scenes[Math.floor(Math.random() * scenes.length)]
+      }
+    }
+  })
+}
