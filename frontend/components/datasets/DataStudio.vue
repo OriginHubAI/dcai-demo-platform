@@ -130,11 +130,11 @@
 
     <!-- Column Statistics Summary -->
     <div class="mb-4 border border-gray-200 rounded-lg overflow-hidden">
-      <table class="min-w-full">
+      <table class="w-full" style="table-layout: fixed; min-width: 1160px;">
         <thead>
           <tr>
             <!-- ID Column -->
-            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200" style="width: 120px;">
+            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200 whitespace-nowrap" style="width: 140px;">
               <div class="flex items-center justify-between mb-1">
                 <span class="text-xs font-medium text-gray-600">ID</span>
                 <span class="text-xs text-gray-400">string</span>
@@ -145,7 +145,7 @@
               <div class="text-xs text-gray-500 mt-1">unique</div>
             </th>
             <!-- Timestamp Column -->
-            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200" style="min-width: 160px;">
+            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200 whitespace-nowrap" style="width: 160px;">
               <div class="flex items-center justify-between mb-1">
                 <span class="text-xs font-medium text-gray-600">Timestamp</span>
                 <span class="text-xs text-gray-400">datetime</span>
@@ -159,7 +159,7 @@
               <div class="text-xs text-gray-500 mt-1">2025-01 ~ 2025-03</div>
             </th>
             <!-- Location Column -->
-            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200" style="min-width: 160px;">
+            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200 whitespace-nowrap" style="width: 160px;">
               <div class="flex items-center justify-between mb-1">
                 <span class="text-xs font-medium text-gray-600">Location</span>
                 <span class="text-xs text-gray-400">geo</span>
@@ -168,7 +168,7 @@
               <div class="text-xs text-gray-500 mt-1">Boston, Singapore</div>
             </th>
             <!-- Description Column -->
-            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200" style="width: 448px;">
+            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200" style="width: 280px;">
               <div class="flex items-center justify-between mb-1">
                 <span class="text-xs font-medium text-gray-600">Description</span>
                 <span class="text-xs text-gray-400">text</span>
@@ -179,7 +179,7 @@
               <div class="text-xs text-gray-500 mt-1">avg 156 chars</div>
             </th>
             <!-- Image Column -->
-            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200" style="width: 120px;">
+            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200 whitespace-nowrap" style="width: 120px;">
               <div class="flex items-center justify-between mb-1">
                 <span class="text-xs font-medium text-gray-600">Image</span>
                 <span class="text-xs text-gray-400">image</span>
@@ -190,7 +190,7 @@
               <div class="text-xs text-gray-500 mt-1">1600×900</div>
             </th>
             <!-- Objects Column -->
-            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200" style="width: 200px;">
+            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200 whitespace-nowrap" style="width: 140px;">
               <div class="flex items-center justify-between mb-1">
                 <span class="text-xs font-medium text-gray-600">Objects</span>
                 <span class="text-xs text-gray-400">semantic</span>
@@ -204,7 +204,7 @@
               <div class="text-xs text-gray-500 mt-1">8 classes</div>
             </th>
             <!-- Vector Column -->
-            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200" style="min-width: 160px;">
+            <th class="px-4 py-3 text-left bg-gray-50 border-b border-gray-200 whitespace-nowrap" style="width: 160px;">
               <div class="flex items-center justify-between mb-1">
                 <span class="text-xs font-medium text-gray-600">Vector</span>
                 <span class="text-xs text-gray-400">vector</span>
@@ -222,32 +222,69 @@
     <!-- Table View -->
     <div v-if="viewMode === 'table'" class="border border-gray-200 rounded-lg overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
+        <table class="w-full divide-y divide-gray-200" style="table-layout: fixed; min-width: 1160px;">
           <thead class="bg-gray-50">
             <tr>
-              <th v-for="col in columns" :key="col.key" 
-                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                @click="sortBy(col.key)"
-              >
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 whitespace-nowrap" style="width: 140px;" @click="sortBy('id')">
                 <div class="flex items-center space-x-1">
-                  <span>{{ col.label }}</span>
-                  <span v-if="sortColumn === col.key" class="text-dc-primary">
-                    {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                  </span>
+                  <span>ID</span>
+                  <span v-if="sortColumn === 'id'" class="text-dc-primary">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
                 </div>
-                <div v-if="col.subLabel" class="text-xs text-gray-400 font-normal normal-case">{{ col.subLabel }}</div>
+                <div class="text-xs text-gray-400 font-normal normal-case">string</div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 whitespace-nowrap" style="width: 160px;" @click="sortBy('timestamp')">
+                <div class="flex items-center space-x-1">
+                  <span>Timestamp</span>
+                  <span v-if="sortColumn === 'timestamp'" class="text-dc-primary">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                </div>
+                <div class="text-xs text-gray-400 font-normal normal-case">datetime</div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 whitespace-nowrap" style="width: 160px;" @click="sortBy('location')">
+                <div class="flex items-center space-x-1">
+                  <span>Location</span>
+                  <span v-if="sortColumn === 'location'" class="text-dc-primary">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                </div>
+                <div class="text-xs text-gray-400 font-normal normal-case">lat, lon</div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" style="width: 280px;" @click="sortBy('description')">
+                <div class="flex items-center space-x-1">
+                  <span>Description</span>
+                  <span v-if="sortColumn === 'description'" class="text-dc-primary">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                </div>
+                <div class="text-xs text-gray-400 font-normal normal-case">text</div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 whitespace-nowrap" style="width: 120px;" @click="sortBy('image')">
+                <div class="flex items-center space-x-1">
+                  <span>Image</span>
+                  <span v-if="sortColumn === 'image'" class="text-dc-primary">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                </div>
+                <div class="text-xs text-gray-400 font-normal normal-case">camera</div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 whitespace-nowrap" style="width: 140px;" @click="sortBy('semantic_objects')">
+                <div class="flex items-center space-x-1">
+                  <span>Objects</span>
+                  <span v-if="sortColumn === 'semantic_objects'" class="text-dc-primary">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                </div>
+                <div class="text-xs text-gray-400 font-normal normal-case">semantic</div>
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 whitespace-nowrap" style="width: 160px;" @click="sortBy('semantic_vector')">
+                <div class="flex items-center space-x-1">
+                  <span>Vector</span>
+                  <span v-if="sortColumn === 'semantic_vector'" class="text-dc-primary">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                </div>
+                <div class="text-xs text-gray-400 font-normal normal-case">384-dim</div>
               </th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="row in paginatedData" :key="row.id" class="hover:bg-gray-50 transition-colors">
               <!-- ID Column -->
-              <td class="px-4 py-3 whitespace-nowrap text-xs font-mono text-gray-600 max-w-[120px] truncate">
+              <td class="px-4 py-3 whitespace-nowrap text-xs font-mono text-gray-600 truncate" style="width: 140px;">
                 {{ row.id }}
               </td>
-              
+
               <!-- Timestamp Column -->
-              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900" style="width: 160px;">
                 <div class="flex items-center space-x-1">
                   <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -255,9 +292,9 @@
                   <span>{{ formatTimestamp(row.timestamp) }}</span>
                 </div>
               </td>
-              
+
               <!-- Location Column -->
-              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+              <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900" style="width: 160px;">
                 <div class="flex items-center space-x-1">
                   <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -269,16 +306,16 @@
                   </div>
                 </div>
               </td>
-              
+
               <!-- Description Column -->
-              <td class="px-4 py-3 text-sm text-gray-700 max-w-md">
+              <td class="px-4 py-3 text-sm text-gray-700" style="width: 280px;">
                 <div class="line-clamp-2" :title="row.description">{{ row.description }}</div>
               </td>
-              
+
               <!-- Image Column -->
-              <td class="px-4 py-3 whitespace-nowrap">
+              <td class="px-4 py-3 whitespace-nowrap" style="width: 120px;">
                 <div class="relative group">
-                  <img :src="row.imageUrl" :alt="row.id" 
+                  <img :src="row.imageUrl" :alt="row.id"
                     class="w-24 h-16 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                     @click="openImageModal(row)"
                   />
@@ -289,10 +326,10 @@
                   </div>
                 </div>
               </td>
-              
+
               <!-- Semantic Objects Column -->
-              <td class="px-4 py-3">
-                <div class="flex flex-wrap gap-1 max-w-[200px]">
+              <td class="px-4 py-3 whitespace-nowrap" style="width: 140px;">
+                <div class="flex flex-wrap gap-1">
                   <span v-for="obj in row.semantic.objects.slice(0, 3)" :key="obj"
                     class="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded"
                   >
@@ -303,10 +340,10 @@
                   </span>
                 </div>
               </td>
-              
+
               <!-- Semantic Vector Column -->
-              <td class="px-4 py-3">
-                <div class="text-xs font-mono text-gray-600 truncate max-w-[200px]" :title="formatVector(row.semantic.vector)">
+              <td class="px-4 py-3 whitespace-nowrap" style="width: 160px;">
+                <div class="text-xs font-mono text-gray-600 truncate" :title="formatVector(row.semantic.vector)">
                   {{ formatVector(row.semantic.vector) }}
                 </div>
               </td>
