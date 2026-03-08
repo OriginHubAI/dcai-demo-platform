@@ -123,24 +123,94 @@ graph TD
     Prefect <-->|Job State| PostgreSQL
     Prefect -->|Distribute Tasks| Ray
     
-    Ray -.->|Save Data / ETL| LakeFS
+    Ray -->|Save Data / ETL| LakeFS
     LakeFS --> MinIO
     Ray -->|Save Results| MinIO
     
     MyScale <-->|VersionedStorage| LakeFS
 ```
 
-**任务调度与执行关系说明**：
-- **pipeline definition** `(definition : pipeline = 1:1)` -> **pipeline**
-- **pipeline** `(pipeline : flow = 1:n)` -> **n:[1]+ flows**
-- **n:[1]+ flows** `(flow : task = 1:m)` -> **m:[1]+ tasks**
-
 **核心组件职责细节说明**：
-- **Redis**: 中存储前端缓存数据。
-- **PostgreSQL**: 中存储用户提交的 pipeline 的定义的全部或部分，pipeline 映射的 flow 的执行信息，flow 执行结果数据，用户信息。短时间内，可能会同时存在多个 PG 实例，每个组件使用不同的 PG 实例情况。
-- **MyScale**: 中存储数据源的各种类型的索引，用来在创建数据集的时候，对应创建索引信息，支持用户在前端通过各种条件检索数据集。
-- **MinIO**: 中存储数据和中间结果数据。
-- **BackEnd Store**: 不是作为一个独立项目，而是针对 MinIO、Local、Cloud 等不同的文件存在方式，在业务上提供一个统一的外部调用方式，防止文件因为内网配置而导致的访问失败。
+
+#### 网关层组件
+
+- **Django API Gateway (v1)**:
+  - 作为系统的统一入口网关，负责所有 HTTP/WebSocket/SSE 请求的接入与路由
+  - 承担认证与授权职责：JWT Token 验证、User 会话管理、权限校验
+  - 实现 **Agent Router** 功能：解析用户对话中的 `@mention` 命令（如 `@DFAgent`、`@loopai`），根据 `AGENT_REGISTRY` 路由表将请求分发至对应的 SubAgent
+  - 通过 `httpx` 异步代理机制，将请求透传至各独立 FastAPI 服务（Type B Apps），统一收敛鉴权与通讯
+  - 管理 Operator Workbench 的生命周期：按需分配端口、启停 Code-Server 沙箱环境
+  - 提供 Admin 后台管理界面，处理业务逻辑与配置管理
+
+- **FastAPI Services (v2 / Type B Apps)**:
+  - 独立部署的高性能异步服务，通过 Django 代理层接入系统
+  - **DataFlow-WebUI (:8002)**: 提供 Pipeline 组装、DAG 控制、任务状态查询等数据流编排能力
+  - **LoopAI (:8003)**: 智能微调训练平台，提供 SSE 流式进度播报与交互式对话
+  - **Paper2Any (:8004)** 等其他领域专属 Agent 服务
+  - 各服务独立维护自身的业务逻辑，通过代理层共享 Django 的认证信息
+
+#### 数据处理引擎
+
+- **DataFlow-System (DataFlow + Ray + Prefect)**:
+  - **Prefect (控制与编排平台)**:
+    - 负责任务 DAG 的定义、调度与执行编排
+    - 管理任务依赖关系、并发控制、失败重试与容错机制
+    - 维护任务执行状态与历史记录，与 PostgreSQL 交互存储元数据
+    - 提供可视化的任务监控与日志追踪能力
+  - **Ray (分布式计算集群)**:
+    - 承载超大规模、高吞吐的算子节点计算负载
+    - 支持并行数据处理、分布式训练、模型推理等计算密集型任务
+    - 动态扩缩容计算资源，适应不同规模的数据处理需求
+    - 执行 ETL 流程，将处理结果写入 LakeFS 和 MinIO
+
+#### 数据库与缓存层
+
+- **Redis**:
+  - 存储前端用户会话缓存、JWT Token 黑名单
+  - 作为消息代理，支持 WebSocket 连接状态管理与实时消息推送
+  - 缓存热点数据（如数据集元数据、用户配置），降低数据库查询压力
+  - 支持分布式锁实现，保障并发场景下的数据一致性
+
+- **PostgreSQL**:
+  - 存储核心业务数据：用户提交的 Pipeline 定义、Flow 执行信息与结果数据
+  - 管理系统级数据：用户信息、权限配置、组织关系、知识库文档结构
+  - DataFlow-WebUI 独立使用 PG 实例存储 DAG 元数据、任务运行历史
+  - 支持复杂的关系查询与事务处理，保障数据完整性
+  - 短期内可能存在多个 PG 实例，各组件按需求使用独立实例
+
+- **MyScale (向量数据库 + OLAP)**:
+  - 存储数据集的向量化索引（文本 Embedding、图像特征、多模态表征）
+  - 支持复杂的元数据过滤查询（结构化条件 + 语义搜索的组合查询）
+  - 替代传统 HuggingFace Viewer 的性能瓶颈，实现海量数据集的秒级检索
+  - 基于 `VersionedS3MergeTree` 引擎与 LakeFS 集成，支持版本化数据的向量索引管理
+
+#### 存储层组件
+
+- **LakeFS (多版本数据管理)**:
+  - 为对象存储提供 Git 语义的操作抽象：Branch、Commit、Merge、Revert
+  - 管理数据集的不可变版本号，支持零拷贝快照创建
+  - DataFlow 产出的 Parquet 数据直接封版，实现数据血缘追踪
+  - 与 MyScale 协同工作，为向量检索提供版本化数据基础
+
+- **MinIO / S3 / OSS (对象存储)**:
+  - 存储原始数据集文件、中间处理结果、模型 Checkpoint
+  - 支持大文件分片上传与断点续传
+  - 通过 LakeFS 网关实现版本化对象管理
+
+- **BackEnd Store (统一存储网关)**:
+  - 非独立项目，而是面向业务层的统一存储抽象层
+  - 封装 MinIO、Local Filesystem、Cloud Storage（OSS/S3）等不同存储后端的访问差异
+  - 提供统一的文件上传、下载、预签名 URL 生成接口
+  - 解决内网配置导致的访问失败问题，根据部署环境自动选择最优访问路径
+  - 支持公共文件的直接穿透访问与私有文件的临时授权访问
+
+#### 异步任务队列
+
+- **Celery (分布式任务队列)**:
+  - 处理耗时的后台任务：数据集文件解析、文档切分与向量化、模型训练任务提交
+  - 配合 Redis 作为 Broker，实现任务的异步调度与结果回调
+  - 支持任务重试机制、优先级队列与定时任务调度
+  - 提供任务执行状态监控与死信队列管理
 
 ---
 
