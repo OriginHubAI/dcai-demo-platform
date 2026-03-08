@@ -315,11 +315,14 @@
               <!-- Image Column -->
               <td class="px-4 py-3 whitespace-nowrap" style="width: 120px;">
                 <div class="relative group">
-                  <img :src="row.imageUrl" :alt="row.id"
+                  <img
+                    :src="row.imageUrl"
+                    :alt="row.id"
                     class="w-24 h-16 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                     @click="openImageModal(row)"
+                    @error="handleImageError($event, row)"
                   />
-                  <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-lg flex items-center justify-center transition-all">
+                  <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-lg flex items-center justify-center transition-all pointer-events-none">
                     <svg class="w-6 h-6 text-white opacity-0 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
@@ -384,7 +387,12 @@
         @click="openImageModal(row)"
       >
         <div class="relative aspect-video">
-          <img :src="row.imageUrl" :alt="row.id" class="w-full h-full object-cover" />
+          <img
+            :src="row.imageUrl"
+            :alt="row.id"
+            class="w-full h-full object-cover"
+            @error="handleImageError($event, row)"
+          />
           <div class="absolute top-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
             {{ formatTimestamp(row.timestamp) }}
           </div>
@@ -418,7 +426,12 @@
     <div v-if="selectedRow" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" @click.self="selectedRow = null">
       <div class="bg-white rounded-xl max-w-5xl w-full max-h-[90vh] overflow-auto">
         <div class="relative">
-          <img :src="selectedRow.imageUrl" :alt="selectedRow.id" class="w-full object-contain max-h-[60vh]" />
+          <img
+            :src="selectedRow.imageUrl"
+            :alt="selectedRow.id"
+            class="w-full object-contain max-h-[60vh]"
+            @error="handleImageError($event, selectedRow)"
+          />
           <button @click="selectedRow = null" class="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -667,6 +680,16 @@ function formatVector(vector, maxItems = 5) {
 
 function openImageModal(row) {
   selectedRow.value = row
+}
+
+function handleImageError(event, row) {
+  // Fallback to a generated placeholder if the image fails to load
+  const objects = row?.semantic?.objects || ['scene']
+  const objectLabels = objects.slice(0, 2).map(obj => obj.charAt(0).toUpperCase() + obj.slice(1)).join('+')
+  const label = encodeURIComponent(objectLabels || 'Scene')
+  const bgColor = '6C757D'
+  const textColor = 'FFFFFF'
+  event.target.src = `https://placehold.co/400x225/${bgColor}/${textColor}?text=${label}&font=roboto`
 }
 
 // Reset page when search changes
