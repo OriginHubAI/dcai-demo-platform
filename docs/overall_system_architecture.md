@@ -20,7 +20,7 @@ DCAI (Data-Centric AI) 平台是一个兼具模型浏览、数据集托管、智
 │     Vue 3 + Vite | Tailwind CSS | Vue Router | Vue I18n                    │
 │                                                                            │
 │  [DataMaster Home] @mention Agent Router  (Unified Chat Entry)             │
-│  [Models] [Datasets] [Tasks] [Spaces/Apps] [DataFlow UI] [Knowledge Base]  │
+│  [Models]  [Datasets]  [Tasks]  [Apps]  [DataFlow UI]  [Knowledge Base]    │
 └──────────────────────────────────────┬─────────────────────────────────────┘
                                        │ HTTP / SSE / WebSocket / iframe
                                        ▼
@@ -34,7 +34,7 @@ DCAI (Data-Centric AI) 平台是一个兼具模型浏览、数据集托管、智
           │ (Auth Sync / Proxy)        │ (Proxy)                    │ (Proxy)
           ▼                            ▼                            ▼ 
 ┌──────────────────┐  ┌────────────────────────────────┐  ┌──────────────────┐
-│ Spaces/Apps      │  │ Spaces/Apps(DataFlow)          │  │ Spaces/Apps      │
+│ Apps             │  │ Apps(DataFlow)                 │  │ Apps             │
 │ Paper2Any        │  │ DataFlow-WebUI (:8002)         │  │ LoopAI (:8003)   │
 │ FastAPI (:8004)  │  │ FastAPI (Async / DAG Ctrl)     │  │ FastAPI          │
 └─────────┬────────┘  └────────────────┬───────────────┘  └─────────┬────────┘
@@ -44,7 +44,7 @@ DCAI (Data-Centric AI) 平台是一个兼具模型浏览、数据集托管、智
 │ Relational & MQ  │  │     Search & Vector Engine     │  │ Data Processing  │
 │                  │  │                                │  │                  │
 │ - PostgreSQL     │  │ - MyScale (Vector / OLAP)      │  │ - Prefect (DAG)  │
-│ - Redis (Cache)  │  │ - SQLite (Local Dev)           │  │ - Ray Cluster    │
+│ - Redis (Cache)  │  │ - SQLite (Local Dev/NotebookLM)│  │ - Ray Cluster    │
 │ - Celery         │  │                                │  │ - Operators      │
 └─────────┬────────┘  └────────────────┬───────────────┘  └─────────┬────────┘
           │                            │                            │ (ETL)
@@ -55,6 +55,92 @@ DCAI (Data-Centric AI) 平台是一个兼具模型浏览、数据集托管、智
 │  │ LakeFS (Data-as-Code): Commits, Branches, Zero-copy snapshots        │  │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
+
+### 2.1 全局核心组件流向图
+
+```mermaid
+graph TD
+    subgraph FrontendLayer [1. User Interface / Frontend]
+        Frontend[Vue 3 Frontend<br>DataMaster & UI Views]
+    end
+
+    subgraph GatewayLayer [2. Backend API Gateway Layer]
+        BackEnd[Django API Gateway<br>Auth & Router Layer]
+        BackendDatasets[Datasets Service]
+        BackendTasks[Tasks Service]
+        BackendModels[Models Service]
+        BackendCode[Code Service]
+        BackEndStore[BackEnd Store Component]
+    end
+
+    subgraph AppsLayer [3. Proxied Services / Spaces]
+        DataFlowWeb[DataFlow-WebUI / SubAgent]
+        OtherApps[LoopAI / Paper2Any etc.]
+    end
+
+    subgraph DataProcessLayer [4. Data Processing Engines]
+        Prefect[Prefect Scheduler]
+        Ray[Ray Compute Cluster]
+    end
+
+    subgraph DatabaseLayer [5. Databases & Vector Engines]
+        Redis[(Redis Cache)]
+        PostgreSQL[(PostgreSQL)]
+        MyScale[(MyScale Vector/OLAP)]
+    end
+
+    subgraph StorageLayer [6. Storage Layer / Data Lake]
+        LakeFS[LakeFS<br>Version Control]
+        MinIO[(MinIO / S3 / OSS)]
+    end
+
+    %% Relationships
+    Frontend <-->|HTTP / WS / SSE| BackEnd
+    BackEndStore -.->|大文件下载，且公共Minio可以直接穿透| Frontend
+    
+    BackEnd -->|Proxy & Dispatch| DataFlowWeb
+    BackEnd -->|Proxy| OtherApps
+    
+    BackEnd <--> Redis
+    BackEnd <--> PostgreSQL
+    BackEnd <--> BackEndStore
+    
+    BackEnd --> BackendDatasets
+    BackEnd --> BackendTasks
+    BackEnd --> BackendModels
+    BackEnd --> BackendCode
+    
+    BackendDatasets -->|Search & Query Datasets| MyScale
+    
+    BackendTasks <-->|Submit Tasks & Query State| Prefect
+    BackendModels --> Prefect
+    BackendCode --> Prefect
+    
+    BackEndStore --> MinIO
+    
+    DataFlowWeb -->|Query & State| PostgreSQL
+    DataFlowWeb -->|Submit DAGs| Prefect
+    Prefect <-->|Job State| PostgreSQL
+    Prefect -->|Distribute Tasks| Ray
+    
+    Ray -.->|Save Data / ETL| LakeFS
+    LakeFS --> MinIO
+    Ray -->|Save Results| MinIO
+    
+    MyScale <-->|VersionedStorage| LakeFS
+```
+
+**任务调度与执行关系说明**：
+- **pipeline definition** `(definition : pipeline = 1:1)` -> **pipeline**
+- **pipeline** `(pipeline : flow = 1:n)` -> **n:[1]+ flows**
+- **n:[1]+ flows** `(flow : task = 1:m)` -> **m:[1]+ tasks**
+
+**核心组件职责细节说明**：
+- **Redis**: 中存储前端缓存数据。
+- **PostgreSQL**: 中存储用户提交的 pipeline 的定义的全部或部分，pipeline 映射的 flow 的执行信息，flow 执行结果数据，用户信息。短时间内，可能会同时存在多个 PG 实例，每个组件使用不同的 PG 实例情况。
+- **MyScale**: 中存储数据源的各种类型的索引，用来在创建数据集的时候，对应创建索引信息，支持用户在前端通过各种条件检索数据集。
+- **MinIO**: 中存储数据和中间结果数据。
+- **BackEnd Store**: 不是作为一个独立项目，而是针对 MinIO、Local、Cloud 等不同的文件存在方式，在业务上提供一个统一的外部调用方式，防止文件因为内网配置而导致的访问失败。
 
 ---
 
@@ -147,4 +233,5 @@ DCAI (Data-Centric AI) 平台是一个兼具模型浏览、数据集托管、智
 2. **构建管线与衍生数据生成**: 用户在 DataFlow Canvas 中，利用预置的领域专用算子包（如 `DataFlow-Material` 或多模态 `DataFlow-MM`）构建数据处理 DAG。底层引擎（Prefect/Ray）开启并发异步解析、数据清洗、多模态 Embedding 与特征提取，最终将清洗或提纯后的结果封装为 **衍生数据集 (Derived Dataset)** 或持久化为专门的知识库表征存储入 MyScaleDB。
 3. **衍生数据集的高效语义检索**:
    - 依赖 MyScale 底层强大的结构化过滤及海量多模态数据混合近邻搜索能力，此时的数据集不再仅支持表面元数据（如大小、格式）维度上的筛选。
-   - 科研人员、自动驾驶评估系统或后续关联应用中的模型分析工具（如 `LoopAI Analyzer`）、DataMaster 对话查询等，均可直接对衍生数据集执行高精度的语义检索指令与关键字筛选（如快速定位包含特定天气的帧段、提取具备罕见特征的高潜长尾数据），以此高效支撑长尾数据发现、靶向性数据回流清洗及精准的模型评估迭代。
+   - 科研人员、自动驾驶评估系统或后续关联应用中的模型分析工具（如 `LoopAI Analyzer`）、DataMaster 对话查询等，均可直接对衍生数据集执行高精度的语义检索指令与关键字筛选（如快速定位包含特定天气的帧段、提取具备罕见特征的高潜长尾数据），以此高效支撑长尾数据发现、精准的模型评估和调优迭代。
+
