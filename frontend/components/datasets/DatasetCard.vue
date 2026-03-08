@@ -26,6 +26,20 @@
           />
         </div>
         <p class="text-xs text-gray-500 line-clamp-2 mt-1">{{ dataset.description }}</p>
+        <!-- Parent Dataset Link for Derived Datasets -->
+        <div v-if="dataset.parentDataset" class="mt-2 flex items-center gap-1">
+          <span class="text-xs text-gray-400">From:</span>
+          <router-link 
+            :to="`/datasets/${dataset.parentDataset}`"
+            class="text-xs text-blue-600 hover:underline hover:text-blue-700 flex items-center gap-0.5"
+            @click.stop
+          >
+            {{ dataset.parentDataset }}
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </router-link>
+        </div>
       </div>
     </div>
     <div class="flex items-center flex-wrap gap-2 mt-3">

@@ -703,6 +703,10 @@ export const datasets = [
     description: 'Original raw autonomous driving dataset from nuScenes. Contains 1000 scenes of multimodal sensor data including 6 cameras, 1 LiDAR, 5 radar, GPS and IMU. Supports 3D object detection, tracking, and trajectory prediction tasks.',
     datasetType: 'original',
     derivedDatasets: ['autodrive-derived-nuscenes-filtered', 'autodrive-derived-nuscenes-labeled'],
+    relatedTasks: [
+      { id: 'task-nuscenes-filter', name: 'nuScenes Quality Filtering Pipeline', type: 'Data Processing', status: 'completed', progress: 100, isOutput: true, startedAt: '2025-03-15T08:00:00Z', endedAt: '2025-03-15T14:30:00Z', duration: '6h 30m' },
+      { id: 'task-nuscenes-label', name: 'nuScenes VLM Labeling Pipeline', type: 'Data Processing', status: 'completed', progress: 100, isOutput: true, startedAt: '2025-03-14T10:00:00Z', endedAt: '2025-03-15T02:15:00Z', duration: '16h 15m' }
+    ],
     metadata: {
       timeRange: { start: '2025-01-01', end: '2025-03-15', timezone: 'UTC' },
       spatial: {
@@ -732,6 +736,10 @@ export const datasets = [
     description: 'Original raw 360-degree autonomous driving dataset extending KITTI. Contains rich sensory data with 2 fisheye cameras, 2 perspective cameras, and 1 Velodyne LiDAR. Supports 360-degree perception and dense annotation tasks.',
     datasetType: 'original',
     derivedDatasets: ['autodrive-derived-kitti360-processed', 'autodrive-derived-kitti360-semantic'],
+    relatedTasks: [
+      { id: 'task-kitti360-process', name: 'KITTI-360 Enhancement Pipeline', type: 'Data Processing', status: 'completed', progress: 100, isOutput: true, startedAt: '2025-03-08T14:00:00Z', endedAt: '2025-03-09T02:30:00Z', duration: '12h 30m' },
+      { id: 'task-kitti360-semantic', name: 'KITTI-360 Semantic Segmentation Pipeline', type: 'Data Processing', status: 'completed', progress: 100, isOutput: true, startedAt: '2025-03-06T08:00:00Z', endedAt: '2025-03-07T18:20:00Z', duration: '34h 20m' }
+    ],
     metadata: {
       timeRange: { start: '2024-06-01', end: '2024-12-31', timezone: 'CET' },
       spatial: {
@@ -761,6 +769,10 @@ export const datasets = [
     description: 'Original raw autonomous driving dataset from Waymo. High-resolution sensor data with 5 LiDARs and 5 cameras covering 360 degrees. Includes diverse geographic locations and weather conditions for robust perception research.',
     datasetType: 'original',
     derivedDatasets: ['autodrive-derived-waymo-motion', 'autodrive-derived-waymo-perception'],
+    relatedTasks: [
+      { id: 'task-waymo-motion', name: 'Waymo Motion Forecasting Pipeline', type: 'Data Processing', status: 'completed', progress: 100, isOutput: true, startedAt: '2025-03-20T09:00:00Z', endedAt: '2025-03-21T08:45:00Z', duration: '23h 45m' },
+      { id: 'task-waymo-perception', name: 'Waymo Perception Enhancement Pipeline', type: 'Data Processing', status: 'running', progress: 78, isOutput: true, startedAt: '2025-03-21T10:00:00Z', endedAt: null, duration: null }
+    ],
     metadata: {
       timeRange: { start: '2024-01-01', end: '2025-03-20', timezone: 'America/Los_Angeles' },
       spatial: {
@@ -793,6 +805,9 @@ export const datasets = [
     parentDataset: 'autodrive-raw-nuscenes',
     readonly: true,
     processingPipeline: 'nuscenes_quality_filter_pipeline',
+    relatedTasks: [
+      { id: 'task-nuscenes-filter', name: 'nuScenes Quality Filtering Pipeline', type: 'Data Processing', status: 'completed', progress: 100, isInput: true, startedAt: '2025-03-15T08:00:00Z', endedAt: '2025-03-15T14:30:00Z', duration: '6h 30m' }
+    ],
     metadata: {
       timeRange: { start: '2025-01-01', end: '2025-03-15', timezone: 'UTC' },
       spatial: {
@@ -834,6 +849,9 @@ export const datasets = [
     parentDataset: 'autodrive-raw-nuscenes',
     readonly: true,
     processingPipeline: 'nuscenes_vlm_labeling_pipeline',
+    relatedTasks: [
+      { id: 'task-nuscenes-label', name: 'nuScenes VLM Labeling Pipeline', type: 'Data Processing', status: 'completed', progress: 100, isInput: true, startedAt: '2025-03-14T10:00:00Z', endedAt: '2025-03-15T02:15:00Z', duration: '16h 15m' }
+    ],
     metadata: {
       timeRange: { start: '2025-01-01', end: '2025-03-15', timezone: 'UTC' },
       spatial: {
@@ -871,6 +889,9 @@ export const datasets = [
     parentDataset: 'autodrive-raw-kitti-360',
     readonly: true,
     processingPipeline: 'kitti360_enhancement_pipeline',
+    relatedTasks: [
+      { id: 'task-kitti360-process', name: 'KITTI-360 Enhancement Pipeline', type: 'Data Processing', status: 'completed', progress: 100, isInput: true, startedAt: '2025-03-08T14:00:00Z', endedAt: '2025-03-09T02:30:00Z', duration: '12h 30m' }
+    ],
     metadata: {
       timeRange: { start: '2024-06-01', end: '2024-12-31', timezone: 'CET' },
       spatial: {
@@ -907,6 +928,9 @@ export const datasets = [
     parentDataset: 'autodrive-raw-kitti-360',
     readonly: true,
     processingPipeline: 'kitti360_semantic_pipeline',
+    relatedTasks: [
+      { id: 'task-kitti360-semantic', name: 'KITTI-360 Semantic Segmentation Pipeline', type: 'Data Processing', status: 'completed', progress: 100, isInput: true, startedAt: '2025-03-06T08:00:00Z', endedAt: '2025-03-07T18:20:00Z', duration: '34h 20m' }
+    ],
     metadata: {
       timeRange: { start: '2024-06-01', end: '2024-12-31', timezone: 'CET' },
       spatial: {
@@ -944,6 +968,9 @@ export const datasets = [
     parentDataset: 'autodrive-raw-waymo-open',
     readonly: true,
     processingPipeline: 'waymo_motion_forecasting_pipeline',
+    relatedTasks: [
+      { id: 'task-waymo-motion', name: 'Waymo Motion Forecasting Pipeline', type: 'Data Processing', status: 'completed', progress: 100, isInput: true, startedAt: '2025-03-20T09:00:00Z', endedAt: '2025-03-21T08:45:00Z', duration: '23h 45m' }
+    ],
     metadata: {
       timeRange: { start: '2024-01-01', end: '2025-03-20', timezone: 'America/Los_Angeles' },
       spatial: {
@@ -982,6 +1009,9 @@ export const datasets = [
     parentDataset: 'autodrive-raw-waymo-open',
     readonly: true,
     processingPipeline: 'waymo_perception_enhancement_pipeline',
+    relatedTasks: [
+      { id: 'task-waymo-perception', name: 'Waymo Perception Enhancement Pipeline', type: 'Data Processing', status: 'running', progress: 78, isInput: true, startedAt: '2025-03-21T10:00:00Z', endedAt: null, duration: null }
+    ],
     metadata: {
       timeRange: { start: '2024-01-01', end: '2025-03-20', timezone: 'America/Los_Angeles' },
       spatial: {

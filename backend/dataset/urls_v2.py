@@ -7,6 +7,95 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 
+# Sample tasks data for related tasks
+SAMPLE_TASKS = [
+    {
+        'id': 'task-nuscenes-filter',
+        'name': 'nuScenes Quality Filtering Pipeline',
+        'dataset': 'autodrive-raw-nuscenes',
+        'outputDataset': 'autodrive-derived-nuscenes-filtered',
+        'package': 'DataFlow-MM',
+        'type': 'Data Processing',
+        'status': 'completed',
+        'progress': 100,
+        'startedAt': '2025-03-15T08:00:00Z',
+        'endedAt': '2025-03-15T14:30:00Z',
+        'duration': '6h 30m',
+        'author': 'autodrive-ai',
+    },
+    {
+        'id': 'task-nuscenes-label',
+        'name': 'nuScenes VLM Labeling Pipeline',
+        'dataset': 'autodrive-raw-nuscenes',
+        'outputDataset': 'autodrive-derived-nuscenes-labeled',
+        'package': 'DataFlow-MM',
+        'type': 'Data Processing',
+        'status': 'completed',
+        'progress': 100,
+        'startedAt': '2025-03-14T10:00:00Z',
+        'endedAt': '2025-03-15T02:15:00Z',
+        'duration': '16h 15m',
+        'author': 'autodrive-ai',
+    },
+    {
+        'id': 'task-waymo-motion',
+        'name': 'Waymo Motion Forecasting Pipeline',
+        'dataset': 'autodrive-raw-waymo-open',
+        'outputDataset': 'autodrive-derived-waymo-motion',
+        'package': 'DataFlow-MM',
+        'type': 'Data Processing',
+        'status': 'completed',
+        'progress': 100,
+        'startedAt': '2025-03-20T09:00:00Z',
+        'endedAt': '2025-03-21T08:45:00Z',
+        'duration': '23h 45m',
+        'author': 'autodrive-ai',
+    },
+    {
+        'id': 'task-waymo-perception',
+        'name': 'Waymo Perception Enhancement Pipeline',
+        'dataset': 'autodrive-raw-waymo-open',
+        'outputDataset': 'autodrive-derived-waymo-perception',
+        'package': 'DataFlow-MM',
+        'type': 'Data Processing',
+        'status': 'running',
+        'progress': 78,
+        'startedAt': '2025-03-21T10:00:00Z',
+        'endedAt': None,
+        'duration': None,
+        'author': 'autodrive-ai',
+    },
+    {
+        'id': 'task-kitti360-process',
+        'name': 'KITTI-360 Enhancement Pipeline',
+        'dataset': 'autodrive-raw-kitti-360',
+        'outputDataset': 'autodrive-derived-kitti360-processed',
+        'package': 'DataFlow-MM',
+        'type': 'Data Processing',
+        'status': 'completed',
+        'progress': 100,
+        'startedAt': '2025-03-08T14:00:00Z',
+        'endedAt': '2025-03-09T02:30:00Z',
+        'duration': '12h 30m',
+        'author': 'autodrive-ai',
+    },
+    {
+        'id': 'task-kitti360-semantic',
+        'name': 'KITTI-360 Semantic Segmentation Pipeline',
+        'dataset': 'autodrive-raw-kitti-360',
+        'outputDataset': 'autodrive-derived-kitti360-semantic',
+        'package': 'DataFlow-MM',
+        'type': 'Data Processing',
+        'status': 'completed',
+        'progress': 100,
+        'startedAt': '2025-03-06T08:00:00Z',
+        'endedAt': '2025-03-07T18:20:00Z',
+        'duration': '34h 20m',
+        'author': 'autodrive-ai',
+    },
+]
+
+
 # Sample dataset data for API mode - includes autodriving datasets
 SAMPLE_DATASETS = [
     {
@@ -470,6 +559,26 @@ def dataset_detail_v2(request, dataset_id):
                     'id': parent['id'],
                     'name': parent['name']
                 }
+        
+        # Get related tasks for this dataset
+        related_tasks = [
+            {
+                'id': t['id'],
+                'name': t['name'],
+                'type': t['type'],
+                'status': t['status'],
+                'progress': t['progress'],
+                'isInput': t.get('dataset') == dataset_id,
+                'isOutput': t.get('outputDataset') == dataset_id,
+                'startedAt': t.get('startedAt'),
+                'endedAt': t.get('endedAt'),
+                'duration': t.get('duration'),
+            }
+            for t in SAMPLE_TASKS
+            if t.get('dataset') == dataset_id or t.get('outputDataset') == dataset_id
+        ]
+        if related_tasks:
+            response_data['relatedTasks'] = related_tasks
         
         return Response({
             'code': 0,

@@ -40,23 +40,78 @@
           
           <!-- Dataset Relationships -->
           <div v-if="dataset.parentDataset || (dataset.derivedDatasets && dataset.derivedDatasets.length)" class="mb-6 p-4 bg-gray-50 rounded-lg">
-            <h3 class="text-sm font-semibold text-gray-700 mb-2">Dataset Relationships</h3>
-            <div v-if="dataset.parentDataset" class="text-sm text-gray-600 mb-1">
-              <span class="text-gray-500">Parent Dataset:</span>
-              <router-link :to="`/datasets/${dataset.parentDataset}`" class="text-blue-600 hover:underline ml-1">{{ dataset.parentDataset }}</router-link>
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">{{ $t('datasets.relationships.title') }}</h3>
+            <div v-if="dataset.parentDataset" class="text-sm text-gray-600 mb-3">
+              <span class="text-gray-500">{{ $t('datasets.relationships.parentDataset') }}:</span>
+              <router-link :to="`/datasets/${dataset.parentDataset}`" class="text-blue-600 hover:underline ml-1 font-medium">{{ dataset.parentDataset }}</router-link>
             </div>
             <div v-if="dataset.derivedDatasets && dataset.derivedDatasets.length" class="text-sm text-gray-600">
-              <span class="text-gray-500">Derived Datasets:</span>
+              <span class="text-gray-500">{{ $t('datasets.relationships.derivedDatasets') }}:</span>
               <div class="flex flex-wrap gap-2 mt-1">
                 <router-link 
                   v-for="derivedId in dataset.derivedDatasets" 
                   :key="derivedId"
                   :to="`/datasets/${derivedId}`"
-                  class="text-blue-600 hover:underline text-xs bg-blue-50 px-2 py-1 rounded"
+                  class="text-blue-600 hover:underline text-xs bg-blue-50 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100 transition-colors"
                 >
                   {{ derivedId }}
                 </router-link>
               </div>
+            </div>
+          </div>
+
+          <!-- Related Tasks -->
+          <div v-if="dataset.relatedTasks && dataset.relatedTasks.length" class="mb-6 p-4 bg-gray-50 rounded-lg">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">{{ $t('datasets.relatedTasks.title') }}</h3>
+            <div class="space-y-2">
+              <router-link 
+                v-for="task in dataset.relatedTasks" 
+                :key="task.id"
+                :to="`/tasks/${task.id}`"
+                class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all group"
+              >
+                <div class="flex items-center gap-3">
+                  <!-- Status Icon -->
+                  <div class="flex-shrink-0">
+                    <div v-if="task.status === 'running'" class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    <div v-else-if="task.status === 'completed'" class="w-2 h-2 rounded-full bg-blue-500"></div>
+                    <div v-else-if="task.status === 'failed'" class="w-2 h-2 rounded-full bg-red-500"></div>
+                    <div v-else class="w-2 h-2 rounded-full bg-gray-400"></div>
+                  </div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-900 group-hover:text-blue-600">{{ task.name }}</div>
+                    <div class="text-xs text-gray-500">
+                      <span v-if="task.isInput" class="text-blue-600">{{ $t('datasets.relatedTasks.generatedBy') }}</span>
+                      <span v-else-if="task.isOutput" class="text-green-600">{{ $t('datasets.relatedTasks.generates') }}</span>
+                      <span v-if="task.duration" class="ml-2">• {{ task.duration }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <!-- Status Badge -->
+                  <span 
+                    class="text-xs px-2 py-1 rounded-full font-medium"
+                    :class="{
+                      'bg-green-100 text-green-700': task.status === 'running',
+                      'bg-blue-100 text-blue-700': task.status === 'completed',
+                      'bg-red-100 text-red-700': task.status === 'failed',
+                      'bg-gray-100 text-gray-600': !['running', 'completed', 'failed'].includes(task.status)
+                    }"
+                  >
+                    {{ task.status === 'running' ? $t('tasks.status.running') : task.status === 'completed' ? $t('tasks.status.completed') : task.status === 'failed' ? $t('tasks.status.failed') : task.status }}
+                  </span>
+                  <!-- Progress Bar for Running Tasks -->
+                  <div v-if="task.status === 'running' && task.progress" class="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      class="h-full bg-green-500 rounded-full transition-all"
+                      :style="{ width: `${task.progress}%` }"
+                    ></div>
+                  </div>
+                  <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </router-link>
             </div>
           </div>
 
