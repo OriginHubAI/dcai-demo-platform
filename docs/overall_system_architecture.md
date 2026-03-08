@@ -4,7 +4,7 @@
 
 DCAI (Data-Centric AI) 平台是一个兼具模型浏览、数据集托管、智能体应用（Agent）及知识库检索分析的综合性 AI 社区平台。系统旨在解决超大规模多模态数据集的管理、复杂工作流的处理编排以及高并发场景下的 AI 对话与大模型服务能力。
 
-为达到这一目标，平台采用了现代化的微服务与混合架构设计，结合了稳定强大的 Web 框架与云原生大数据与 AI 处理组件，核心底座包括 **Django + FastAPI** 混合后端、用于数据处理与算子分发的 **DataFlow-System（Prefect + Ray）**，以及保障海量多模态数据版本存储与极速检索的 **LakeFS + MyScale** 组合。
+为达到这一目标，平台采用了现代化的微服务与混合架构设计，结合了稳定强大的 Web 框架与云原生大数据与 AI 处理组件，核心底座包括 **Django + FastAPI** 混合后端、用于数据处理与算子分发的 **DataFlow-System（DataFlow + Ray + Prefect）**，以及保障海量多模态数据版本存储与极速检索的 **MyScale + LakeFS** 组合。
 
 ---
 
@@ -65,15 +65,15 @@ DCAI (Data-Centric AI) 平台是一个兼具模型浏览、数据集托管、智
 - **chat / llm_chat**: 核心对话引擎，支持与系统预设智能体或自定义 Agent 的对话交互，并支持通过流式协议（Server-Sent Events）输出。
 - **knowledgebase / document**: 支持知识库内文件的解析、片段（Chunks）切分、及全局的相似度文档检索。
 
-### 3.3 数据版本与高性能检索子系统 (LakeFS + MyScale)
+### 3.3 数据版本与高性能检索子系统 (MyScale + LakeFS)
 为突破原生 Hugging Face 数据集的 Viewer 性能与版本管理瓶颈，平台深度集成了以下数据层：
 - **LakeFS Storage Gateway**: 在底层 S3 对象存储之上实现 Git-like 的数据版本控制（分支、Commit、Rollback）。配合 `lakefs-spec` 实现大文件的直接拦截与挂载。
-- **MyScale Query Service**: 用作原 HF Viewer 的升级替换，基于 `VersionedS3MergeTree` 引擎。结合 LakeFS 的零拷贝优势，支持百亿级规模的结构化过滤、关键字检索、高维向量及跨模态特征对象的快速混合查询（Hybrid Search）。
+- **MyScale Query Service**: 用作原 HF Viewer 的升级替换，基于 `VersionedS3MergeTree` 引擎。结合 LakeFS 的零拷贝优势，支持百亿级规模的结构化过滤、时空数据分析、关键字检索、高维向量及跨模态特征对象的快速混合查询（Hybrid Search）。
 
 ### 3.4 分布式流水线驱动引擎 (DataFlow-System)
 替换传统的简单后台 worker 队列，处理底层复杂的数据清洗、图谱化执行逻辑：
-- **控制与编排平台 (Prefect)**: 负责用户构建的 DAG 网络图执行顺序调度、拓扑排序、运行容错重试和运行回调。
 - **分布式计算池 (Ray)**: 承接并并发式扩展各类处理算子（`Operators`）。如文档切分映射、向 AI API 服务请求 Embedding 等重负荷工作以及数据向 S3/Parquet 和 MyScale 数据库格式的最后回写与写入。
+- **控制与编排平台 (Prefect)**: 负责用户构建的 DAG 网络图执行顺序调度、拓扑排序、运行容错重试和运行回调。
 
 ---
 
