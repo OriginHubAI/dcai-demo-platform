@@ -263,3 +263,33 @@ Generated backend spec and implemented mock FastAPI server based on dataflow-sys
 ### Next Steps
 
 - None - task complete
+
+
+## Session 9: Dataflow Mock Auto-start Integration
+
+**Date**: 2026-03-09
+**Task**: Dataflow Mock Auto-start Integration
+
+### Summary
+
+Implemented auto-start logic for mock Dataflow server, created Django client, and added integration tests.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+(No commits - planning session)
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
