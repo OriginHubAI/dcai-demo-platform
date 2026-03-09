@@ -52,9 +52,12 @@ Before implementing any logic:
   - If yes -> Create a shared hook/utility **first**, then use it
   - Example: `useDebounce` instead of repeating debounce logic in 5 hooks
 
-- [ ] **Callback pattern?** Does the logic need optional callbacks (onStart, onComplete, onError)?
-  - If yes -> Design the abstraction with callback support from the start
-  - Example: `useAutoSave({ onSaveStart, onSaveComplete, onSaveError })`
+- [ ] **Mock data needed?** If implementing a new feature, do you need to add mock data to `frontend/data/` for local development or testing?
+  - Example: `frontend/data/new-feature.js` should mirror the planned backend response shape.
+
+- [ ] **Service layer?** Are you calling the API directly?
+  - If yes -> **STOP**. Move the fetch logic to `frontend/services/api.js` using the mock/API switching pattern.
+  - Example: See `frontend/spec/services.md` for the standard pattern.
 
 ### 3. Types & Interfaces
 

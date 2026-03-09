@@ -73,45 +73,23 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return qs
 ```
 
-### 3. External API Proxy Call (httpx)
+### 3. FastAPI Proxy View
 
-For routing requests to the underlying FastAPI services (Type B apps like DataFlow-Sys or LoopAI), use asynchronous proxying with `httpx`.
+For routing requests to internal FastAPI services (e.g., Agents, Tasks), use the standard `FastAPIProxyView`. This handles header forwarding and asynchronous communication.
 
 ```python
-# backend/core/proxy.py (or similar service file)
-import httpx
-from rest_framework.response import Response
-from django.conf import settings
+# backend/fastapi_proxy.py
+from fastapi_proxy import FastAPIProxyView
 
-async def forward_to_fastapi(request, endpoint: str):
-    """
-    Proxies a Django request to an internal FastAPI service.
-    """
-    target_url = f"{settings.FASTAPI_BASE_URL}/{endpoint}"
-    
-    headers = {
-        'Authorization': request.headers.get('Authorization', ''),
-        'Content-Type': 'application/json'
-    }
+class FastAPIAgentProxyView(FastAPIProxyView):
+    """Proxy for Agent endpoints"""
+    fastapi_path = 'api/v2/agents'
 
-    async with httpx.AsyncClient() as client:
-        try:
-            # Forward the request payload
-            response = await client.request(
-                method=request.method,
-                url=target_url,
-                headers=headers,
-                json=request.data if request.method in ['POST', 'PUT', 'PATCH'] else None,
-                params=request.query_params
-            )
-            response.raise_for_status()
-            return Response(response.json(), status=response.status_code)
-            
-        except httpx.HTTPStatusError as e:
-            return Response({'error': str(e)}, status=e.response.status_code)
-        except httpx.RequestError as e:
-            return Response({'error': 'Service unavailable'}, status=503)
+# urls.py
+path('api/v2/agents/', FastAPIAgentProxyView.as_view()),
 ```
+
+Refer to [fastapi.md](./fastapi.md) for detailed integration guidelines.
 
 ---
 

@@ -1,172 +1,132 @@
-# FastAPI Microservice Guidelines
+# FastAPI Integration & Microservices
 
-> Guidelines for developing internal microservices (e.g., DataFlow-Sys, LoopAI) and data plane components using FastAPI.
-
----
-
-## Architecture & Role
-
-FastAPI serves as the backbone for high-performance, asynchronous microservices within the DCAI Platform. While Django acts as the primary Gateway/IdP, FastAPI is used for:
-
-1. **Data Plane Operations**: High-throughput data ingestion, processing, and streaming (Datasets API).
-2. **AI/ML Workloads**: Managing long-running DataFlow operators, LLM inference, and Agent tracking.
-3. **Compute-Heavy/Async Tasks**: Logic that benefits from non-blocking I/O.
+> Guidelines for developing FastAPI services and integrating them with the main Django application for high-performance, asynchronous endpoints.
 
 ---
 
-## 1. Project Structure (Microservices)
+## Architecture & Integration Modes
 
-Keep FastAPI apps modular, using `APIRouter` to organize endpoints by domain.
+FastAPI is used for high-performance, asynchronous workloads (e.g., Agents, Tasks, Data Processing). It integrates with Django using one of the following modes:
+
+### 1. Proxy Mode (Recommended for Migration)
+Django acts as a reverse proxy, forwarding requests to a separate FastAPI service. This allows gradual migration while maintaining Django's session, auth, and middleware.
+
+- **Implementation**: Use `FastAPIProxyView` in `backend/fastapi_proxy.py`.
+- **Routing**: Define paths in Django's `urls.py`.
+
+```python
+# core/urls.py
+from fastapi_proxy import FastAPIAgentProxyView
+
+urlpatterns = [
+    path('api/v2/agents/', FastAPIAgentProxyView.as_view()),
+    path('api/v2/fastapi/<path:path>', FastAPIProxyView.as_view()),
+]
+```
+
+### 2. Mixed ASGI Mode
+Django and FastAPI run in the same process on the same port using a combined ASGI application.
+
+- **Implementation**: See `backend/core/asgi_fastapi.py`.
+- **Usage**: Use `uvicorn core.asgi_fastapi:application`.
+
+### 3. Standalone Mode
+FastAPI runs as an independent microservice, typically routed via Nginx at the infrastructure level.
+
+---
+
+## Project Structure
+
+FastAPI-related code is organized as follows:
 
 ```text
-src/
-├── main.py               # FastAPI application instance & middlewares
-├── api/
-│   ├── dependencies.py   # Auth, DB sessions (Depends)
-│   └── routes/           # APIRouters (e.g., datasets.py, operators.py)
-├── core/
-│   ├── config.py         # Pydantic BaseSettings
-│   └── security.py       # JWT validation (shared secret with Django)
-├── models/               # SQLAlchemy/Tortoise ORM models (if applicable)
-├── schemas/              # Pydantic models (Input/Output validation)
-└── services/             # Core business logic (separated from HTTP)
-```
-
-## 2. Pydantic Models (Schemas)
-
-Always use Pydantic models for request validation and response serialization. Ensure standard response shapes.
-
-```python
-# schemas/operator.py
-from pydantic import BaseModel, ConfigDict, Field
-
-class OperatorCreate(BaseModel):
-    name: str = Field(..., min_length=3, max_length=50)
-    config: dict
-
-class OperatorResponse(OperatorCreate):
-    id: str
-    status: str
-
-    model_config = ConfigDict(from_attributes=True)
-```
-
-## 3. Dependency Injection
-
-Use `Depends` to manage shared logic like Database Sessions and Authentication context injected by Django.
-
-```python
-# api/dependencies.py
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-import jwt
-
-security = HTTPBearer()
-
-async def get_current_user_from_jwt(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Validate JWT signed by the Django Gateway."""
-    try:
-        payload = jwt.decode(
-            credentials.credentials, 
-            "SHARED_SECRET", 
-            algorithms=["HS256"]
-        )
-        return {"user_id": payload.get("user_id")}
-    except jwt.PyJWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-        )
-```
-
-## 4. Async Performance & Blocking I/O
-
-FastAPI relies on ASGI. Avoid synchronous blocking operations inside `async def` routes.
-
-- **BAD**:
-  ```python
-  import time
-  @app.get("/heavy")
-  async def heavy_computation():
-      time.sleep(5)  # Blocks the entire event loop!
-      return {"status": "done"}
-  ```
-
-- **GOOD**: Run blocking code in a thread pool (e.g., `run_in_threadpool` or declaring endpoint as `def` instead of `async def`), or use asyncio counterparts.
-  ```python
-  import asyncio
-  
-  @app.get("/light_async")
-  async def async_wait():
-      await asyncio.sleep(5) # Event loop remains free
-      return {"status": "done"}
-
-  # FastAPI runs normal `def` in a separate threadpool automatically
-  @app.get("/heavy_sync")
-  def heavy_computation():
-      time.sleep(5) 
-      return {"status": "done"}
-  ```
-
-## 5. Streaming & Data Plane (Large Files)
-
-When handling large datasets (upload or download), stream the data to avoid memory bloat.
-
-```python
-# api/routes/datasets.py
-from fastapi import APIRouter
-from fastapi.responses import StreamingResponse
-
-router = APIRouter()
-
-async def generate_large_csv():
-    # Yield chunks of data rather than building a huge string
-    for i in range(1000000):
-        yield f"{i},value_{i}\n".encode('utf-8')
-
-@router.get("/download")
-async def download_dataset():
-    """Stream response directly to client without buffering in memory."""
-    return StreamingResponse(
-        generate_large_csv(), 
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=large.csv"}
-    )
-```
-
-## 6. Error Handling
-
-Define custom Exception Handlers globally to maintain a consistent error response format matching the Django Gateway.
-
-```python
-# main.py
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-
-app = FastAPI()
-
-class ServiceException(Exception):
-    def __init__(self, name: str, code: int):
-        self.name = name
-        self.code = code
-
-@app.exception_handler(ServiceException)
-async def service_exception_handler(request: Request, exc: ServiceException):
-    return JSONResponse(
-        status_code=exc.code,
-        content={"detail": exc.name},
-    )
+backend/
+├── fastapi_app/          # FastAPI application directory
+│   ├── main.py           # Application entry point
+│   ├── api/              # Route handlers (APIRouters)
+│   ├── schemas/          # Pydantic validation models
+│   └── services/         # Business logic
+├── fastapi_proxy.py      # Django proxy views
+└── core/
+    └── asgi_fastapi.py   # Mixed ASGI configuration
 ```
 
 ---
 
-## Summary
+## Reusing Django Models
 
-| Policy                 | Implementation                          |
-| ---------------------- | --------------------------------------- |
-| **Data Validation**    | Pydantic schemas (`BaseModel`)          |
-| **Authentication**     | Validate Django JWT using `Depends()`   |
-| **Logic Separation**   | Use `APIRouter` and `services/` layer   |
-| **Blocking Core**      | Use `async/await` safely, no `time.sleep` in `async` |
-| **Data Plane**         | Use `StreamingResponse` for chunks      |
-| **Error Format**       | Global Exception Handlers returning JSON|
+FastAPI can directly use Django ORM models by initializing Django within the FastAPI process.
+
+```python
+# fastapi_app/main.py
+import os
+import django
+
+# Initialize Django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+django.setup()
+
+# Now models can be imported and used
+from agent.models import Agent
+
+@app.get("/api/v2/agents")
+async def list_agents():
+    # Note: Use sync_to_async if performing complex ORM operations in async routes
+    agents = Agent.objects.all()
+    return [{"id": a.id, "name": a.name} for a in agents]
+```
+
+---
+
+## Authentication Integration
+
+To maintain consistency, FastAPI should reuse Django's JWT authentication mechanism.
+
+```python
+# fastapi_app/auth.py
+from fastapi import Depends, HTTPException, Header
+import jwt
+from django.conf import settings
+from user.models import User
+
+async def get_current_user(authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    try:
+        token = authorization.replace("Bearer ", "")
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        return User.objects.get(id=payload["user_id"])
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+```
+
+---
+
+## Pydantic Models & Validation
+
+Always use Pydantic models for request validation and response serialization, even when working with Django models.
+
+```python
+from pydantic import BaseModel, Field
+from typing import Optional
+
+class AgentSchema(BaseModel):
+    name: str = Field(..., min_length=1)
+    description: Optional[str] = None
+
+@app.post("/api/v2/agents")
+async def create_agent(data: AgentSchema, user=Depends(get_current_user)):
+    from agent.models import Agent
+    agent = Agent.objects.create(owner=user, **data.dict())
+    return {"id": agent.id, "name": agent.name}
+```
+
+---
+
+## Best Practices
+
+1.  **Async/Sync Boundary**: When using Django ORM (synchronous) inside FastAPI's `async def` routes, wrap blocking calls in `database_sync_to_async` (from `channels.db`) or run the endpoint as a standard `def`.
+2.  **Connection Management**: Ensure database connections are properly handled, especially when sharing the same database between Django and FastAPI.
+3.  **Schema Consistency**: Keep Pydantic schemas in sync with Django model definitions or use tools like `djantic` (if available) for automated schema generation.
+4.  **Error Handling**: Use FastAPI's exception handlers to return standard JSON error responses that match the platform's API specification.

@@ -23,6 +23,7 @@
 | [components.md](./components.md)                                               | Semantic HTML, empty states, scrollbar patterns | Reference     |
 | [type-safety.md](./type-safety.md)                                             | Prop validation, JSDoc, and data structures     | Reference     |
 | [directory-structure.md](./directory-structure.md)                             | Project structure conventions                   | Reference     |
+| [services.md](./services.md)                                                   | API service layer and mock data patterns        | Reference     |
 | [css-design.md](./css-design.md)                                               | Tailwind styling and design tokens              | Reference     |
 | [quality.md](./quality.md)                                                     | Code quality and performance standards          | Reference     |
 
@@ -42,6 +43,7 @@
 | ------------------------ | -------------------------------------------- |
 | Create reusable logic    | [composables.md](./composables.md)           |
 | Manage application state | [state-management.md](./state-management.md) |
+| Interact with API / Mock | [services.md](./services.md)                 |
 | Build UI components      | [components.md](./components.md)             |
 | Ensure data validity     | [type-safety.md](./type-safety.md)           |
 

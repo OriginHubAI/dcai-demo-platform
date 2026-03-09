@@ -47,53 +47,44 @@ class DatasetViewSet(ModelViewSet):
 
 ---
 
-## 3. Proxying Identity to Internal Type-B Apps (FastAPI)
+## 3. Proxying Identity to Internal FastAPI Services
 
-When Django proxies a request to an internal FastAPI service via `httpx`, it passes the JWT context forward.
+When Django proxies a request to an internal FastAPI service via `FastAPIProxyView`, it forwards the `Authorization` header. This allows the FastAPI service to verify the user's identity using the shared secret.
 
 ```python
-# backend/core/proxy.py (Snippet)
-async def forward_to_fastapi(request, endpoint: str):
-    target_url = f"{settings.FASTAPI_BASE_URL}/{endpoint}"
-    
-    # Forward the Bearer token transparently
-    headers = {
-        'Authorization': request.headers.get('Authorization', ''),
-        'X-Forwarded-User-Id': str(request.user.id) if request.user.is_authenticated else '',
-    }
+# backend/fastapi_proxy.py
+from fastapi_proxy import FastAPIProxyView
 
-    async with httpx.AsyncClient() as client:
-        return await client.request(
-            method=request.method,
-            url=target_url,
-            headers=headers,
-            # ...
-        )
+class FastAPIAgentProxyView(FastAPIProxyView):
+    fastapi_path = 'api/v2/agents'
+
+# urls.py
+path('api/v2/agents/', FastAPIAgentProxyView.as_view()),
 ```
 
 ### 4. Decoding JWT in FastAPI
 
-The remote FastAPI service receives the standard `Authorization: Bearer <token>` header. It validates the signature locally (since both services share the JWT Secret Key) to trust the identity.
+The remote FastAPI service receives the standard `Authorization: Bearer <token>` header. It validates the signature locally using the shared `SECRET_KEY` from Django settings.
 
 ```python
-# DataFlow-System / FastAPI
-from fastapi import Depends, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+# fastapi_app/auth.py
+from fastapi import Depends, HTTPException, Header
 import jwt
+from django.conf import settings
 
-security = HTTPBearer()
-JWT_SECRET = "your-shared-django-secret-key"
-
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    token = credentials.credentials
+async def get_current_user(authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
     try:
-        # FastAPI decodes the token that Django generated
-        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        token = authorization.replace("Bearer ", "")
+        # FastAPI decodes the token that Django generated using the shared secret
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         user_id = payload.get("user_id")
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid token scope")
         return {"user_id": user_id}
-    except jwt.PyJWTError:
+    except Exception:
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
 # Using it in a FastAPI route
