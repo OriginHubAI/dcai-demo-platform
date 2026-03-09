@@ -6,20 +6,16 @@
 
 ## Package Manager
 
-**Use pnpm** for monorepo projects:
+**Use npm**:
 
 ```bash
-# Good (from repo root)
-pnpm install
-pnpm lint
-pnpm typecheck
-
-# Also OK (with workspace filter)
-pnpm --filter @your-app/desktop lint
+# Good
+npm install
+npm run lint
 
 # Avoid mixing package managers
-npm install  # Don't
-yarn install # Don't
+pnpm install  # Don't
+yarn install  # Don't
 ```
 
 ---
@@ -29,219 +25,122 @@ yarn install # Don't
 Run these checks before committing:
 
 ```bash
-# 1. Type check
-pnpm typecheck  # or: pnpm exec tsc --noEmit
+# 1. Lint
+npm run lint
 
-# 2. Lint
-pnpm lint
-
-# 3. Manual testing
-# Test the feature you changed
+# 2. Manual testing
+# Test the feature you changed visually inside the browser.
 ```
 
 **Checklist**:
 
-- [ ] `pnpm typecheck` - No type errors
-- [ ] `pnpm lint` - 0 errors, 0 warnings
+- [ ] `npm run lint` - 0 errors, 0 warnings
 - [ ] Manual testing passes
-- [ ] No console errors in DevTools
+- [ ] No console errors in Browser DevTools
 
 ---
 
-## Forbidden Patterns
+## Vue 3 Specific Quality Rules
 
-| Pattern                             | Reason             | Fix                                 |
-| ----------------------------------- | ------------------ | ----------------------------------- |
-| Non-null assertions (`!`)           | Type unsafe        | Use local variable after null check |
-| `any` type                          | Loses type safety  | Use proper types or `unknown`       |
-| Unused imports/variables            | Dead code          | Remove or prefix with `_`           |
-| Lexical declarations in bare `case` | ESLint error       | Wrap case body in `{}`              |
-| Duplicate constant definitions      | Maintenance burden | Use shared constants                |
+### Keying `v-for` loops
 
----
+Always provide a unique `:key` attribute when using `v-for`. Never use the array `index` as the key if the array elements can be reordered, added, or deleted.
 
-## Non-null Assertion Fix
+```vue
+<!-- Good -->
+<li v-for="item in items" :key="item.id">{{ item.name }}</li>
 
-```typescript
-// Bad - non-null assertion
-if (result.success && result.data) {
-  doSomething(result.data!);
-}
+<!-- Bad -->
+<li v-for="(item, index) in items" :key="index">{{ item.name }}</li>
+```
 
-// Good - use local variable
-if (result.success && result.data) {
-  const data = result.data; // TypeScript knows this is defined
-  doSomething(data);
-}
+### Avoiding `v-if` with `v-for`
+
+**Never use `v-if` on the same element as `v-for`.** Vue 3 evaluates `v-if` BEFORE `v-for`, so the `v-if` condition will not have access to the loop variable.
+
+```vue
+<!-- Good: Filter in a computed property -->
+<li v-for="activeItem in computedActiveItems" :key="activeItem.id">...</li>
+
+<!-- Good: Use a wrapper <template> for the loop -->
+<template v-for="item in items" :key="item.id">
+  <li v-if="item.isActive">...</li>
+</template>
+
+<!-- Bad -->
+<li v-for="item in items" v-if="item.isActive" :key="item.id">...</li>
 ```
 
 ---
 
-## Switch Case with Lexical Declarations
+## Clean Up Unused Imports & Dead Code
 
-When declaring variables (with `const`/`let`) inside a `case` block, you MUST wrap the block in braces `{}`:
+After refactoring, always check for and remove unused imports and commented-out blocks of old code:
 
-```typescript
-// Bad - ESLint error: "Unexpected lexical declaration in case block"
-switch (value) {
-  case 'today':
-    const date = new Date(); // Error!
-    break;
-}
-
-// Good - wrap in braces
-switch (value) {
-  case 'today': {
-    const date = new Date(); // OK
-    break;
-  }
-}
-```
-
----
-
-## Exhaustive Switch Check
-
-Use `_exhaustive` pattern for exhaustive switch checks. The `_` prefix tells ESLint this variable is intentionally unused:
-
-```typescript
-type Status = "open" | "closed" | "pending";
-
-function getIcon(status: Status) {
-  switch (status) {
-    case "open":
-      return <OpenIcon />;
-    case "closed":
-      return <ClosedIcon />;
-    case "pending":
-      return <PendingIcon />;
-    default: {
-      // TypeScript will error if a case is missing
-      const _exhaustive: never = status;
-      return null;
-    }
-  }
-}
-```
-
----
-
-## Clean Up Unused Imports
-
-After refactoring, always check for and remove unused imports:
-
-```typescript
-// Bad - unused imports
-import { todoStateSchema, todoPrioritySchema } from '../shared/types/entity';
-// ... code that doesn't use these schemas
+```javascript
+// Bad - dead code
+import { oldFunction } from '../services/api';
+// oldFunction();
 
 // Good - only import what you use
-import type { TodoState, TodoPriority } from '../shared/types/entity';
+import { newFunction } from '../services/api';
 ```
 
-**Tip**: Run `pnpm lint` before committing to catch unused imports.
-
----
-
-## Avoid Duplicate Definitions
-
-Before defining constants, mappings, or configuration values, **search the codebase first**:
-
-```bash
-# Search for existing definitions
-grep -r "ALLOWED_TYPES\|allowedTypes" src/
-grep -r "extension.*mime" src/
-```
-
-**Common locations for shared constants**:
-
-| Type             | Location                              |
-| ---------------- | ------------------------------------- |
-| IPC channels     | `src/shared/constants/channels.ts`    |
-| File type limits | `src/shared/constants/file-limits.ts` |
-| App config       | `src/shared/constants/config.ts`      |
-
-**Cross-process sharing**: Constants in `src/shared/` can be imported by both main process and renderer.
-
-```typescript
-// Bad - duplicate definition in renderer
-const typeMap = { jpg: 'image/jpeg', png: 'image/png' };
-
-// Good - import from shared
-import { EXTENSION_TO_MIME } from '../shared/constants/file-limits';
-```
+**Tip**: The linter is configured to catch unused variables and imports.
 
 ---
 
 ## Performance Guidelines
 
-### Avoid Unnecessary Re-renders
+### Computed Properties vs Methods
 
-```tsx
-// Bad - inline function creates new reference every render
-<List items={items.filter((item) => item.active)} />;
+Use `computed` for derived data that should be cached. Only use methods for actions or calculations that truly need to run on every render.
 
-// Good - memoize filtered list
-const activeItems = useMemo(() => items.filter((item) => item.active), [items]);
-<List items={activeItems} />;
-```
+```javascript
+// Good: Cached until 'items' changes
+const activeItemsCount = computed(() => {
+  return items.value.filter(i => i.active).length
+})
 
-### Lazy Loading
-
-```tsx
-// Lazy load heavy components
-const HeavyComponent = lazy(() => import('./HeavyComponent'));
-
-function App() {
-  return (
-    <Suspense fallback={<Loading />}>
-      <HeavyComponent />
-    </Suspense>
-  );
+// Bad: Re-evaluates every time the component updates for unrelated reasons
+const getActiveItemsCount = () => {
+  return items.value.filter(i => i.active).length
 }
 ```
 
 ### Debounce Expensive Operations
 
-```tsx
-// Debounce search input
-const [query, setQuery] = useState('');
-const debouncedQuery = useDebounce(query, 300);
+```javascript
+// Using lodash-es or similar for debounce
+import { debounce } from 'lodash-es'
+import { watch, ref } from 'vue'
 
-useEffect(() => {
-  if (debouncedQuery) {
-    performSearch(debouncedQuery);
-  }
-}, [debouncedQuery]);
+const searchQuery = ref('')
+
+// Debounce the API call
+const fetchResults = debounce((query) => {
+  api.search(query)
+}, 300)
+
+watch(searchQuery, (newQuery) => {
+  fetchResults(newQuery)
+})
 ```
 
 ---
 
-## Code Organization
+## Component Organization
 
 ### File Length
 
-- **Components**: Max ~300 lines. Split if larger.
-- **Hooks**: Max ~150 lines. Extract helper functions.
-- **CSS files**: Max ~500 lines. Split by component.
+- **Vue Components**: Max ~300 lines. Break large templates into smaller child components.
+- **Composables**: Max ~150 lines. Extract pure JS helper functions.
 
 ### Function Length
 
-- Keep functions under 50 lines when possible
+- Keep JS functions under 50 lines when possible
 - Extract helper functions for complex logic
-- Use descriptive names for extracted functions
-
-### Comments
-
-```typescript
-// Good - explains WHY, not WHAT
-// We use a ref here to avoid re-creating the WebSocket on every render
-const wsRef = useRef<WebSocket | null>(null);
-
-// Bad - explains obvious WHAT
-// Create a new WebSocket
-const ws = new WebSocket(url);
-```
+- Use descriptive names for extracted functions (`preparePayload`, `formatDate`)
 
 ---
 
@@ -249,53 +148,21 @@ const ws = new WebSocket(url);
 
 ### API Calls
 
-```typescript
+Handle errors gracefully entirely to prevent the application from crashing.
+
+```javascript
 // Good - handle errors explicitly
 try {
-  const result = await window.api.data.fetch();
-  if (!result.success) {
-    toast.error(result.error || 'Failed to fetch data');
-    return;
-  }
-  setData(result.data);
+  const result = await api.fetchData();
+  data.value = result;
 } catch (error) {
   console.error('Unexpected error:', error);
-  toast.error('An unexpected error occurred');
+  // Show a toast notification to the user
+  toast.error('Failed to fetch data');
+} finally {
+  isLoading.value = false;
 }
 ```
-
-### Type Guards
-
-```typescript
-// Good - type guard for error handling
-function isApiError(error: unknown): error is { message: string; code: number } {
-  return typeof error === 'object' && error !== null && 'message' in error && 'code' in error;
-}
-
-try {
-  // ...
-} catch (error) {
-  if (isApiError(error)) {
-    console.error(`API Error ${error.code}: ${error.message}`);
-  } else {
-    console.error('Unknown error:', error);
-  }
-}
-```
-
----
-
-## Quick Reference
-
-| Rule                                    | Why                         |
-| --------------------------------------- | --------------------------- |
-| No `!` (non-null assertion)             | Hides potential null issues |
-| No `any`                                | Loses type safety           |
-| Wrap `case` with `const`/`let` in `{}`  | ESLint requirement          |
-| Use `_` prefix for intentionally unused | ESLint won't complain       |
-| Search before defining constants        | Avoid duplication           |
-| Max 300 lines per component             | Maintainability             |
-| Run lint + typecheck before commit      | Catch issues early          |
 
 ---
 
