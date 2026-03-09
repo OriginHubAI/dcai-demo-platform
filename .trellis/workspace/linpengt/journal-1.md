@@ -173,3 +173,33 @@ Added 20 unit tests for user models and API endpoints (login, register, sync, et
 ### Next Steps
 
 - None - task complete
+
+
+## Session 6: Update user and auth data models
+
+**Date**: 2026-03-09
+**Task**: Update user and auth data models
+
+### Summary
+
+Synced User, InviteCode, and EmailVerificationCode models with pg_schema_v1 references. Added migrations and updated serializers.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+(No commits - planning session)
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
