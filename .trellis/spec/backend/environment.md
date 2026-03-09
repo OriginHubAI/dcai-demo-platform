@@ -1,109 +1,96 @@
 # Environment Configuration
 
-> Guidelines for separating development and production environments.
+> Guidelines for managing configurations across different environments (Development vs Production) in Django.
 
 ---
 
-## Dev/Prod Data Isolation
+## The `.env` Approach
+
+Configuration should never be hardcoded into `settings.py`. We use `django-environ` to read values from a `.env` file or from system environment variables.
 
 ### The Problem
 
-By default, Electron's `userData` is the same for dev and prod:
-
-- Dev and prod share the same data
-- Testing can corrupt data
-- Can't run both simultaneously
+- Secrets committed to Git.
+- Hardcoded database credentials resulting in production breakages.
+- Overriding complex dictionaries based on environments.
 
 ### The Solution
 
-```typescript
-// src/main/env-setup.ts
-import { app } from 'electron';
+```python
+# backend/core/settings.py
+import environ
+import os
+from pathlib import Path
 
-if (!app.isPackaged) {
-  const devUserData = app.getPath('userData') + '-dev';
-  app.setPath('userData', devUserData);
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+env = environ.Env(
+    # set casting, default value
+    DEBUG=(bool, False)
+)
+
+# Reading .env file.
+# We usually read it from the level above `backend/` where the Dockerfile might be invoked,
+# or cleanly inside the `backend/` folder.
+environ.Env.read_env(os.path.join(BASE_DIR.parent, '.env'))
+
+# Usage:
+SECRET_KEY = env('DJANGO_SECRET_KEY')
+DEBUG = env('DEBUG')
+DATABASE_URL = env('DATABASE_URL', default='postgres://user:pass@localhost:5432/dcai_db')
+
+DATABASES = {
+    'default': env.db('DATABASE_URL')
 }
-
-export {};
-```
-
-**Import order matters:**
-
-```typescript
-// src/main/index.ts
-import { app } from 'electron';
-import './env-setup'; // MUST be first after electron import
-
-// Now safe to import modules that use electron-store
-import Store from 'electron-store';
 ```
 
 ---
 
-## Why a Separate Module?
+## Expected `.env` Variables
 
-ESM hoists imports, so this won't work:
+A `.env.example` file should exist in the repository root and look something like this:
 
-```typescript
-// WRONG
-import { app } from "electron";
-if (!app.isPackaged) {
-  app.setPath("userData", ...); // Runs AFTER all imports
-}
-import Store from "electron-store"; // Already initialized!
-```
+```ini
+# Core Django
+DJANGO_SECRET_KEY=yoursecretkey
+DEBUG=True
+ALLOWED_HOSTS=127.0.0.1,localhost,dcai-platform.com
 
-With a separate module:
+# Database (PostgreSQL)
+DATABASE_URL=postgres://postgres:password@localhost:5432/dcai_db
+# Redis
+REDIS_URL=redis://localhost:6379/1
 
-```typescript
-// CORRECT
-import { app } from 'electron';
-import './env-setup'; // Side effect runs during import
-import Store from 'electron-store'; // Now uses correct path
+# Proxied FastAPI Endpoints
+FASTAPI_BASE_URL=http://localhost:8002
 ```
 
 ---
 
-## Detection Methods
+## Local Development vs Production settings
 
-| Method                 | Use Case                                       |
-| ---------------------- | ---------------------------------------------- |
-| `app.isPackaged`       | Recommended - true when running from .app/.exe |
-| `process.env.NODE_ENV` | Alternative - depends on build config          |
+Instead of maintaining multiple settings files (e.g., `settings_dev.py`, `settings_prod.py`), try to toggle settings dynamically based on the `DEBUG` flag.
 
----
-
-## What Gets Isolated
-
-| Data Type      | Dev Path         | Prod Path    |
-| -------------- | ---------------- | ------------ |
-| electron-store | `App-dev/*.json` | `App/*.json` |
-| Cookies        | `App-dev/`       | `App/`       |
-| Logs           | `App-dev/logs/`  | `App/logs/`  |
-
----
-
-## Database Path Exception
-
-Keep database in project for easy inspection during dev:
-
-```typescript
-const getDbPath = () => {
-  if (process.env.NODE_ENV === 'development') {
-    return './app-dev.db'; // Project directory
-  }
-  return path.join(app.getPath('userData'), 'app.db');
-};
+```python
+if DEBUG:
+    # Use simpler setups, print emails to console.
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    # Optional SQLite override for light local dev
+    # DATABASES['default'] = {'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DIR / "db.sqlite3"}
+else:
+    # Use real email service, restrict CORS completely, secure session cookies
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 ```
 
 ---
 
 ## Summary
 
-| Rule                        | Reason                     |
-| --------------------------- | -------------------------- |
-| Isolate dev/prod userData   | Prevent data corruption    |
-| Use `app.isPackaged`        | Most reliable detection    |
-| Set path in separate module | ESM hoisting               |
-| Import env-setup first      | Before any userData access |
+| Rule                                  | Reason                                                |
+| ------------------------------------- | ----------------------------------------------------- |
+| Never hardcode secrets in `settings.py`| Prevents credential leaks                             |
+| Copy `.env.example` to `.env`         | Ensures devs know what vars are needed                |
+| Base settings on `DEBUG`              | Maintains a single source of truth for app config     |
+| Use `django-environ`                  | Safely parses casting types (e.g. converting "True" to Python boolean `True`) |

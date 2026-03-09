@@ -1,6 +1,6 @@
 # API Patterns
 
-> Common patterns and anti-patterns for API modules.
+> Common patterns and anti-patterns for Django REST Framework (DRF) and backend integration modules.
 
 ---
 
@@ -8,226 +8,222 @@
 
 ### 1. CRUD with Transaction
 
-For creating entities with related data, use transactions.
+For creating entities with related data, use `django.db.transaction.atomic`.
 
-```typescript
-export function createProject(input: CreateProjectInput): CreateProjectOutput {
-  const parseResult = createProjectInputSchema.safeParse(input);
-  if (!parseResult.success) {
-    return { success: false, error: parseResult.error.issues[0].message };
-  }
+```python
+# backend/project/services.py
+from django.db import transaction
+from django.core.exceptions import ValidationError
+from .models import Project, ProjectMember
+import logging
 
-  const { name, description, members } = parseResult.data;
-  const projectId = crypto.randomUUID();
+logger = logging.getLogger(__name__)
 
-  try {
-    const result = db.transaction((tx) => {
-      // 1. Create project
-      const [newProject] = tx
-        .insert(project)
-        .values({ id: projectId, name, description })
-        .returning()
-        .all();
-
-      // 2. Create members if provided
-      if (members && members.length > 0) {
-        tx.insert(projectMember)
-          .values(members.map((m) => ({ projectId, userId: m.userId })))
-          .run();
-      }
-
-      return newProject;
-    });
-
-    // Note: Convert Date fields to Unix ms before returning
-    // See shared/timestamp.md for specification
-    return { success: true, project: result };
-  } catch (error) {
-    logger.error('Create failed', { error });
-    return { success: false, error: 'Failed to create project' };
-  }
-}
+def create_project_with_members(name: str, description: str, member_user_ids: list[int]) -> Project:
+    try:
+        with transaction.atomic():
+            # 1. Create project
+            project = Project.objects.create(
+                name=name, 
+                description=description
+            )
+            
+            # 2. Create members if provided
+            if member_user_ids:
+                members_to_create = [
+                    ProjectMember(project=project, user_id=uid)
+                    for uid in member_user_ids
+                ]
+                ProjectMember.objects.bulk_create(members_to_create)
+                
+            return project
+            
+    except Exception as e:
+        logger.error(f"Failed to create project: {e}")
+        # Re-raise or convert to a specific API Exception so the view can handle it
+        raise ValidationError("Failed to create project and members.")
 ```
 
-### 2. Paginated List with Cursor
+### 2. Standard DRF ViewSet
 
-```typescript
-export function listProjects(input: ListProjectsInput): ListProjectsOutput {
-  const { status, limit = 20, cursor } = input;
-  const conditions = [];
+Use Generic ViewSets for standard CRUD features with built-in pagination, filtering, and object lookups.
 
-  if (status) {
-    conditions.push(eq(project.status, status));
-  }
+```python
+# backend/project/views.py
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+from .models import Project
+from .serializers import ProjectSerializer
 
-  if (cursor) {
-    const cursorData = decodeCursor(cursor);
-    if (cursorData) {
-      conditions.push(
-        or(
-          lt(project.updatedAt, cursorData.updatedAt),
-          and(eq(project.updatedAt, cursorData.updatedAt), lt(project.id, cursorData.id))
-        )
-      );
-    }
-  }
+class ProjectViewSet(viewsets.ModelViewSet):
+    """
+    A viewset that provides default `create()`, `retrieve()`, `update()`,
+    `partial_update()`, `destroy()` and `list()` actions.
+    """
+    queryset = Project.objects.all().order_by('-updated_at')
+    serializer_class = ProjectSerializer
+    permission_classes = [IsAuthenticated]
 
-  const fetchLimit = limit + 1;
-  const results = db
-    .select()
-    .from(project)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .orderBy(desc(project.updatedAt), desc(project.id))
-    .limit(fetchLimit)
-    .all();
-
-  const hasMore = results.length > limit;
-  if (hasMore) results.pop();
-
-  const nextCursor =
-    hasMore && results.length > 0
-      ? encodeCursor(results[results.length - 1].updatedAt, results[results.length - 1].id)
-      : null;
-
-  return { success: true, projects: results, nextCursor, hasMore };
-}
+    def get_queryset(self):
+        # Filter based on current user or query params
+        qs = super().get_queryset()
+        status = self.request.query_params.get('status')
+        if status:
+            qs = qs.filter(status=status)
+        return qs
 ```
 
-### 3. External API Call
+### 3. External API Proxy Call (httpx)
 
-Use `net.fetch` for proper proxy support.
+For routing requests to the underlying FastAPI services (Type B apps like DataFlow-Sys or LoopAI), use asynchronous proxying with `httpx`.
 
-```typescript
-export async function fetchRemoteData(input: FetchRemoteInput): Promise<FetchRemoteOutput> {
-  const parseResult = fetchRemoteInputSchema.safeParse(input);
-  if (!parseResult.success) {
-    return { success: false, error: parseResult.error.issues[0].message };
-  }
+```python
+# backend/core/proxy.py (or similar service file)
+import httpx
+from rest_framework.response import Response
+from django.conf import settings
 
-  try {
-    // Use net.fetch for proper proxy support
-    const response = await net.fetch(`${API_URL}/resources/${input.id}`, {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${input.token}` },
-    });
-
-    if (!response.ok) {
-      return { success: false, error: `HTTP ${response.status}` };
+async def forward_to_fastapi(request, endpoint: str):
+    """
+    Proxies a Django request to an internal FastAPI service.
+    """
+    target_url = f"{settings.FASTAPI_BASE_URL}/{endpoint}"
+    
+    headers = {
+        'Authorization': request.headers.get('Authorization', ''),
+        'Content-Type': 'application/json'
     }
 
-    const data = await response.json();
-    return { success: true, data };
-  } catch (error) {
-    return { success: false, error: 'Network request failed' };
-  }
-}
+    async with httpx.AsyncClient() as client:
+        try:
+            # Forward the request payload
+            response = await client.request(
+                method=request.method,
+                url=target_url,
+                headers=headers,
+                json=request.data if request.method in ['POST', 'PUT', 'PATCH'] else None,
+                params=request.query_params
+            )
+            response.raise_for_status()
+            return Response(response.json(), status=response.status_code)
+            
+        except httpx.HTTPStatusError as e:
+            return Response({'error': str(e)}, status=e.response.status_code)
+        except httpx.RequestError as e:
+            return Response({'error': 'Service unavailable'}, status=503)
 ```
 
 ---
 
 ## Anti-Patterns
 
-### 1. Fat IPC Handlers
+### 1. Fat Views without Serializer Validation
 
-```typescript
-// BAD: Logic in IPC handler
-ipcMain.handle("project:create", async (_, input) => {
-  const parseResult = schema.safeParse(input);
-  if (!parseResult.success) { ... }
-  const [project] = db.insert(...).returning().all();
-  return { success: true, project };
-});
+```python
+# BAD: Manual validation and dict access in Views
+class CreateProjectView(APIView):
+    def post(self, request):
+        name = request.data.get('name')
+        if not name:
+            return Response({"error": "Name required"}, status=400)
+        
+        project = Project.objects.create(name=name, status='active')
+        return Response({"id": project.id, "name": project.name})
 
-// GOOD: Thin IPC handler
-ipcMain.handle("project:create", (_, input) => createProject(input));
+# GOOD: Lean Views with DRF Serializers
+class CreateProjectView(APIView):
+    def post(self, request):
+        serializer = CreateProjectInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # Validation passed, use validated_data
+        project = Project.objects.create(**serializer.validated_data)
+        return Response(ProjectSerializer(project).data)
 ```
 
-### 2. Missing Validation
+### 2. N+1 Query Problem
 
-```typescript
-// BAD: No validation
-export function createProject(input: any) {
-  db.insert(project).values(input).run();
-}
+Failing to fetch related models in list endpoints.
 
-// GOOD: Validate first
-export function createProject(input: CreateProjectInput) {
-  const parseResult = schema.safeParse(input);
-  if (!parseResult.success) {
-    return { success: false, error: parseResult.error.issues[0].message };
-  }
-  // ...
-}
+```python
+# BAD: Triggers N additional queries when accessing related field `author`
+queryset = Task.objects.all()
+# Serializer accessing task.author.name inside a loop
+
+# GOOD: Uses select_related (for ForeignKeys) or prefetch_related (for ManyToMany)
+queryset = Task.objects.select_related('author').all()
 ```
 
-### 3. Node fetch Instead of net.fetch
+### 3. Catching System Errors Silently in Transactions
 
-```typescript
-// BAD: Ignores system proxy
-import fetch from 'node-fetch';
-const response = await fetch(url);
+```python
+# BAD: Transaction continues or commits partial state, hiding the error
+@transaction.atomic
+def process_data(data):
+    try:
+        Project.objects.create(**data)
+        # ... more db operations
+    except Exception:
+        pass # Transaction continues or commits in an invalid state
 
-// GOOD: Respects system proxy
-import { net } from 'electron';
-const response = await net.fetch(url);
-```
-
-### 4. Silent Return in Transactions
-
-```typescript
-// BAD: Transaction continues on failure
-export function insertItem(tx, data) {
-  const parseResult = schema.safeParse(data);
-  if (!parseResult.success) {
-    return; // Transaction continues!
-  }
-  tx.insert(table).values(data).run();
-}
-
-// GOOD: Throw to rollback
-export function insertItem(tx, data) {
-  const parseResult = schema.safeParse(data);
-  if (!parseResult.success) {
-    throw new Error('Validation failed');
-  }
-  tx.insert(table).values(data).run();
-}
+# GOOD: Raise to trigger transaction rollback
+@transaction.atomic
+def process_data(data):
+    try:
+        Project.objects.create(**data)
+    except IntegrityError:
+        # Let it bubble up or raise an API-friendly exception
+        raise ValidationError("Invalid data, cannot process.")
 ```
 
 ---
 
-## Upsert Pattern
+## Upsert Pattern (Django ORM)
 
-```typescript
-db.insert(settings)
-  .values({ key: 'theme', value: 'dark' })
-  .onConflictDoUpdate({
-    target: settings.key,
-    set: { value: 'dark', updatedAt: new Date() },
-  })
-  .run();
+Use `update_or_create` for Upsert patterns to avoid race conditions.
+
+```python
+# Insert or update based on 'key'
+obj, created = SystemSetting.objects.update_or_create(
+    key='theme',
+    defaults={'value': 'dark', 'updated_at': timezone.now()}
+)
 ```
 
 ---
 
 ## Soft Delete Pattern
 
-```typescript
-// Soft delete
-db.update(project).set({ isDeleted: true, deletedAt: new Date() }).where(eq(project.id, id)).run();
+Instead of hard deleting rows, especially for audited tables.
 
-// Query active only
-db.select().from(project).where(eq(project.isDeleted, false)).all();
+```python
+# In models.py
+class SoftDeleteModel(models.Model):
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        abstract = True
+
+# Usage in Services/Views:
+def safe_delete_project(project_id: int):
+    Project.objects.filter(id=project_id).update(
+        is_deleted=True, 
+        deleted_at=timezone.now()
+    )
+
+# Query active only
+active_projects = Project.objects.filter(is_deleted=False)
 ```
 
 ---
 
 ## Summary
 
-| Pattern           | Use Case           |
-| ----------------- | ------------------ |
-| Transaction       | Multiple writes    |
-| Cursor pagination | Large lists        |
-| net.fetch         | External API calls |
-| Upsert            | Insert or update   |
-| Soft delete       | Data recovery      |
+| Pattern                | Use Case                       | Django/DRF Solution                 |
+| ---------------------- | ------------------------------ | ----------------------------------- |
+| Multiple DB operations | Ensure atomic consistency      | `@transaction.atomic`               |
+| Query optimization     | Avoiding N+1 queries           | `select_related`, `prefetch_related`|
+| Pagination             | Standard DRF list endpoints    | DRF Pagination Classes              |
+| External API calls     | Calling FastAPI Microservices  | `httpx` asynchronous clients        |
+| Upsert                 | Insert or update data          | `update_or_create` ORM method       |
+| Soft delete            | Data recovery & audit trails   | Filter `is_deleted=False`           |

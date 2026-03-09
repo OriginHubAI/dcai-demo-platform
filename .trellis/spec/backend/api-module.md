@@ -1,190 +1,167 @@
 # API Module Organization
 
-> Domain-driven API module layout using TypeScript + Zod for strict type safety.
+> Domain-driven API module layout using Django, Django REST Framework (DRF), and Python type hints.
 
 ---
 
 ## Core Principles
 
-1. **Domain-driven structure** - Each business domain gets its own folder
-2. **Type safety first** - Zod schemas for every input/output
-3. **Single source of truth** - Types defined once in `types.ts`
-4. **Code reuse** - Shared logic extracted to `lib/`
-5. **Clear separation** - One file per procedure
-6. **Thin IPC handlers** - Wrappers calling procedures
+1. **Domain-driven structure** - Each major business domain gets its own Django app (e.g., `apps.dataset`, `user`, `chat`).
+2. **Fat Models, Thin Views, Service Layer** - Keep HTTP logic in Views/ViewSets, state in Models, and complex business logic in `services.py` or selectors.
+3. **Serialization** - Use DRF Serializers for validation and data transformation.
+4. **Code reuse** - Shared utilities extracted to a common `core/` or `utils/` app.
+5. **Clear separation of concerns** - URL routing -> Views -> Serializers/Services -> Models.
 
 ---
 
-## Module Structure
+## Django App Structure
+
+A typical modern Django app in DCAI Platform should look like this:
 
 ```
-src/main/services/{domain}/
-├── types.ts              # Zod schemas + TypeScript types (REQUIRED)
-├── procedures/           # Endpoint handlers (REQUIRED)
-│   ├── create.ts         # Create operation
-│   ├── list.ts           # List with filters
-│   ├── get.ts            # Get by ID
-│   ├── update.ts         # Update operation
-│   └── delete.ts         # Delete operation
-└── lib/                  # Shared business logic (OPTIONAL)
-    ├── helpers.ts        # General helpers
-    └── cache.ts          # Caching operations
+backend/{app_name}/
+├── apps.py               # Django AppConfig
+├── models.py             # Database models (PostgreSQL)
+├── urls.py               # App-specific URL routing
+├── views.py              # DRF Views & ViewSets
+├── serializers.py        # Request/Response validation and transformation
+├── services.py           # Complex business logic and external API calls (e.g. FastAPI proxying)
+├── selectors.py          # (Optional) Complex read queries
+└── tests/                # Unit and integration tests
 ```
 
 ---
 
 ## File Responsibilities
 
-### types.ts - Schema & Type Definitions
+### `models.py` - Database Schema
 
-**Purpose**: Define every Zod schema and TypeScript type for the module.
+**Purpose**: Define the database tables, relationships, and basic data integrity rules using the Django ORM.
 
-```typescript
-// src/main/services/project/types.ts
-import { z } from 'zod';
+```python
+# backend/project/models.py
+from django.db import models
 
-// ============= Base Schemas =============
+class ProjectStatus(models.TextChoices):
+    ACTIVE = 'active', 'Active'
+    ARCHIVED = 'archived', 'Archived'
+    DRAFT = 'draft', 'Draft'
 
-export const projectStatusSchema = z.enum(['active', 'archived', 'draft']);
+class Project(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=ProjectStatus.choices, default=ProjectStatus.ACTIVE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-export const projectSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string().nullable(),
-  status: projectStatusSchema,
-  // Use z.number() for API responses (Unix milliseconds)
-  // See shared/timestamp.md for full timestamp specification
-  createdAt: z.number(),
-  updatedAt: z.number(),
-});
+    class Meta:
+        ordering = ['-updated_at']
 
-// ============= Input Schemas =============
-
-export const createProjectInputSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
-  description: z.string().optional(),
-});
-
-export const listProjectsInputSchema = z.object({
-  status: projectStatusSchema.optional(),
-  limit: z.number().min(1).max(100).default(50),
-  cursor: z.string().optional(),
-});
-
-// ============= Output Schemas =============
-
-export const createProjectOutputSchema = z.object({
-  success: z.boolean(),
-  project: projectSchema.optional(),
-  error: z.string().optional(),
-});
-
-// ============= Type Exports =============
-
-export type ProjectStatus = z.infer<typeof projectStatusSchema>;
-export type Project = z.infer<typeof projectSchema>;
-export type CreateProjectInput = z.infer<typeof createProjectInputSchema>;
-export type CreateProjectOutput = z.infer<typeof createProjectOutputSchema>;
+    def __str__(self):
+        return self.name
 ```
 
 ---
 
-### procedures/ - Endpoint Handlers
+### `serializers.py` - Validation & Data Formatting
 
-**Purpose**: Implement endpoint logic per file with validated inputs.
+**Purpose**: Validate incoming data (from `request.data` or `request.query_params`) and serialize outgoing model instances to JSON.
 
-```typescript
-// src/main/services/project/procedures/create.ts
-import { db } from '../../../db/client';
-import { project } from '../../../db/schema';
-import { logger as baseLogger } from '../../logger';
-import { createProjectInputSchema } from '../types';
-import type { CreateProjectInput, CreateProjectOutput } from '../types';
+```python
+# backend/project/serializers.py
+from rest_framework import serializers
+from .models import Project
 
-const logger = baseLogger.scope('project:create');
+class ProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = ['id', 'name', 'description', 'status', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
-export function createProject(input: CreateProjectInput): CreateProjectOutput {
-  try {
-    // 1. Validate input
-    const parseResult = createProjectInputSchema.safeParse(input);
-    if (!parseResult.success) {
-      return { success: false, error: parseResult.error.issues[0].message };
-    }
-
-    const { name, description } = parseResult.data;
-    const projectId = crypto.randomUUID();
-
-    // 2. Insert into database
-    const [newProject] = db
-      .insert(project)
-      .values({
-        id: projectId,
-        name,
-        description: description ?? null,
-        status: 'active',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning()
-      .all();
-
-    logger.info('Project created', { projectId });
-    // Convert Date to Unix milliseconds for API response
-    // See shared/timestamp.md for timestamp specification
-    return {
-      success: true,
-      project: {
-        ...newProject,
-        createdAt: newProject.createdAt.getTime(),
-        updatedAt: newProject.updatedAt.getTime(),
-      },
-    };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Create project failed', { error: message });
-    return { success: false, error: 'Failed to create project' };
-  }
-}
+class CreateProjectInputSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=100)
+    description = serializers.CharField(required=False, allow_blank=True)
 ```
 
 ---
 
-### lib/ - Shared Business Logic
+### `views.py` / `viewset/` - HTTP Endpoint Handlers
 
-**Purpose**: Host reusable logic used by multiple procedures.
+**Purpose**: Handle HTTP requests, parse inputs using serializers, call services/ORM layer, and return HTTP responses.
 
-```typescript
-// src/main/services/project/lib/helpers.ts
-import { eq } from 'drizzle-orm';
-import { db } from '../../../db/client';
-import { project } from '../../../db/schema';
+```python
+# backend/project/views.py
+from rest_framework import mixins, viewsets, status
+from rest_framework.response import Response
+from .models import Project
+from .serializers import ProjectSerializer, CreateProjectInputSerializer
+from .services import create_project
 
-export function isNameUnique(name: string, excludeId?: string): boolean {
-  const existing = db.select({ id: project.id }).from(project).where(eq(project.name, name)).get();
+class ProjectViewSet(mixins.CreateModelMixin,
+                     mixins.ListModelMixin,
+                     mixins.RetrieveModelMixin,
+                     viewsets.GenericViewSet):
+    
+    queryset = Project.objects.all()
+    serializer_class = ProjectSerializer
 
-  if (!existing) return true;
-  if (excludeId && existing.id === excludeId) return true;
-  return false;
-}
+    def create(self, request, *args, **kwargs):
+        # 1. Validate Input
+        serializer = CreateProjectInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        # 2. Call Service or ORM
+        project = create_project(**serializer.validated_data)
+        
+        # 3. Serialize Output
+        output_serializer = ProjectSerializer(project)
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 ```
 
 ---
 
-## IPC Handler Integration
+### `services.py` - Business Logic & Proxies
 
-IPC handlers are **thin wrappers** that call procedures:
+**Purpose**: Host reusable logic that involves multiple models, external API calls (e.g., to DataFlow-System FastAPI), or complex transaction blocks.
 
-```typescript
-// src/main/ipc/project.handler.ts
-import { ipcMain } from 'electron';
-import { IPC_CHANNELS } from '../../shared/constants/channels';
-import { createProject } from '../services/project/procedures/create';
-import { listProjects } from '../services/project/procedures/list';
+```python
+# backend/project/services.py
+from django.db import transaction
+from .models import Project
 
-export function setupProjectHandlers(): void {
-  ipcMain.handle(IPC_CHANNELS.PROJECT.CREATE, (_, input) => createProject(input));
-  ipcMain.handle(IPC_CHANNELS.PROJECT.LIST, (_, input) => listProjects(input));
-}
+@transaction.atomic
+def create_project(name: str, description: str = "") -> Project:
+    """
+    Creates a new project. Raises exceptions on failure.
+    """
+    project = Project.objects.create(
+        name=name,
+        description=description,
+        status='active'
+    )
+    # Could involve other models or external API calls here
+    return project
+```
+
+---
+
+## URL Routing Integration
+
+URL configs map incoming requests to the ViewSets or Views.
+
+```python
+# backend/project/urls.py
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import ProjectViewSet
+
+router = DefaultRouter()
+router.register(r'projects', ProjectViewSet, basename='project')
+
+urlpatterns = [
+    path('', include(router.urls)),
+]
 ```
 
 ---
@@ -193,47 +170,27 @@ export function setupProjectHandlers(): void {
 
 ### DO
 
-```typescript
-// 1. Always validate inputs with Zod
-const parseResult = schema.safeParse(input);
-if (!parseResult.success) {
-  return { success: false, error: parseResult.error.issues[0].message };
-}
-
-// 2. Use typed return values
-export function createProject(input: Input): Output { ... }
-
-// 3. Use scoped logger
-const logger = baseLogger.scope("project:create");
-
-// 4. Return consistent response format
-return { success: true, project };
-return { success: false, error: "Name is required" };
-```
+- **Always validate inputs with DRF Serializers**: `serializer.is_valid(raise_exception=True)` automatically returns HTTP 400 with the error details.
+- **Use `select_related` and `prefetch_related`** in your Views' `queryset` to avoid N+1 queries.
+- **Keep Views thin**: Move complex business rules to `services.py` or model methods.
+- **Return consistent DRF Responses**: Let the content negotiation handle JSON rendering.
 
 ### DON'T
 
-```typescript
-// 1. Don't skip validation
-export function createProject(input: any) { ... }
-
-// 2. Don't use console.log
-console.log("Project created");  // Use logger
-
-// 3. Don't expose internal errors
-return { success: false, error: error.stack };
-```
+- **Don't skip validation**: Never trust `request.data` blindly. E.g., `Project.objects.create(**request.data)` is dangerous.
+- **Don't put complex business logic in Serializers**: Serializers are for data transformation and validation. If creating an object requires hitting an external API, put that in a `service`.
+- **Don't expose internal stack traces**: Let DRF's exception handler convert custom Exceptions into appropriate HTTP responses.
 
 ---
 
 ## Quick Start Checklist
 
-When creating a new service domain:
+When creating a new Django app (module):
 
-- [ ] Create `services/{domain}/` directory
-- [ ] Add `types.ts` with Zod schemas
-- [ ] Create `procedures/` with one file per action
-- [ ] Add `lib/` for shared logic (if needed)
-- [ ] Create thin IPC handler in `ipc/{domain}.handler.ts`
-- [ ] Register handler in `ipc/index.ts`
-- [ ] Add IPC channels in `shared/constants/channels.ts`
+- [ ] Run `python manage.py startapp {app_name}`
+- [ ] Add the app to `INSTALLED_APPS` in `core/settings.py`
+- [ ] Create `models.py` and run `makemigrations`
+- [ ] Add `serializers.py` with validation rules
+- [ ] Create `views.py` (prefer ViewSets for CRUD)
+- [ ] Add `urls.py` and register it in the main `backend/core/urls.py`
+- [ ] Add `services.py` if complex business logic or proxying to FastAPI is required

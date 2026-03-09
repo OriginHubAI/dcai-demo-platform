@@ -1,130 +1,103 @@
 # Type Safety Guidelines
 
-> Type safety patterns for TypeScript + Zod development.
+> Type safety patterns for Python 3.9+ using explicit typing and Mypy.
 
 ---
 
-## No Non-Null Assertions
+## Why Type Hints?
 
-```typescript
-// WRONG
-const name = user!.name;
+While Python is dynamically typed, type hinting drastically improves code navigation, helps developers catch bugs early (via `mypy` or LSP tools), and auto-documents code.
 
-// CORRECT
-const user = db.select().from(users).where(eq(users.id, id)).get();
-if (!user) {
-  throw new Error('User not found');
-}
-const name = user.name;
+```python
+# WRONG
+def process_task(task_id, payload):
+    # Hard to tell what types these are without reading internal method logic
+    return db_save(task_id, payload)
+
+# CORRECT
+from uuid import UUID
+
+def process_task(task_id: UUID, payload: dict) -> bool:
+    # Explicit types. IDE will warn if you pass a string instead of UUID
+    return db_save(task_id, payload)
 ```
 
 ---
 
-## Discriminated Union Narrowing
+## Handling Optionals
 
-Use strict equality for type narrowing:
+If a function can return `None`, you must signify it.
 
-```typescript
-type Result = { success: true; data: string } | { success: false; error: string };
+```python
+from typing import Optional
+from .models import User
 
-// CORRECT: Use === true
-if (result.success === true) {
-  console.log(result.data);
-} else {
-  console.log(result.error);
-}
+# CORRECT
+def get_user_by_email(email: str) -> Optional[User]:
+    return User.objects.filter(email=email).first()
 
-// WRONG: Truthy check may not narrow
-if (result.success) {
-  console.log(result.data);
-} else {
-  console.log(result.error); // May cause type error
-}
+client = get_user_by_email("test@example.com")
+if client:
+    print(client.id) # Safe
 ```
 
 ---
 
-## Zod Schema for All Types
+## Advanced Typing (dataclasses / Pydantic)
 
-```typescript
-import { z } from 'zod';
+For complex data structures (especially those coming from or going to Proxied FastAPI services), use standard library `dataclasses` or `pydantic`.
 
-// Input schemas
-export const createUserInputSchema = z.object({
-  email: z.string().email('Invalid email'),
-  name: z.string().min(1, 'Name required'),
-});
+```python
+from pydantic import BaseModel
+from typing import List
 
-// Entity schemas (for API responses - use z.number() for timestamps)
-export const userSchema = z.object({
-  id: z.string(),
-  email: z.string().email(),
-  name: z.string(),
-  createdAt: z.number(), // Unix milliseconds
-});
+class AgentToolParams(BaseModel):
+    name: str
+    openapi_url: str
 
-// Inferred types
-export type CreateUserInput = z.infer<typeof createUserInputSchema>;
-export type User = z.infer<typeof userSchema>;
+class AgentConfig(BaseModel):
+    title: str
+    tools: List[AgentToolParams]
+
+# Utilizing it in a Service
+def deploy_agent(config_data: dict) -> bool:
+    # This automatically validates and provides dot-notation autocomplete!
+    config = AgentConfig(**config_data)
+    print(config.tools[0].name)
+    return True
 ```
 
 ---
 
-## Zod Error Handling
+## Type Hints in Django Views vs Services
 
-```typescript
-const parseResult = schema.safeParse(input);
+Usually, DRF Serializers handle the "typing" at the View layer. It is most crucial to strictly type the `services.py` layer.
 
-if (!parseResult.success) {
-  // CORRECT: Use .issues
-  const error = parseResult.error.issues[0].message;
-  return { success: false, error };
-}
+```python
+# backend/project/services.py
+from django.db.models import QuerySet
+from .models import Project
 
-// WRONG: .errors doesn't exist
-parseResult.error.errors; // TypeScript error!
+def get_active_projects() -> QuerySet[Project]:
+    return Project.objects.filter(status='active')
 ```
+
+*(Note for `QuerySet`: using `django-stubs` provides support for generically typing QuerySets like `QuerySet[Project]`)*.
 
 ---
 
-## Type Imports
+## Avoiding `Any`
 
-```typescript
-// CORRECT
-import type { User, Project } from './types';
-import { createUser } from './procedures';
+Using `Any` defeats the purpose of the type checker. Try to use built-in collection types (`dict`, `list`, `set`) or specify `unknown` patterns via generic type parameters if absolutely necessary.
 
-// Also acceptable
-import { type User, createUser } from './types';
-```
+```python
+from typing import Any
 
----
+# WRONG
+def raw_sql_execute(query: str) -> Any: ...
 
-## Explicit Return Types
-
-```typescript
-// WRONG
-export function getUser(id: string) {
-  return db.query.users.findFirst({ where: eq(users.id, id) });
-}
-
-// CORRECT
-export function getUser(id: string): User | undefined {
-  return db.query.users.findFirst({ where: eq(users.id, id) });
-}
-```
-
----
-
-## Avoid `any`
-
-```typescript
-// WRONG
-function process(data: any) { ... }
-
-// CORRECT
-function process(data: ProcessInput) { ... }
-function process(data: unknown) { ... }
+# BETTER
+def raw_sql_execute(query: str) -> list[dict]: ...
 ```
 
 ---
@@ -133,10 +106,8 @@ function process(data: unknown) { ... }
 
 | Rule                        | Reason                 |
 | --------------------------- | ---------------------- |
-| No `!` assertions           | Runtime errors         |
-| Use `=== true` for unions   | Proper narrowing       |
-| Zod-first types             | Single source of truth |
-| Use `.issues` not `.errors` | Correct Zod API        |
-| `import type` for types     | Clear separation       |
-| Explicit return types       | Documentation          |
-| Avoid `any`                 | Type safety            |
+| Type hint all service funcs | Self-documenting code  |
+| Understand `Optional[T]`    | Prevents `AttributeError: NoneType` |
+| Use `pydantic` or `dataclass`| Strong validation for internal payloads |
+| Explicit return types       | Mypy can infer better  |
+| Avoid `Any` when possible   | Type safety            |

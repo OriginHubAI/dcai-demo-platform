@@ -1,261 +1,126 @@
 # Code Quality & Import Guidelines
 
-> Import path rules and code quality standards.
+> Quality standards for Python, Django, and the broader DCAI backend.
 
 ---
 
 ## Import Path Rules
 
-### Import Path by Process
+### Absolute Imports
 
-Different processes use different import path styles:
+Always use absolute imports based on the Django project root.
 
-| Process                                | Path Style      | Example                      |
-| -------------------------------------- | --------------- | ---------------------------- |
-| **Main process** (`src/main/`)         | Relative paths  | `../../../shared/types/user` |
-| **Renderer process** (`src/renderer/`) | `@shared` alias | `@shared/types/user`         |
-| **Shared** (`src/shared/`)             | Relative paths  | `./common`                   |
+```python
+# CORRECT - src/backend/project/services.py
+from project.models import Project
+from core.exceptions import CustomAPIException
 
-### Main Process: Use Relative Paths
-
-Files in `src/main/` **MUST** use relative paths for imports from `src/shared/`:
-
-```typescript
-// CORRECT - src/main/services/project/types.ts
-import { createOutputSchema } from '../../../shared/types/common';
-
-// WRONG - ESLint will fail
-import { createOutputSchema } from '@shared/types/common';
+# WRONG - Relative imports make refactoring harder and can cause circular dependency issues
+from .models import Project
+from ..core.exceptions import CustomAPIException
 ```
 
-**Why?** The `@shared` alias is only configured for the Vite-bundled renderer process, not for the main process which runs directly in Node.js.
+### Import Ordering (isort)
 
-### Renderer Process: Use @shared Alias
+Imports should be grouped in the following order:
+1. Standard library imports (e.g. `import os`, `import sys`)
+2. Related third party imports (e.g. `import django`, `import rest_framework`)
+3. Local application/library specific imports
 
-Files in `src/renderer/` should use the `@shared` alias:
-
-```typescript
-// CORRECT - src/renderer/src/hooks/useProject.ts
-import { projectSchema, Project } from '@shared/types/project';
-
-// Works but not recommended
-import { projectSchema } from '../../../../shared/types/project';
-```
-
----
-
-## Vite Path Alias Configuration
-
-### The Problem
-
-Electron projects have **three separate Vite configs**:
-
-- `vite.main.config.ts` - Main process
-- `vite.preload.config.ts` - Preload scripts
-- `vite.renderer.config.ts` - Renderer process
-
-**Critical**: Vite does NOT automatically read `tsconfig.json` paths. Each config needs explicit `resolve.alias`.
-
-### Common Error
-
-```
-[vite]: Rollup failed to resolve import "@shared/types/user" from "src/main/services/xxx.ts"
-```
-
-### Solution
-
-Add path aliases to **all three** Vite config files:
-
-```typescript
-// vite.main.config.ts (and vite.preload.config.ts)
-import path from 'node:path';
-import { defineConfig } from 'vite';
-
-export default defineConfig({
-  resolve: {
-    alias: {
-      '@shared': path.resolve(__dirname, './src/shared'),
-    },
-  },
-  // ... other config
-});
-```
-
-### Best Practice: Shared Alias Config
-
-Create a shared alias configuration:
-
-```typescript
-// vite.shared.ts
-import path from 'node:path';
-
-export const sharedAlias = {
-  '@shared': path.resolve(__dirname, './src/shared'),
-};
-
-// vite.main.config.ts
-import { sharedAlias } from './vite.shared';
-
-export default defineConfig({
-  resolve: {
-    alias: sharedAlias,
-  },
-});
-```
-
-### Alternative: vite-tsconfig-paths Plugin
-
-```bash
-npm install -D vite-tsconfig-paths
-```
-
-```typescript
-import tsconfigPaths from 'vite-tsconfig-paths';
-
-export default defineConfig({
-  plugins: [tsconfigPaths()],
-});
-```
-
-### Key Insight
-
-- **TypeScript paths** (`tsconfig.json`) only affect type checking
-- **Vite aliases** (`resolve.alias`) affect actual module resolution at build time
-- Both must be kept in sync
+Using `isort` will automatically organize this for you.
 
 ---
 
 ## Quality Guidelines
 
-### Before Every Commit
+### Style and Formatting
 
-- [ ] `npm run lint` - 0 errors
-- [ ] `npm run typecheck` (or `tsc --noEmit`) - No type errors
-- [ ] Database schema changes have migrations
+We follow **PEP 8** standards.
+
+- **Formatter**: `Black` (line length of 88 or 100).
+- **Linter**: `Flake8` or `Ruff`.
+- **Type Checker**: `mypy`.
+
+Before committing, ensure your code passes styling checks. Let CI/CD or your pre-commit hooks handle formatting seamlessly.
 
 ### Forbidden Patterns
 
 | Pattern                        | Reason                | Alternative                   |
 | ------------------------------ | --------------------- | ----------------------------- |
-| `!` (non-null assertion)       | Type unsafe           | Use null checks               |
-| `console.log`                  | Not structured        | Use `electron-log`            |
-| `await` in loops               | N+1 queries           | Use `inArray` or relations    |
-| Direct `db` access in renderer | Security              | Use IPC handlers              |
-| `let` for non-reassigned       | ESLint `prefer-const` | Use `const`                   |
-| `any` type                     | Type unsafe           | Use proper types or `unknown` |
-
-### Drizzle-Specific Rules
-
-- [ ] Use `.get()` for single result, `.all()` for multiple
-- [ ] Define relations in schema for related queries
-- [ ] Use transactions for multiple write operations
-- [ ] Always use `$defaultFn` for auto-generated values
+| `except Exception:` blindly    | Swallows tracebacks   | `logger.exception()` or specific errors  |
+| Raw strings for settings       | Security/Rigidity     | `django.conf.settings` or `.env`    |
+| `import *`                     | Namespace pollution   | Explicitly name your imports  |
+| Business logic in views        | Hard to test          | Move to `services.py`         |
+| Unpaginated `Model.objects.all()` | Memory crash          | Use standard ViewSet or limit |
 
 ---
 
-## Testing Guidelines
+## Testing Guidelines (Pytest)
+
+We use `pytest` combined with `pytest-django`.
 
 ### Test Coverage Requirements
 
 | Layer        | Target Coverage | Description                    |
 | ------------ | --------------- | ------------------------------ |
-| Procedures   | > 80%           | CRUD operations                |
-| Lib/Helpers  | > 80%           | Pure utility functions         |
-| IPC Handlers | > 60%           | Thin wrappers (lower priority) |
-| Shared Types | N/A             | Type definitions only          |
-
-### Test Structure
-
-```
-tests/
-├── setup/
-│   ├── global-setup.ts        # Test database initialization
-│   └── test-helpers.ts        # Test utilities
-├── factories/                 # Test data factories
-│   ├── index.ts               # Barrel export + resetAllCounters()
-│   └── project.factory.ts
-├── unit/                      # Mock-based unit tests
-│   └── services/{module}/
-│       ├── lib/*.test.ts
-│       └── procedures/*.test.ts
-└── integration/               # Real database tests
-    └── database/*.test.ts
-```
+| Services     | > 90%           | Core business rules / Proxies  |
+| Views/Routes | > 80%           | HTTP contract testing          |
+| Models       | > 80%           | Custom model methods / constraints |
+| Serializers  | Tested via Views| Covered implicitly if Views pass |
 
 ### Running Tests
 
 ```bash
 # Run all tests
-npm test
+pytest
 
-# Run specific test file
-npm test -- tests/unit/services/project/procedures/create.test.ts
+# Run tests in a specific app
+pytest project/tests/
 
-# Run with coverage
-npm run test:coverage
-
-# Watch mode
-npm test -- --watch
+# Run with coverage report
+pytest --cov=.
 ```
 
 ### Test File Template
 
-```typescript
-/**
- * [ProcedureName] Procedure Unit Tests
- */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+```python
+# backend/project/tests/test_services.py
+import pytest
+from project.models import Project
+from project.services import create_project
 
-// 1. Define mocks using vi.hoisted() (MUST be before vi.mock)
-const { mockGet, mockSelect } = vi.hoisted(() => {
-  const mockGet = vi.fn();
-  const mockSelect = vi.fn(() => ({
-    from: vi.fn(() => ({ where: vi.fn(() => ({ get: mockGet })) })),
-  }));
-  return { mockGet, mockSelect };
-});
+@pytest.mark.django_db
+class TestProjectServices:
 
-// 2. Set up module mocks
-vi.mock('@main/db/client', () => ({
-  db: { select: mockSelect },
-}));
-
-// 3. Import the module under test AFTER mocks
-import { getProject } from '@main/services/project/procedures/get';
-
-describe('getProject Procedure', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockGet.mockReturnValue({ id: '123', name: 'Test' });
-  });
-
-  describe('Input Validation', () => {
-    it('should reject missing id', () => {
-      const result = getProject({ id: '' });
-      expect(result.success).toBe(false);
-    });
-  });
-
-  describe('Normal Operations', () => {
-    it('should return project when found', () => {
-      const result = getProject({ id: '123' });
-      expect(result.success).toBe(true);
-      expect(result.project.name).toBe('Test');
-    });
-  });
-});
+    def test_create_project_success(self):
+        # Arrange
+        name = "Test Project"
+        
+        # Act
+        project = create_project(name=name)
+        
+        # Assert
+        assert project.id is not None
+        assert project.name == "Test Project"
+        assert project.status == "active"
+        
+    def test_create_project_validation(self):
+        # Arrange
+        name = "" # invalid
+        
+        # Act & Assert
+        with pytest.raises(ValueError):
+            create_project(name=name)
 ```
 
 ### Test Scenario Categories
 
-Each procedure test should cover:
-
 | Category            | What to Test            | Example                        |
 | ------------------- | ----------------------- | ------------------------------ |
-| Input Validation    | Required fields, format | Missing id, invalid status     |
-| Normal Operations   | Happy path              | Create with valid input        |
-| Error Handling      | Exceptions, not found   | Database error, entity missing |
-| Boundary Conditions | Edge cases              | Empty string, max length       |
+| Input Validation    | Required fields, format | Missing name, invalid UUID     |
+| Normal Operations   | Happy path              | Create entity successfully     |
+| Error Handling      | Exceptions, proxy fails | Verify HTTPErrors are raised/caught |
+| Database Integrity  | Constraints             | Duplicate unique names         |
 
 ---
 
@@ -263,10 +128,8 @@ Each procedure test should cover:
 
 | Rule                         | Reason              |
 | ---------------------------- | ------------------- |
-| Main process: relative paths | No alias resolution |
-| Renderer: `@shared` alias    | Cleaner imports     |
-| Sync Vite + TypeScript paths | Both needed         |
-| No `!` assertions            | Type safety         |
-| Use structured logging       | Searchable logs     |
-| Test with mocks              | Fast, isolated      |
-| 80% coverage for procedures  | Quality assurance   |
+| Absolute imports             | Codebase clarity    |
+| Use `Black` and `Ruff`       | Uniform formatting without arguments |
+| Never rely on `import *`     | Explicit is better than implicit |
+| 90% coverage for services    | Isolate logic from Web logic  |
+| Use `@pytest.mark.django_db` | Give tests DB access securely |

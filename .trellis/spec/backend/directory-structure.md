@@ -1,152 +1,118 @@
 # Directory Structure
 
-> Domain-driven directory layout for Electron main process.
+> Domain-driven directory layout for the Django Backend Server.
 
 ---
 
-## Main Process Structure
+## Backend Application Structure
+
+The DCAI Backend is built around Django but incorporates modern microservice and API gateway concepts.
 
 ```
-src/main/
-├── index.ts              # Main process entry
-├── db/                   # Database layer
-│   ├── client.ts         # Drizzle client initialization
-│   ├── schema.ts         # All table schemas
-│   └── migrate.ts        # Migration logic
-├── ipc/                  # IPC handlers (thin layer)
-│   ├── index.ts          # Register all handlers
-│   ├── project.handler.ts
-│   └── user.handler.ts
-└── services/             # Business logic (domain-driven)
-    ├── {domain}/         # One folder per domain
-    │   ├── types.ts      # Zod schemas + TypeScript types (REQUIRED)
-    │   ├── procedures/   # Endpoint handlers (REQUIRED)
-    │   │   ├── create.ts
-    │   │   ├── list.ts
-    │   │   ├── get.ts
-    │   │   ├── update.ts
-    │   │   └── delete.ts
-    │   └── lib/          # Shared business logic (OPTIONAL)
-    │       ├── helpers.ts
-    │       └── cache.ts
-    ├── project/          # Example: Project domain
-    │   ├── types.ts
-    │   ├── procedures/
-    │   │   ├── create.ts
-    │   │   ├── list.ts
-    │   │   ├── get.ts
-    │   │   ├── update.ts
-    │   │   └── delete.ts
-    │   └── lib/
-    │       └── cache.ts
-    ├── user/             # Example: User domain
-    │   ├── types.ts
-    │   ├── procedures/
-    │   │   ├── get.ts
-    │   │   └── update.ts
-    │   └── lib/
-    │       └── helpers.ts
-    └── logger.ts         # Shared logger (not a domain)
+backend/
+├── manage.py             # Django entry point
+├── requirements.txt      # Python dependencies
+├── core/                 # Core settings, URL routing, and global configs (Main Django Box)
+│   ├── settings.py       # Global Django settings
+│   ├── urls.py           # Root URL dispatcher
+│   ├── asgi.py           # ASGI config (for WebSockets / async apps)
+│   └── wsgi.py           # WSGI config for sync deployment
+├── agent/                # Domain App: Agent routing & management
+├── apps/                 # Domain App: Type A Spaces/Apps
+├── chat/                 # Domain App: Chat history, conversations, sharing
+├── collection/           # Domain App: User Collections
+├── customadmin/          # Domain App: Custom Django admin interface overrides
+├── dataflow/             # Domain App: Proxies DataFlow-System endpoints
+├── dataset/              # Domain App: High-performance metadata and MyScale linkage
+├── document/             # Domain App: Document chunking and management
+├── knowledgebase/        # Domain App: Knowledge bases UI logic
+├── llm_chat/             # Domain App: Large Language Model proxying
+├── organization/         # Domain App: RBAC, Teams, and Orgs
+├── user/                 # Domain App: Custom User models, Auth, JWT, GitHub/WeChat OAuth
+└── third_party/          # Integrations: AliYun Bailian, LangChain wrappers, etc.
 ```
 
 ---
 
-## Domain Examples
+## Inside a Domain App Folder
 
-| Domain     | Description        | Example Procedures                          |
-| ---------- | ------------------ | ------------------------------------------- |
-| `project`  | Project management | `create`, `list`, `get`, `update`, `delete` |
-| `user`     | User management    | `get`, `update`, `updateSettings`           |
-| `auth`     | Authentication     | `login`, `logout`, `checkSession`           |
-| `settings` | App settings       | `get`, `save`, `reset`                      |
-| `file`     | File operations    | `read`, `write`, `list`, `delete`           |
-
----
-
-## Shared Types Directory
+A standard App generally follows the MVC/MTV structure enhanced with Service layers for logic:
 
 ```
-src/shared/
-├── constants/
-│   ├── channels.ts       # IPC channel names
-│   └── config.ts         # App configuration
-└── types/
-    ├── common.ts         # Shared utilities (e.g., createOutputSchema)
-    ├── project.ts        # Project-related types
-    └── user.ts           # User-related types
+backend/{domain}/
+├── __init__.py           
+├── apps.py               # App configuration
+├── models.py             # Database models (Data Layer)
+├── urls.py               # Route dispatcher for this domain
+├── views.py              # HTTP Endpoints (View Layer)
+├── serializers.py        # Request validation and serialization formatting
+├── services.py           # Business Rules / Cross-model operations / API Proxy calls
+├── permissions.py        # Optional: Custom DRF permission classes
+├── tasks.py              # Optional: Celery async tasks (e.g., background document processing)
+└── tests/                # Testing directory
+    ├── conftest.py       # Pytest fixtures
+    ├── test_models.py
+    ├── test_views.py
+    └── test_services.py
 ```
 
 ---
 
-## Test Directory Structure
+## Domain Examples & Responsibilities
+
+| Domain          | Description                                         | Example Responsibilities                            |
+| --------------- | --------------------------------------------------- | --------------------------------------------------- |
+| `user`          | User identity & Authentication                      | Login, Register, Refresh Token, WeChat/GitHub OAuth |
+| `agent`         | Tool and Agent configuration                        | Agent creation, Tool URLs, routing via SubAgents    |
+| `dataflow`      | Interactions with the DataFlow-System FastAPI Server| Operator retrieval, Code-Server lifecycle proxying  |
+| `dataset`       | Linking S3/LakeFS with structured Metadata          | Listing datasets, interacting with LakeFS API       |
+| `chat`          | User conversations via DataMaster                   | Conversation history, stream responses              |
+
+---
+
+## Test Directory Structure (Pytest)
+
+Maintain tests near the code they are testing within the App's `tests/` directory. Use Pytest + `pytest-django`.
 
 ```
-tests/
-├── setup/
-│   ├── global-setup.ts        # Test database initialization
-│   └── test-helpers.ts        # Test utilities
-├── factories/                 # Test data factories
-│   ├── index.ts               # Barrel export + resetAllCounters()
-│   ├── user.factory.ts
-│   └── project.factory.ts
-├── mocks/
-│   └── electron.ts            # Electron API mocks
-├── unit/                      # Mock-based unit tests
-│   └── services/{domain}/
-│       ├── lib/*.test.ts      # Utility function tests
-│       └── procedures/*.test.ts
-└── integration/               # Real database tests
-    └── database/*.test.ts
+backend/{domain}/tests/
+├── factories/            # Factory Boy factories (Optional)
+│   ├── __init__.py
+│   └── user_factory.py
+├── test_models.py        # ORM / Constraint testing
+├── test_views.py         # Testing ViewSets and API Endpoints (Integration style) 
+├── test_services.py      # Testing isolated business logic (Unit style)
+└── test_serializers.py   # Explicit validation tests
 ```
 
 ---
 
 ## Test File Naming Convention
 
-| Type             | Location                        | Naming                |
-| ---------------- | ------------------------------- | --------------------- |
-| Unit test        | `tests/unit/services/{domain}/` | `{file}.test.ts`      |
-| Integration test | `tests/integration/{category}/` | `{feature}.test.ts`   |
-| Factory          | `tests/factories/`              | `{entity}.factory.ts` |
+| Type                | Location                      | Naming                          |
+| ------------------- | ----------------------------- | ------------------------------- |
+| Models test         | `backend/{domain}/tests/`     | `test_models.py`                |
+| Views test          | `backend/{domain}/tests/`     | `test_views.py`                 |
+| Services test       | `backend/{domain}/tests/`     | `test_services.py`              |
+| Celery Tasks test   | `backend/{domain}/tests/`     | `test_tasks.py`                 |
 
 ---
 
 ## Key Principles
 
-1. **One folder per domain** - Each business domain has its own folder
-2. **types.ts is required** - Every domain must have Zod schemas and types
-3. **procedures/ is required** - One file per action (create, get, list, etc.)
-4. **lib/ is optional** - Only add when you have reusable logic
-5. **IPC handlers are thin** - They only call procedures, no business logic
+1. **One folder per domain** - Each business domain is encapsulated in an installed Django app.
+2. **urls.py registers app routes** - The `core/urls.py` simply `includes` the domain `urls.py`.
+3. **Views contain no business logic** - Keep Views light. Extract logic into `services.py`.
+4. **Celery tasks go in tasks.py** - Django automatically discovers celery background workers by inspecting `tasks.py`.
+5. **Serializers do validation** - All input checking happens there.
 
 ---
 
-## IPC Handler Example
+## When to Create a New Domain App
 
-```typescript
-// src/main/ipc/project.handler.ts
-import { ipcMain } from 'electron';
-import { createProject } from '../services/project/procedures/create';
-import { listProjects } from '../services/project/procedures/list';
-import { IPC_CHANNELS } from '../../shared/constants/channels';
-
-export function setupProjectHandlers(): void {
-  ipcMain.handle(IPC_CHANNELS.PROJECT.CREATE, (_, input) => createProject(input));
-  ipcMain.handle(IPC_CHANNELS.PROJECT.LIST, (_, input) => listProjects(input));
-}
-```
-
----
-
-## When to Create a New Domain
-
-Create a new domain folder when:
-
-- You have a new business concept (e.g., "tasks", "notes", "settings")
-- You need multiple CRUD operations on an entity
-- The logic is distinct from existing domains
+Create a new domain app (`python manage.py startapp {domain}`) when:
+- You have a fundamentally new business concept (e.g., launching a "billing" service).
+- The models and views naturally bundle together and shouldn't bloat an existing module.
 
 Do NOT create a new domain for:
-
-- Single utility functions (put in existing domain's `lib/`)
-- Cross-cutting concerns (put in `services/` root, e.g., `logger.ts`)
+- Scripts or common utilities. Put these in a generic `core/` or `utils/` app instead.

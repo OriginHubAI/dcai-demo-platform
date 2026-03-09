@@ -1,110 +1,114 @@
-# Logging & Packaging Guidelines
+# Logging Guidelines
 
-> Guidelines for logging and native module packaging.
+> Guidelines for logging in Python and Django.
 
 ---
 
 ## Logging Guidelines
 
-### Use Structured Logging
+### Use Python Standard `logging`
 
-```typescript
-// CORRECT
-import log from 'electron-log';
-log.info('Project created', { projectId: project.id, name: project.name });
-log.error('Database error', { error: err.message });
+Never use `print()` for backend logic, since it won't be collected by centralized monitoring tools (like ELK/CloudWatch) and lacks severity context.
 
-// WRONG
-console.log('Project created: ' + project.id);
+```python
+# CORRECT
+import logging
+
+logger = logging.getLogger(__name__)
+
+def create_project(data):
+    logger.info("Project creation started", extra={"project_name": data.get("name")})
+    try:
+        # DB Logic
+        pass
+    except Exception as e:
+        # Use logger.exception to automatically attach the stack trace
+        logger.exception("Failed to create project")
+
+# WRONG
+print("Project created: " + project.id)
 ```
 
-### Scoped Logger Pattern
+### Django `LOGGING` Configuration
 
-```typescript
-// src/main/services/logger.ts
-import log from 'electron-log';
+Logging is configured centrally in `core/settings.py`.
 
-log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] {text}';
-log.transports.console.format = '[{level}] {text}';
+```python
+# backend/core/settings.py
+import os
 
-export const logger = log;
-
-// Usage in modules
-import { logger as baseLogger } from '../../logger';
-
-const logger = baseLogger.scope('project:create');
-// Output: [project:create] Project created { projectId: '123' }
-
-logger.info('Project created', { projectId: '123' });
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple' if os.environ.get('DEBUG') == 'True' else 'verbose',
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/django.log',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        # Catch our application logs
+        'agent': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'core': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        }
+    },
+}
 ```
 
 ### Log Levels
 
-| Level   | Use Case            |
-| ------- | ------------------- |
-| `error` | Unexpected failures |
-| `warn`  | Recoverable issues  |
-| `info`  | Important events    |
-| `debug` | Development details |
+| Level       | Use Case            | Action Required |
+| ----------- | ------------------- | --------------- |
+| `EXCEPTION` | Includes stack trace| Immediate bug investigation |
+| `ERROR`     | Unexpected failures | High priority investigation |
+| `WARNING`   | Recoverable issues  | Low priority, monitor |
+| `INFO`      | Important events    | Passive monitoring |
+| `DEBUG`     | Development details | Ignore in production |
 
 ---
 
-## Packaging Native Modules
+## Handling Celery Task Logging
 
-Native modules like `better-sqlite3` require special configuration.
+When running background tasks using Celery, you should obtain a logger specific to Celery so the logs correctly pipe to the worker output stream.
 
-### Vite Config
+```python
+from celery.utils.log import get_task_logger
 
-```typescript
-// vite.main.config.ts
-export default defineConfig({
-  build: {
-    rollupOptions: {
-      external: ['better-sqlite3'],
-    },
-  },
-});
-```
+logger = get_task_logger(__name__)
 
-### Forge Config
-
-```typescript
-// forge.config.ts
-const nativeModules = ['better-sqlite3', 'bindings', 'file-uri-to-path'];
-
-const config = {
-  packagerConfig: {
-    asar: {
-      unpack: '*.{node,dll}',
-    },
-    extraResource: ['./drizzle'],
-  },
-  rebuildConfig: {
-    force: true,
-  },
-  hooks: {
-    packageAfterCopy: async (_config, buildPath) => {
-      const sourceModules = path.resolve(__dirname, 'node_modules');
-      const destModules = path.resolve(buildPath, 'node_modules');
-
-      await Promise.all(
-        nativeModules.map(async (pkg) => {
-          await cp(path.join(sourceModules, pkg), path.join(destModules, pkg), {
-            recursive: true,
-          });
-        })
-      );
-    },
-  },
-};
-```
-
-### Fuses
-
-```typescript
-new FusesPlugin({
-  [FuseV1Options.OnlyLoadAppFromAsar]: false, // Required!
-});
+@celery_app.task
+def process_data(data_id):
+    logger.info(f"Starting async processing for Data ID: {data_id}")
+    ...
 ```
 
 ---
@@ -113,8 +117,7 @@ new FusesPlugin({
 
 | Rule                             | Reason                     |
 | -------------------------------- | -------------------------- |
-| Use `logger.scope()`             | Module identification      |
-| Structured logging               | Easier to search           |
-| Mark native modules external     | Vite compatibility         |
-| Copy native modules in Forge     | Runtime availability       |
-| Set `OnlyLoadAppFromAsar: false` | Allow unpacked .node files |
+| Use `logging.getLogger(__name__)`| Module identification out of the box      |
+| Avoid `print()` statements       | Lacks structure and won't go to file handlers |
+| Use `logger.exception()` in `except` blocks | Collects the full stack trace |
+| Configure central formatters     | Consistency across all modules |

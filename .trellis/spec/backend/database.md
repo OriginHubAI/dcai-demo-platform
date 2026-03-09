@@ -1,177 +1,198 @@
-# Database Guidelines (Drizzle + SQLite)
+# Database Guidelines (Django ORM + PostgreSQL)
 
-> Guidelines for Drizzle ORM and SQLite development in Electron.
+> Guidelines for Django ORM and Database migrations development.
 
 ---
 
-## Drizzle Client Setup
+## Database Configuration
 
-```typescript
-// src/main/db/client.ts
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
-import { app } from 'electron';
-import path from 'path';
-import * as schema from './schema';
+The DCAI Platform uses **PostgreSQL** for primary transactional data and **MyScale** for vector embeddings and OLAP queries. Dev environments can optionally use SQLite.
 
-const getDbPath = () => {
-  if (process.env.NODE_ENV === 'development') {
-    return './app-dev.db';
-  }
-  return path.join(app.getPath('userData'), 'app.db');
-};
+```python
+# backend/core/settings.py
 
-const sqlite = new Database(getDbPath());
-sqlite.pragma('journal_mode = WAL');
-sqlite.pragma('foreign_keys = ON');
-
-export const db = drizzle(sqlite, { schema });
-export { sqlite };
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'dcai_db',
+        'USER': 'postgres',
+        'PASSWORD': 'password',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
 ```
 
 ---
 
-## Schema Definition
+## Schema Definition (Models)
 
-```typescript
-// src/main/db/schema.ts
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
-import { relations, sql } from 'drizzle-orm';
+Use Django's built-in Model classes to define your schema.
 
-export const projects = sqliteTable('projects', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  description: text('description'),
-  status: text('status', { enum: ['active', 'archived', 'draft'] })
-    .default('active')
-    .notNull(),
-  // Use timestamp_ms for millisecond precision
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
-    .notNull()
-    .default(sql`(unixepoch() * 1000)`),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
-    .notNull()
-    .default(sql`(unixepoch() * 1000)`)
-    .$onUpdate(() => new Date()),
-});
+```python
+# backend/project/models.py
+from django.db import models
+from django.contrib.auth import get_user_model
+import uuid
 
-export const tasks = sqliteTable('tasks', {
-  id: text('id').primaryKey(),
-  projectId: text('project_id')
-    .notNull()
-    .references(() => projects.id, { onDelete: 'cascade' }),
-  title: text('title').notNull(),
-  completed: integer('completed', { mode: 'boolean' }).notNull().default(false),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
-    .notNull()
-    .default(sql`(unixepoch() * 1000)`),
-});
+User = get_user_model()
 
-// Relations for db.query.* API
-export const projectsRelations = relations(projects, ({ many }) => ({
-  tasks: many(tasks),
-}));
+class Project(models.Model):
+    # UUIDs are better for distributed systems and hard-to-guess IDs
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    
+    # TextChoices for Enums
+    class Status(models.TextChoices):
+        ACTIVE = 'active', 'Active'
+        ARCHIVED = 'archived', 'Archived'
+        DRAFT = 'draft', 'Draft'
+        
+    status = models.CharField(
+        max_length=20, 
+        choices=Status.choices, 
+        default=Status.ACTIVE
+    )
+    
+    # Automatically managed timestamps
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-export const tasksRelations = relations(tasks, ({ one }) => ({
-  project: one(projects, {
-    fields: [tasks.projectId],
-    references: [projects.id],
-  }),
-}));
+    class Meta:
+        # Default order
+        ordering = ['-updated_at']
+        # Add constraints and indexes as needed
+        indexes = [
+            models.Index(fields=['status', 'created_at']),
+        ]
 
-// Export types
-export type Project = typeof projects.$inferSelect;
-export type InsertProject = typeof projects.$inferInsert;
-```
+    def __str__(self):
+        return self.name
 
----
-
-## Timestamp Precision
-
-**CRITICAL: Always use `{ mode: 'timestamp_ms' }` for timestamps.**
-
-```typescript
-// BAD: Using seconds mode
-createdAt: integer('createdAt', { mode: 'timestamp' }); // Stores 1734019200
-
-// GOOD: Using milliseconds mode
-createdAt: integer('createdAt', { mode: 'timestamp_ms' }); // Stores 1734019200000
+class Task(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')
+    title = models.CharField(max_length=255)
+    completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
 ```
 
 ---
 
 ## Query Patterns
 
-```typescript
-// Single result
-const user = db.select().from(users).where(eq(users.id, id)).get();
+### ORM Basics
 
-// Multiple results
-const allUsers = db.select().from(users).all();
+```python
+# Single result (Raises Task.DoesNotExist if not found, Task.MultipleObjectsReturned if > 1)
+task = Task.objects.get(id=task_id)
 
-// Insert with return
-const newUser = db.insert(users).values(data).returning().get();
+# Single result, returning None if not found
+task = Task.objects.filter(id=task_id).first()
 
-// Relational queries
-const projectsWithTasks = db.query.projects.findMany({
-  with: { tasks: true },
-});
+# Multiple results
+all_tasks = Task.objects.all()
+active_projects = Project.objects.filter(status='active')
 
-// Transaction
-db.transaction((tx) => {
-  tx.insert(projects).values(projectData).run();
-  tx.insert(tasks).values(taskData).run();
-});
+# Insert with return
+project = Project.objects.create(name='New Project')
 
-// Batch lookup (avoid N+1)
-const results = db.select().from(items).where(inArray(items.id, ids)).all();
+# Relational queries (Reverse Relationship using `related_name`)
+project_tasks = project.tasks.all()
+```
+
+### Avoiding N+1 Queries
+
+Always fetch related data efficiently if you plan to serialize or iterate through it.
+
+```python
+# Use select_related when fetching a Foreign Key (1-to-1 or N-to-1)
+tasks = Task.objects.select_related('project').all()
+for task in tasks:
+    print(task.project.name) # Does NOT trigger a new database hit
+
+# Use prefetch_related when fetching Many-to-Many or Reverse Foreign Keys (1-to-N)
+projects = Project.objects.prefetch_related('tasks').all()
+for project in projects:
+    print(project.tasks.count()) # Does NOT trigger a new database hit per project if loaded appropriately
+```
+
+### Batch Operations
+
+```python
+# Bulk Create
+Project.objects.bulk_create([
+    Project(name='Project 1'),
+    Project(name='Project 2'),
+])
+
+# Bulk Update
+Task.objects.filter(completed=False).update(completed=True)
+```
+
+### IN clauses
+
+```python
+# Finding items matching a list of IDs
+project_ids = [1, 2, 3]
+projects = Project.objects.filter(id__in=project_ids)
 ```
 
 ---
 
 ## Migrations
 
-```typescript
-// src/main/db/migrate.ts
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { db } from './client';
-import { existsSync } from 'fs';
-import path from 'path';
+Django handles schema changes automatically via makemigrations.
 
-export function runMigrations() {
-  const migrationsFolder =
-    process.env.NODE_ENV === 'development'
-      ? path.resolve(__dirname, '..', '..', 'drizzle')
-      : path.join(process.resourcesPath, 'drizzle');
+```bash
+# 1. After making a change to models.py, generate the migration file
+python manage.py makemigrations project
 
-  if (!existsSync(migrationsFolder)) {
-    return { success: false, reason: 'missing-folder' };
-  }
+# 2. Apply the migration to the database
+python manage.py migrate
+```
 
-  try {
-    migrate(db, { migrationsFolder });
-    return { success: true };
-  } catch (error) {
-    return { success: false, reason: 'error', error: error.message };
-  }
-}
+**Rule of Thumb:**
+- Never edit an applied migration file.
+- If you mess up locally, reverse the migration (`python manage.py migrate project {prev_migration_num}`), delete the bad migration file, and recreate it.
+- In production, migrations should always be run sequentially during the deployment process.
+
+---
+
+## Advanced: Querying External/Vector Databases
+
+The platform uses MyScale for vector search. This is typically managed via a client library, rather than the Django ORM, though the results might be mapped back to Django ORM Models.
+
+```python
+import clickhouse_connect
+
+def search_embeddings(embedding_vector, limit=10):
+    client = clickhouse_connect.get_client(...)
+    # Native MyScale Query
+    result = client.command(f"""
+        SELECT id, distance(vector, {embedding_vector}) as dist 
+        FROM dataset_vectors
+        ORDER BY dist ASC LIMIT {limit}
+    """)
+    return result
 ```
 
 ---
 
 ## Quick Reference
 
-| Operation     | Method                  |
-| ------------- | ----------------------- |
-| Single        | `.get()`                |
-| Multiple      | `.all()`                |
-| Insert/Update | `.run()`                |
-| With return   | `.returning().get()`    |
-| Relational    | `db.query.*.findMany()` |
+| Operation             | Method                                   |
+| --------------------- | ---------------------------------------- |
+| Fetch One             | `.get()` or `.first()`                   |
+| Fetch Many            | `.filter()` or `.all()`                  |
+| Insert                | `.create()` or `.bulk_create()`          |
+| Relational (FK)       | `.select_related('fk_field')`            |
+| Relational (M2M)      | `.prefetch_related('m2m_field')`         |
+| Match array           | `filter(field__in=list)`                 |
+| Contains String       | `filter(field__icontains="text")`        |
 
-| Rule               | Reason                |
-| ------------------ | --------------------- |
-| Use `timestamp_ms` | Match JavaScript Date |
-| Use transactions   | Atomic operations     |
-| Use `inArray`      | Avoid N+1 queries     |
-| Filter `isDeleted` | Exclude soft-deleted  |
+| Rule                             | Reason                                  |
+| -------------------------------- | --------------------------------------- |
+| Use `select_related/prefetch`    | Maximize performance (avoid N+1)        |
+| Use transactions                 | Atomic operations                       |
+| Generate Migrations (`makemigrations`) | Keep schema tightly coupled to code |

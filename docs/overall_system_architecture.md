@@ -36,13 +36,13 @@ DCAI (Data-Centric AI) 平台是一个兼具模型浏览、数据集托管、智
 ┌──────────────────┐  ┌────────────────────────────────┐  ┌──────────────────┐
 │ Apps             │  │ Apps(DataFlow)                 │  │ Apps             │
 │ Paper2Any        │  │ DataFlow-WebUI (:8002)         │  │ LoopAI (:8003)   │
-│ FastAPI (:8004)  │  │ FastAPI (Async / DAG Ctrl)     │  │ FastAPI          │
+│ FastAPI (:8004)  │  │ (Dashboard / SubAgent)         │  │ FastAPI          │
 └─────────┬────────┘  └────────────────┬───────────────┘  └─────────┬────────┘
-          │                            │                            │·
+          │                            │                            │
           ▼                            ▼                            ▼ 
 ┌──────────────────┐  ┌────────────────────────────────┐  ┌──────────────────┐
 │ Relational & MQ  │  │     Search & Vector Engine     │  │ Data Processing  │
-│                  │  │                                │  │                  │
+│                  │  │                                │  │ - DF-Sys Server  │
 │ - PostgreSQL     │  │ - MyScale (Vector / OLAP)      │  │ - Prefect (DAG)  │
 │ - Redis (Cache)  │  │ - SQLite (Local Dev/NotebookLM)│  │ - Ray Cluster    │
 │ - Celery         │  │                                │  │ - Operators      │
@@ -60,38 +60,46 @@ DCAI (Data-Centric AI) 平台是一个兼具模型浏览、数据集托管、智
 
 ```mermaid
 graph TD
-    subgraph FrontendLayer [1. User Interface / Frontend]
-        Frontend[Vue 3 Frontend<br>DataMaster & UI Views]
+    subgraph FrontendLayer [1. User Interface]
+        Frontend[Web Frontend<br>DataMaster & UI Views]
     end
 
-    subgraph GatewayLayer [2. Backend API Gateway Layer]
-        BackEnd[Django API Gateway<br>Auth & Router Layer]
-        BackendDatasets[Datasets Service]
+    subgraph GatewayLayer [2. Backend API Gateway]
+        BackEnd[Django Backend Server<br>Auth & Router Layer]
         BackendTasks[Tasks Service]
         BackendModels[Models Service]
         BackendCode[Code Service]
-        BackEndStore[BackEnd Store Component]
+        BackEndStore[Backend Store Component]
     end
 
-    subgraph AppsLayer [3. Proxied Services / Spaces]
+    subgraph DatasetsLayer [3. Datasets & Data Lineage]
+        DatasetsServer[Datasets Service]
+    end
+
+    subgraph AppsLayer [4. Proxied Services & Apps]
         DataFlowWeb[DataFlow-WebUI / SubAgent]
         OtherApps[LoopAI / Paper2Any etc.]
     end
 
-    subgraph DataProcessLayer [4. Data Processing Engines]
+    subgraph DataProcessLayer [5. Data Processing Engines]
+        DataFlowServer[DataFlow-System Server<br>FastAPI / DAG Builder]
         Prefect[Prefect Scheduler]
         Ray[Ray Compute Cluster]
     end
 
-    subgraph DatabaseLayer [5. Databases & Vector Engines]
+    subgraph DatabaseLayer [6. Databases & Vector Engines]
         Redis[(Redis Cache)]
-        PostgreSQL[(PostgreSQL)]
         MyScale[(MyScale Vector/OLAP)]
+        PostgreSQL[(PostgreSQL)]
     end
 
-    subgraph StorageLayer [6. Storage Layer / Data Lake]
+    subgraph StorageLayer [7. Storage / Data Lake]
         LakeFS[LakeFS<br>Version Control]
         MinIO[(MinIO / S3 / OSS)]
+    end
+
+    subgraph ExternalPlatformsLayer [8. External Platforms]
+        BailianPlatform[Aliyun Bailian Platform]
     end
 
     %% Relationships
@@ -101,27 +109,30 @@ graph TD
     BackEnd -->|Proxy & Dispatch| DataFlowWeb
     BackEnd -->|Proxy| OtherApps
     
-    BackEnd <--> Redis
-    BackEnd <--> PostgreSQL
-    BackEnd <--> BackEndStore
+    BackEnd --> Redis
+    BackEnd --> |Users Auth <br> Datasets Tasks| PostgreSQL
+    BackEnd --> BackEndStore
     
-    BackEnd --> BackendDatasets
+    BackEnd --> |Manage & Query Datasets|DatasetsServer
     BackEnd --> BackendTasks
     BackEnd --> BackendModels
     BackEnd --> BackendCode
     
-    BackendDatasets -->|Search & Query Datasets| MyScale
-    BackendDatasets -->|Read Datasets          | LakeFS
+    DatasetsServer -->|Search & Query Datasets| MyScale
+    DatasetsServer -->|Read Datasets          | LakeFS
     
-    BackendTasks <-->|Submit Tasks & Query State| Prefect
-    BackendModels --> Prefect
-    BackendCode --> Prefect
+    BackendTasks -->|Submit Tasks & Query State| DataFlowServer
+    BackendModels -->|Submit Training & Inference Tasks| BailianPlatform
+    BackendCode --> |Submit Code-Server Tasks| DataFlowServer
     
     BackEndStore --> MinIO
     
-    DataFlowWeb -->|Query & State| PostgreSQL
-    DataFlowWeb -->|Submit DAGs| Prefect
-    Prefect <-->|Job State| PostgreSQL
+    DataFlowWeb -->|Submit Tasks| DataFlowServer
+    DataFlowServer -->|Meta & State Storage| PostgreSQL
+    DataFlowServer -->|Deploy & Trigger Flows| Prefect
+    DataFlowServer -->|Load Operators Info <br> Launch Ray Serve| Ray
+    Prefect -->|State Callback Webhook| DataFlowServer
+    Prefect -->|Job State| PostgreSQL
     Prefect -->|Distribute Tasks| Ray
     
     Ray -->|Save Data / ETL| LakeFS
@@ -145,7 +156,7 @@ graph TD
 
 - **FastAPI Services**:
   - 独立部署的高性能异步服务，通过 Django 代理层接入系统
-  - **DataFlow-WebUI (:8002)**: 提供 Pipeline 组装、DAG 控制、任务状态查询等数据流编排能力
+  - **DataFlow-WebUI (:8002)**: 提供可视化的 Pipeline 拖拽组装、监控面板与交互页面，自身无状态，将 API 请求转发给 DataFlow-System Server 处理
   - **LoopAI (:8003)**: 智能微调训练平台，提供 SSE 流式进度播报与交互式对话
   - **Paper2Any (:8004)** 等其他领域专属 Agent 服务
   - 各服务独立维护自身的业务逻辑，通过代理层共享 Django 的认证信息
@@ -153,6 +164,13 @@ graph TD
 #### 数据处理引擎
 
 - **DataFlow-System (DataFlow + Ray + Prefect)**:
+  - **DataFlow-System Server (FastAPI)**:
+    - 作为数据治理工作流的统一网关与核心服务端，对外提供 Pipeline 与 Operator 生命周期管理的 RESTful API。
+    - 内置工作流构建层（Pipeline DAG Builder），负责 DAG 的无环检测、拓扑排序与上游依赖关系解析。
+    - **底层交互与挂载**：
+      - 连接 **PostgreSQL** 进行算子配置和 Pipeline 运行时状态 (PipelineRuntime) 的持久化落地。
+      - 连接 **Prefect** 进行 Sub-pipeline / Pipeline Deployment 部署配置、拉起执行，并暴露 Webhook 接收其任务运转状态的回调告警。
+      - 连接 **Ray** 集群远程直接拉取最新的可用算子任务清单 (Operator Loading)。
   - **Prefect (控制与编排平台)**:
     - 负责任务 DAG 的定义、调度与执行编排
     - 管理任务依赖关系、并发控制、失败重试与容错机制
@@ -270,9 +288,9 @@ graph TD
 ### 4.2 代理子服务网关接口 (Type B App API Middleware)
 
 *部署在 `/api/v1/{service_name}/`，由 Django httpx 中间件转发：*
-- **`/api/v1/dataflow/*` (DataFlow WebUI 代理)**:
-  - 路由至 `:8002`，暴露 Pipeline 组装 (`/pipelines/create`)、Task 查询 (`/tasks/{id}`)。
-  - 底层调用 `dataflow-system` 相关接口，实现高性能、可扩展服务。
+- **`/api/v1/dataflow/*` (DataFlow WebUI/System 代理)**:
+  - 路由至 `:8002` 的前端静态/WebUI，并将核心逻辑与管理接口透传暴露 Pipeline 组装 (`/pipelines/create`)、算子查询 (`/operators`)。
+  - 底层由 `DataFlow-System Server` 服务组负责接受所有相关 request，解析为 DAG 校验并分发至 Prefect 引擎管理，连接了底层资源引擎。
 - **`/api/v1/loopai/*` (LoopAI 平台代理)**:
   - 路由至 `:8003`，透传 `starter/agent/message/stream` SSE 数据进行智能微调训练的互动进度播报。
 - **`/api/v1/dfagent/*`, `/api/v1/paper2any/*`**: 依同样逻辑透传对应独立 Python/Gradio 进程的请求。
