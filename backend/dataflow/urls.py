@@ -5,7 +5,7 @@ from django.urls import path
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-
+from . import views
 
 # Sample DataFlow packages
 SAMPLE_PACKAGES = [
@@ -127,4 +127,8 @@ def package_detail(request, package_id):
 urlpatterns = [
     path('packages', package_list, name='package-list'),
     path('packages/<str:package_id>', package_detail, name='package-detail'),
+    
+    # Dataflow System Integration
+    path('operators', views.OperatorListView.as_view(), name='operator-list'),
+    path('pipelines/<uuid:pipeline_id>/status', views.PipelineStatusView.as_view(), name='pipeline-status'),
 ]

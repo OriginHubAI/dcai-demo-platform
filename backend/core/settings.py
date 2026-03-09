@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'third_party',
     'llm_chat',
     'train',
+    'dataflow',
 ]
 
 MIDDLEWARE = [
@@ -213,3 +214,8 @@ LOGGING = {
         },
     },
 }
+
+# Dataflow System Integration
+ENABLE_MOCK_DATAFLOW = os.environ.get('ENABLE_MOCK_DATAFLOW', 'False') == 'True'
+DATAFLOW_SERVICE_URL = os.environ.get('DATAFLOW_SERVICE_URL', 'http://localhost:8001')
+
