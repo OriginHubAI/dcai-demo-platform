@@ -203,3 +203,33 @@ Synced User, InviteCode, and EmailVerificationCode models with pg_schema_v1 refe
 ### Next Steps
 
 - None - task complete
+
+
+## Session 7: Configure PostgreSQL in .env
+
+**Date**: 2026-03-09
+**Task**: Configure PostgreSQL in .env
+
+### Summary
+
+Tested and verified PostgreSQL connection via .env. Applied all migrations to the database and updated .env.example.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+(No commits - planning session)
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
