@@ -101,11 +101,17 @@ class DataflowIntegrationTest(SimpleTestCase):
 class DataFlowWorkspaceTests(APITestCase):
     def setUp(self):
         self.tempdir = TemporaryDirectory()
-        operators_root = Path(self.tempdir.name)
+        repo_root = Path(self.tempdir.name) / 'DataFlow'
+        operators_root = repo_root / 'dataflow' / 'operators'
         package_root = operators_root / 'core_text'
         package_root.mkdir(parents=True)
         (package_root / 'sample_operator.py').write_text('print("ok")\n', encoding='utf-8')
-        self.override = override_settings(DATAFLOW_OPERATORS_ROOT=str(operators_root))
+        sandbox_root = Path(self.tempdir.name) / 'sandboxes'
+        self.override = override_settings(
+            DATAFLOW_OPERATORS_ROOT=str(operators_root),
+            DATAFLOW_REPO_ROOT=str(repo_root),
+            PACKAGE_EDITOR_SANDBOX_ROOT=str(sandbox_root),
+        )
         self.override.enable()
 
         from dataflow import views as dataflow_views
@@ -148,7 +154,7 @@ class DataFlowWorkspaceTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         payload = response.json()['data']
         self.assertEqual(payload['mode'], 'preview')
-        self.assertIn('code-server', payload['reason'])
+        self.assertIn('opencode', payload['reason'])
 
     def test_package_test_runs_compileall(self):
         response = self.client.post('/api/v2/dataflow/packages/core_text/test')

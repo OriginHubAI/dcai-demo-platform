@@ -91,7 +91,7 @@ const helperText = computed(() => {
   if (!props.packageId) {
     return 'Use @DataFlow, @LoopAI, @DFAgent, or @PackageEditor.'
   }
-  return 'Current file context is appended to the request.'
+  return 'Package context is appended to the request. This side panel gives suggestions and routing hints; it does not edit code directly.'
 })
 
 function appendMessage(role, content) {
@@ -110,15 +110,15 @@ async function send() {
   draft.value = ''
   submitting.value = true
 
-  const context = [props.packageId, props.currentPath].filter(Boolean).join(' / ')
+const context = [props.packageId, props.currentPath].filter(Boolean).join(' / ')
   const composedQuestion = context
-    ? `@PackageEditor [${context}] ${question}`
+    ? `[Package Context: ${context}] ${question}`
     : question
 
   try {
     const result = await chatApi.sendMessage({ question: composedQuestion })
     appendMessage('assistant', result.answer || 'Request routed.')
-    if (result.type === 'tool_call' && result.iframe_url) {
+    if (result.type === 'tool_call' && result.iframe_url && result.agent !== 'PackageEditor-Agent') {
       router.push(result.iframe_url)
     }
   } catch (error) {

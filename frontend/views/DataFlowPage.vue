@@ -37,19 +37,11 @@
       <p class="text-sm mt-1">{{ $t('packages.noResultsHint') }}</p>
     </div>
     <PaginationBar v-model="currentPage" :total-pages="totalPages" />
-
-    <VSCodeEditorDialog
-      v-if="selectedPackage"
-      v-model:visible="showEditor"
-      :pkg="selectedPackage"
-      @close="closeEditor"
-    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { dataflowApi } from '@/services/api.js'
 import { usePagination } from '@/composables/usePagination.js'
@@ -57,18 +49,13 @@ import SearchBar from '@/components/common/SearchBar.vue'
 import SortDropdown from '@/components/common/SortDropdown.vue'
 import PaginationBar from '@/components/common/PaginationBar.vue'
 import DataFlowCard from '@/components/dataflow/DataFlowCard.vue'
-import VSCodeEditorDialog from '@/components/dataflow/VSCodeEditorDialog.vue'
 
 const { t } = useI18n()
-const route = useRoute()
-const router = useRouter()
 const searchQuery = ref('')
 const sortBy = ref('downloads')
 const activeCategory = ref('all')
 const dataflowPackages = ref([])
 const loading = ref(false)
-const showEditor = ref(false)
-const selectedPackage = ref(null)
 
 onMounted(async () => {
   loading.value = true
@@ -128,32 +115,9 @@ const filtered = computed(() => {
   return result
 })
 
-const { currentPage, totalPages, paginatedItems, totalItems } = usePagination(filtered, 12)
+const { currentPage, totalPages, paginatedItems, totalItems } = usePagination(filtered, 24)
 
 watch([activeCategory, searchQuery], () => {
   currentPage.value = 1
 })
-
-watch(
-  () => [route.query.editorPackage, dataflowPackages.value.length],
-  () => {
-    const packageId = route.query.editorPackage
-    if (!packageId) return
-    const match = dataflowPackages.value.find((item) => item.id === packageId)
-    if (!match) return
-    selectedPackage.value = match
-    showEditor.value = true
-  },
-  { immediate: true },
-)
-
-function closeEditor() {
-  showEditor.value = false
-  selectedPackage.value = null
-  if (route.query.editorPackage) {
-    const query = { ...route.query }
-    delete query.editorPackage
-    router.replace({ query })
-  }
-}
 </script>

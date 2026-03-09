@@ -60,7 +60,10 @@ def package_editor_start(request, package_id):
     package = catalog.get_package(package_id)
     if not package:
         return _not_found('package not found')
-    session = code_server_manager.get_or_start(package_id, catalog.get_package_repo_path(package_id))
+    session = code_server_manager.get_or_start(
+        package_id=package_id,
+        repo_path=catalog.get_repo_root(),
+    )
     return Response({
         'code': 0,
         'msg': 'success',
@@ -69,6 +72,10 @@ def package_editor_start(request, package_id):
             'url': session.url,
             'port': session.port,
             'reason': session.reason,
+            'sandbox_path': session.sandbox_path,
+            'package_path': session.package_path,
+            'session_id': session.session_id,
+            'session_directory': session.session_directory,
         },
     })
 

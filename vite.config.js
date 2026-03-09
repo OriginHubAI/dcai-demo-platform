@@ -18,6 +18,17 @@ export default defineConfig(({ mode }) => {
           target: apiTarget,
           changeOrigin: true,
         }
+        ,
+        '/embedded/dataflow-webui': {
+          target: 'http://127.0.0.1:8002',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/embedded\/dataflow-webui/, ''),
+        },
+        '/embedded/dataflow-backend': {
+          target: 'http://127.0.0.1:8002',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/embedded\/dataflow-backend/, ''),
+        }
       }
     }
   }

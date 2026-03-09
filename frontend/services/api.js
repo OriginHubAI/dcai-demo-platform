@@ -268,7 +268,7 @@ export const chatApi = {
 
 export const loopaiApi = {
   async getConfig() {
-    const url = getApiUrl('/loopai/config')
+    const url = getApiUrl('/loopai/config/config')
     const response = await requestJson(url)
     return response.data
   },

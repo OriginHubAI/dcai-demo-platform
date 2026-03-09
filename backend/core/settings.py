@@ -199,7 +199,16 @@ DATAFLOW_OPERATORS_ROOT = os.environ.get(
     'DATAFLOW_OPERATORS_ROOT',
     str(BASE_DIR.parent.parent / 'DataFlow' / 'dataflow' / 'operators'),
 )
+DATAFLOW_REPO_ROOT = os.environ.get(
+    'DATAFLOW_REPO_ROOT',
+    str(BASE_DIR.parent.parent / 'DataFlow'),
+)
 CODE_SERVER_BASE_PORT = int(os.environ.get('CODE_SERVER_BASE_PORT', '18080'))
+PACKAGE_EDITOR_PORT = int(os.environ.get('PACKAGE_EDITOR_PORT', '18004'))
+PACKAGE_EDITOR_SANDBOX_ROOT = os.environ.get(
+    'PACKAGE_EDITOR_SANDBOX_ROOT',
+    str(BASE_DIR.parent.parent / 'sandboxes' / 'package-editor'),
+)
 PROXY_TIMEOUT = int(os.environ.get('PROXY_TIMEOUT', '120'))
 
 LLM_PROVIDER_BASE_URL = os.environ.get('LLM_PROVIDER_BASE_URL', '')
