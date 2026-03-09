@@ -67,3 +67,39 @@ Completed Bootstrap Guidelines task. Updated frontend guidelines for directory s
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: Update Backend Specs for FastAPI Integration
+
+**Date**: 2026-03-09
+**Task**: Update Backend Specs for FastAPI Integration
+
+### Summary
+
+Updated backend specifications to capture FastAPI integration patterns, standardized proxy views, and shared authentication guidelines.
+
+### Main Changes
+
+### Backend Spec Updates
+- **FastAPI Integration (fastapi.md)**: Documented Proxy, Mixed ASGI, and Standalone modes. Added guidance on reusing Django models and JWT authentication.
+- **API Patterns (api-patterns.md)**: Standardized FastAPI proxying to use FastAPIProxyView.
+- **Authentication (authentication.md)**: Refined JWT decoding logic and identity forwarding patterns for FastAPI services.
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `none` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
