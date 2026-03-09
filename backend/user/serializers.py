@@ -3,7 +3,7 @@ User serializers for ADP Backend
 """
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import User, InviteCode, VerificationCode, Feedback
+from .models import User, InviteCode, VerificationCode, Feedback, EmailVerificationCode
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -13,9 +13,16 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id', 'email', 'username', 'name', 'phone', 'avatar', 'bio', 
-                  'is_active', 'is_staff', 'is_superuser', 'date_joined', 'last_login']
-        read_only_fields = ['id', 'date_joined', 'last_login']
+        fields = [
+            'id', 'email', 'username', 'name', 'phone', 'avatar', 'bio', 
+            'nickname', 'description', 'updated_at', 'date_joined', 'last_login',
+            'register_source', 'inviter_id', 'extension', 'api_key',
+            'wechat_avatar', 'wechat_openid', 'wechat_unionid',
+            'user_id', 'organization_id',
+            'github_avatar', 'github_email', 'github_id', 'github_login',
+            'is_virtual_api_user', 'is_active', 'is_staff', 'is_superuser'
+        ]
+        read_only_fields = ['id', 'date_joined', 'last_login', 'updated_at']
     
     def get_name(self, obj):
         return obj.get_full_name() or obj.email
@@ -29,7 +36,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['email', 'password', 'username', 'code']
+        fields = ['email', 'password', 'username', 'code', 'nickname', 'description']
     
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
@@ -51,7 +58,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(
             email=validated_data['email'],
             username=validated_data.get('username', validated_data['email'].split('@')[0]),
-            password=validated_data['password']
+            password=validated_data['password'],
+            nickname=validated_data.get('nickname', ''),
+            description=validated_data.get('description', '')
         )
         
         if code:
@@ -148,9 +157,9 @@ class InviteCodeSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = InviteCode
-        fields = ['id', 'code', 'description', 'max_uses', 'used_count', 
-                  'expires_at', 'created_at', 'created_by_email']
-        read_only_fields = ['id', 'used_count', 'created_at']
+        fields = ['id', 'code', 'description', 'is_active', 'max_uses', 'used_count', 
+                  'expires_at', 'created_at', 'updated_at', 'created_by_email']
+        read_only_fields = ['id', 'used_count', 'created_at', 'updated_at']
     
     def get_created_by_email(self, obj):
         return obj.created_by.email
@@ -161,7 +170,7 @@ class InviteCodeCreateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = InviteCode
-        fields = ['code', 'description', 'max_uses', 'expires_at']
+        fields = ['code', 'description', 'is_active', 'max_uses', 'expires_at']
 
 
 class FeedbackSerializer(serializers.ModelSerializer):
