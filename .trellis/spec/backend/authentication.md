@@ -139,6 +139,24 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
 ---
 
+## Handling High-Volume Data APIs (Datasets API)
+
+While the JWT + Django Gateway approach is excellent for the **Control Plane** (e.g., creating datasets, editing metadata, managing permissions), it can become a bottleneck for the **Data Plane** (e.g., uploading/downloading large files or high-throughput data streams). For high-performance APIs like the Datasets API, follow these guidelines to separate control flow from data flow:
+
+1. **Bypass Django for Large Data Transfer**:
+   Do not proxy large binary streams or gigabytes of data through Django using `httpx`. This will tie up Django workers and cause excessive memory/CPU overhead.
+   - **Solution**: Use **Presigned URLs**. Django validates permissions and generates a temporary, secure URL (e.g., AWS S3, MinIO, LakeFS). The client then interacts directly with the object storage, bypassing the Python backend completely.
+
+2. **Push Authorization Down to the Database Level**:
+   Avoid using standard DRF object-level permissions (`has_object_permission`) for list endpoints returning thousands of records, as this can lead to severe `N+1` query issues and high Python CPU usage.
+   - **Solution**: Filter datasets by the authenticated user directly in the database query (e.g., `Dataset.objects.filter(owner=request.user)` inside the view's `get_queryset` method).
+
+3. **Avoid SSE for Binary Data**:
+   Server-Sent Events (SSE) used for Agent Routing are tailored for text generation (like LLM tokens), not for streaming binary or structured table data.
+   - **Solution**: Use standard chunked transfers (`Transfer-Encoding: chunked`), dedicated binary protocols, or direct file downloads.
+
+---
+
 ## Summary
 
 | Core Component       | Auth Responsibility                     |
@@ -147,4 +165,5 @@ class DocumentViewSet(viewsets.ModelViewSet):
 | **Django ViewSets**  | Validates token via `IsAuthenticated`   |
 | **Proxy Layer**      | Passes `Authorization` header downstream|
 | **FastAPI Services** | Decodes JWT manually using shared secret|
-| **Agent Router**     | Evaluates workspace/object permissions before proxying |
+| **Agent Router**     | Evaluates workspace permissions before proxying |
+| **Data Plane**       | Issues Presigned URLs to bypass proxy overhead  |

@@ -18,6 +18,7 @@
 | [pagination.md](./pagination.md)                   | DRF Pagination Classes (`PageNumber`, `Cursor`)   | Implementing large list APIs       |
 | [quality.md](./quality.md)                         | Python linting, `pytest`, imports, code quality   | Formatting code and writing tests |
 | [type-safety.md](./type-safety.md)                 | Python Type Hinting guidelines (`mypy`)          | Writing robust Python methods        |
+| [fastapi.md](./fastapi.md)                         | FastAPI microservice & data plane development     | Building FastAPI Type-B services   |
 | [authentication.md](./authentication.md)             | Token based Auth across microservices             | Dealing with Auth / Permissions   |
 
 ---
@@ -37,6 +38,7 @@
 | **Use Type Annotations on all new Python methods**               | [type-safety.md](./type-safety.md)             |
 | **Format with Black, lint with Ruff/Flake8**                   | [quality.md](./quality.md)                   |
 | **Pass JWT properly via headers to Sub-Agents and Type-B Apps**| [authentication.md](./authentication.md) |
+| **Use Pydantic schemas for FastAPI validation**                | [fastapi.md](./fastapi.md)                     |
 
 ---
 
