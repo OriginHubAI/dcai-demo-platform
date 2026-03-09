@@ -188,6 +188,12 @@ class DataFlowCatalog:
     def get_package_repo_path(self, package_id: str) -> str:
         return str(self._package_root(package_id))
 
+    def get_repo_root(self) -> str:
+        configured_root = getattr(settings, 'DATAFLOW_REPO_ROOT', '')
+        if configured_root:
+            return str(Path(configured_root).resolve())
+        return str(self.root.parents[1])
+
     def _package_root(self, package_id: str) -> Path:
         target = (self.root / package_id).resolve()
         if self.root not in target.parents or not target.exists() or not target.is_dir():

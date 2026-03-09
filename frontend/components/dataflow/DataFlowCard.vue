@@ -1,16 +1,16 @@
 <template>
   <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-gray-300 transition-all bg-white relative group">
     <button
-      @click.stop="openEditor"
+      @click.stop="openPackageEditor"
       class="absolute top-3 right-3 w-8 h-8 rounded-lg bg-gray-100 hover:bg-blue-500 hover:text-white text-gray-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-sm"
-      title="Open package workspace"
+      title="Open PackageEditor-Agent"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
       </svg>
     </button>
 
-    <button class="block w-full text-left" @click="openEditor">
+    <button class="block w-full text-left" @click="openPackageEditor">
       <div class="flex items-start justify-between gap-2">
         <div class="min-w-0 flex-1">
           <div class="flex items-center space-x-2 mb-1">
@@ -32,30 +32,26 @@
         <span class="text-xs text-gray-400">{{ pkg.lastModified }}</span>
       </div>
     </button>
-
-    <VSCodeEditorDialog
-      v-model:visible="showEditor"
-      :pkg="pkg"
-      @close="showEditor = false"
-    />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import TagBadge from '@/components/common/TagBadge.vue'
 import StatBadge from '@/components/common/StatBadge.vue'
-import VSCodeEditorDialog from './VSCodeEditorDialog.vue'
 
-defineProps({
+const props = defineProps({
   pkg: { type: Object, required: true },
 })
 
-const showEditor = ref(false)
+const router = useRouter()
 
-function openEditor() {
-  showEditor.value = true
+function openPackageEditor() {
+  router.push({
+    path: '/apps/OpenDCAI/PackageEditor-Agent',
+    query: { package: props.pkg.id },
+  })
 }
 
 const tagColorMap = {

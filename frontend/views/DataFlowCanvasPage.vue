@@ -27,7 +27,7 @@
       <div v-if="iframeError" class="absolute inset-0 flex items-center justify-center bg-white z-10">
         <div class="text-center">
           <p class="text-gray-500 mb-2">DataFlow-WebUI service is not available.</p>
-          <p class="text-xs text-gray-400">Make sure DataFlow-WebUI is running on port 5173.</p>
+          <p class="text-xs text-gray-400">Make sure the embedded DataFlow-WebUI service is running.</p>
           <button @click="reloadIframe" class="mt-3 text-xs px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Retry</button>
         </div>
       </div>
@@ -319,12 +319,12 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { resolveServiceUrl } from '@/config/index.js'
 import AgentDialogSidebar from '../components/dataflow/AgentDialogSidebar.vue'
 
 // ── iframe mode ──────────────────────────────────────────────────────────────
 const route = useRoute()
-const dataflowBackendUrl = resolveServiceUrl(import.meta.env.VITE_DATAFLOW_BACKEND_URL, 8002)
+const appOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://127.0.0.1:18001'
+const dataflowBackendUrl = `${appOrigin}/embedded/dataflow-backend`
 const initialCanvasMode = route.query.mode === 'webui'
   ? 'dataflow-webui'
   : (localStorage.getItem('dcai.canvas.mode') || 'builtin')
@@ -332,7 +332,7 @@ const canvasMode = ref(initialCanvasMode)  // 'builtin' | 'dataflow-webui'
 const dfIframe = ref(null)
 const iframeLoading = ref(false)
 const iframeError = ref(false)
-const dataflowWebUIUrl = resolveServiceUrl(import.meta.env.VITE_DATAFLOW_WEBUI_URL, 5173)
+const dataflowWebUIUrl = `${appOrigin}/embedded/dataflow-webui/?dcaiApiBase=${encodeURIComponent(dataflowBackendUrl)}`
 
 function setCanvasMode(mode) {
   canvasMode.value = mode

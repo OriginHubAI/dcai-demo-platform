@@ -5,11 +5,11 @@ Supports SSE streaming for agent message streams.
 """
 import httpx
 from django.conf import settings
-from django.http import HttpResponse, StreamingHttpResponse
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from django.http import HttpResponse, HttpResponseNotAllowed, StreamingHttpResponse
+from django.views.decorators.csrf import csrf_exempt
 
 EXCLUDED_HEADERS = frozenset(['host', 'authorization', 'content-length', 'transfer-encoding'])
+ALLOWED_METHODS = ('GET', 'POST', 'PUT', 'DELETE', 'OPTIONS')
 
 LOOPAI_BACKEND_URL = getattr(settings, 'LOOPAI_BACKEND_URL', 'http://localhost:8003')
 PROXY_TIMEOUT = getattr(settings, 'PROXY_TIMEOUT', 120)
@@ -45,11 +45,14 @@ def _proxy(request, target_url: str, stream: bool = False):
                     resp.close()
                     client.close()
 
-            return StreamingHttpResponse(
+            response = StreamingHttpResponse(
                 streaming_content=_gen(),
                 status=resp.status_code,
                 content_type=resp.headers.get('content-type', 'text/event-stream'),
             )
+            response['Cache-Control'] = resp.headers.get('cache-control', 'no-cache')
+            response['X-Accel-Buffering'] = 'no'
+            return response
         else:
             with httpx.Client(timeout=PROXY_TIMEOUT) as client:
                 resp = client.request(
@@ -78,9 +81,16 @@ def _proxy(request, target_url: str, stream: bool = False):
         )
 
 
-@api_view(['GET', 'POST', 'PUT', 'DELETE'])
-@permission_classes([AllowAny])
+@csrf_exempt
 def loopai_proxy(request, path=''):
+    if request.method == 'OPTIONS':
+        response = HttpResponse(status=204)
+        response['Allow'] = ', '.join(ALLOWED_METHODS)
+        return response
+
+    if request.method not in ALLOWED_METHODS:
+        return HttpResponseNotAllowed(ALLOWED_METHODS)
+
     is_stream = path in SSE_PATHS or request.GET.get('stream') == 'true'
     target = f"{LOOPAI_BACKEND_URL}/{path}"
     return _proxy(request, target, stream=is_stream)
