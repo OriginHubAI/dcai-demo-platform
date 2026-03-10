@@ -32,21 +32,15 @@ class ChatRoutingTests(SimpleTestCase):
         mock_conv.create.return_value = MagicMock(conversation_id='conv_123')
         mock_df_conv.create.return_value = MagicMock(id=uuid.UUID('e063cb5b-10b8-4b43-91be-65e460e80730'))
         
-        # Also patch the original model objects for the assertions in test
-        with patch('chat.models.Conversation.objects') as m1, \
-             patch('df_conversation.models.DFConversation.objects') as m2:
-            m1.count.return_value = 1
-            m2.count.return_value = 1
-            
-            response = self.client.post('/api/v1/chat', {'question': '@DataFlow build a chemistry pipeline'}, format='json')
+        response = self.client.post('/api/v1/chat', {'question': '@DataFlow build a chemistry pipeline'}, format='json')
 
-            self.assertEqual(response.status_code, 200)
-            payload = response.json()['data']
-            self.assertEqual(payload['type'], 'tool_call')
-            self.assertEqual(payload['action'], 'open_iframe')
-            self.assertEqual(payload['iframe_url'], '/dataflow/canvas')
-            self.assertEqual(Conversation.objects.count(), 1)
-            self.assertEqual(DFConversation.objects.count(), 1)
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()['data']
+        self.assertEqual(payload['type'], 'tool_call')
+        self.assertEqual(payload['action'], 'open_iframe')
+        self.assertEqual(payload['iframe_url'], '/dataflow/canvas')
+        self.assertEqual(mock_conv.create.call_count, 1)
+        self.assertEqual(mock_df_conv.create.call_count, 1)
 
     @patch('chat.views.transaction.atomic')
     @patch('chat.views.ChatMessageView._resolve_user')
@@ -90,25 +84,29 @@ class ChatRoutingTests(SimpleTestCase):
     @patch('chat.views.DFConversation.objects')
     @patch('chat.views.DFMessage.objects')
     def test_anonymous_sessions_get_distinct_demo_users(self, mock_df_msg, mock_df_conv, mock_q, mock_conv, mock_resolve_user, mock_atomic):
-        try:
-            mock_atomic.return_value.__enter__.return_value = MagicMock()
-            mock_resolve_user.return_value = MagicMock()
-            mock_conv.create.return_value = MagicMock(conversation_id='conv_123')
-            mock_df_conv.create.return_value = MagicMock(id=uuid.UUID('e063cb5b-10b8-4b43-91be-65e460e80731'))
-            
-            with patch('chat.models.Conversation.objects') as m1:
-                m1.count.return_value = 2
-                
-                first = self.client.post('/api/v1/chat', {'question': '@DataFlow create pipeline'}, format='json')
-                second = self.client.post('/api/v1/chat', {'question': '@DataFlow create pipeline'}, format='json')
+        mock_atomic.return_value.__enter__.return_value = MagicMock()
 
-                self.assertEqual(first.status_code, 200)
-                self.assertEqual(second.status_code, 200)
-                self.assertEqual(Conversation.objects.count(), 2)
-        except Exception as e:
-            print(f"CAUGHT EXCEPTION: {type(e)}: {e}")
-            raise
+        # Return a different user mock for each call to simulate distinct users
+        user1 = MagicMock()
+        user2 = MagicMock()
+        mock_resolve_user.side_effect = [user1, user2]
 
+        mock_conv.create.return_value = MagicMock(conversation_id='conv_123')
+        mock_df_conv.create.return_value = MagicMock(id=uuid.UUID('e063cb5b-10b8-4b43-91be-65e460e80731'))
+
+        first = self.client.post('/api/v1/chat', {'question': '@DataFlow create pipeline'}, format='json')
+        second = self.client.post('/api/v1/chat', {'question': '@DataFlow create pipeline'}, format='json')
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 200)
+
+        # Verify that Conversation.objects.create was called twice
+        self.assertEqual(mock_conv.create.call_count, 2)
+
+        # Verify that it was called with different users
+        calls = mock_conv.create.call_args_list
+        self.assertEqual(calls[0][1]['user'], user1)
+        self.assertEqual(calls[1][1]['user'], user2)
     @patch('chat.views.transaction.atomic')
     @patch('chat.views.ChatMessageView._resolve_user')
     @patch('chat.views.Conversation.objects')
