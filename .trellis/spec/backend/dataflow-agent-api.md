@@ -1,42 +1,67 @@
 # Dataflow Agent Architecture & API Specification
 
-> This document details the architecture and API exposure of the external `dataflow-agent` module. 
+> This document details the architecture and programmatic interfaces of the external `dataflow-agent` module. 
 
 ---
 
 ## Architectural Overview
 
-Unlike typical backend microservices (like `dataflow-loopai` or `dataflow-system`) which expose standard RESTful APIs (e.g., via FastAPI or Django), the `dataflow-agent` module is built natively as an **interactive AI Agent platform utilizing Gradio**.
+Through deep code inspection, it's confirmed that `dataflow-agent` **does not expose a standard RESTful API** (e.g., using FastAPI, Django, or Flask) for its core agent functionalities. Instead, it is an SDK-first Python library wrapped with a native **Gradio Web UI**.
 
-- **Core Framework**: State-driven, modular AI Agent framework for DataFlow.
-- **Presentation Layer**: The UI and interaction layer are provided directly by `gradio_app/app.py`.
-- **Primary Function**: It orchestrates dataflow and operator tasks including PromptAgent Frontend, Op Assemble Line, Operator QA, Operator Write, Pipeline Rec, and Web Collection.
-
----
-
-## API Endpoints & Exposure
-
-The `dataflow-agent` **does not** expose standard, decoupled REST API endpoints (like `/v1/task` or `/v1/train`) intended for consumption by an external frontend (like `dataflow-webui`). 
-
-Instead, it relies on the internal API endpoints generated automatically by the **Gradio Server**.
-
-### Gradio API Integration
-
-When `gradio_app/app.py` is launched (default port: `7860`), Gradio automatically creates an internal `/api/` routing schema (such as `/api/predict`) to handle websocket connections and HTTP requests between its frontend interface and the python backend functions.
-
-If another system needs to invoke the agents programmatically, it can do so in two ways:
-1. **Python API**: Import the core workflows directly into another Python service (e.g., using `dataflow_agent.workflow.run_workflow`).
-2. **Gradio Client**: Use the `gradio_client` Python or JS library to programmatically interact with the exposed Gradio API endpoints.
+- **Core Framework**: Built on `LangChain`/`LangGraph`, providing a state-driven Multi-Agent system (e.g., PromptAgent, Pipeline Rec, Operator QA).
+- **Presentation Layer**: Provided directly by `gradio_app/app.py`.
+- **API Paradigm**: Programmatic integration is achieved via **Python SDK imports** or the implicit **Gradio Client API**, rather than decoupled HTTP microservices.
 
 ---
 
-## Toolkits & Utilities
+## Programmatic Integration (Python SDK)
 
-While the core application relies on Gradio, the module contains some standalone API utilities:
+The most robust way to interact with `dataflow-agent` from other backend services (like `dataflow-system`) is by importing it directly as a Python library.
+
+### Workflow Execution API
+
+All core agent processes are defined as "Workflows" registered via decorators and managed by the `RuntimeRegistry`.
+
+**Endpoint / Function Call:**
+```python
+import asyncio
+from dataflow_agent.workflow import run_workflow
+from dataflow_agent.state import MainState
+
+async def execute_agent():
+    # 1. Initialize the required state
+    state = MainState()
+    
+    # 2. Call the workflow by its registered name
+    # Available workflows include: "operator_qa", "pipeline_recommend", etc.
+    out_state = await run_workflow("operator_qa", state)
+    
+    return out_state
+```
+
+**Key Interfaces:**
+- `dataflow_agent.workflow.list_workflows()`: Returns a list of all currently registered agent workflows.
+- `dataflow_agent.workflow.get_workflow(name)`: Retrieves the graph factory for a specific workflow.
+- `dataflow_agent.state.DFState` / `MainState`: The dataclass structures required as input payloads for these workflows.
+
+---
+
+## Gradio API Integration
+
+When the Gradio app (`gradio_app/app.py`) is running (default port: `7860`), it implicitly exposes WebSocket and HTTP endpoints.
+
+However, because specific `api_name` parameters are **not defined** on the Gradio components in the codebase, the endpoints are dynamically generated (e.g., `/api/predict_1`, `/api/predict_2`). 
+
+*Note: It is highly recommended to use the Python SDK (`run_workflow`) instead of HTTP requests to the Gradio server for backend-to-backend integrations due to the fragility of anonymous Gradio endpoints.*
+
+---
+
+## Standalone Utilities (FastAPI)
+
+The module does contain one standalone FastAPI microservice used exclusively as a utility, not for agent logic:
 
 ### Generic Model Load Balancer
 Located at `dataflow_agent/toolkits/model_servers/generic_lb.py`.
-It spins up a lightweight `FastAPI` application that acts as a round-robin proxy for multiple backend model servers.
-- **Endpoint**: `/{path_name:path}`
-- **Methods**: All HTTP methods
-- **Functionality**: Forwards requests strictly to the configured `BACKEND_URLS` via `httpx`.
+- **Purpose**: A round-robin proxy for multiple backend LLM endpoints.
+- **Route**: `/{path_name:path}` (Accepts all methods).
+- **Execution**: `python generic_lb.py --backends http://llm1 http://llm2 --port 8000`
