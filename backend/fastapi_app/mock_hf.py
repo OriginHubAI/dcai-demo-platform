@@ -47,14 +47,28 @@ async def handle_api_request(repo_id: str, request: Request):
     if not os.path.exists(dataset_path):
         raise HTTPException(status_code=404, detail=f"Dataset not found: {base_repo_id}")
     
+    # Check if files exist in resolve/main or root
+    data_dir = os.path.join(dataset_path, "resolve", "main")
+    if not os.path.exists(data_dir):
+        data_dir = dataset_path
+        
+    siblings = []
+    for root, _, files in os.walk(data_dir):
+        for name in files:
+            # Skip hidden files
+            if name.startswith("."): continue
+            rel_path = os.path.relpath(os.path.join(root, name), data_dir)
+            siblings.append({"rfilename": rel_path})
+            
+    if not siblings:
+        siblings = [{"rfilename": "train.jsonl"}]
+    
     # Simple mock metadata
     return {
         "id": base_repo_id,
         "sha": "mock-commit-hash-12345",
         "lastModified": "2024-03-10T00:00:00.000Z",
-        "siblings": [
-            {"rfilename": "train.jsonl"}
-        ],
+        "siblings": siblings,
         "private": False,
         "config": "default"
     }
