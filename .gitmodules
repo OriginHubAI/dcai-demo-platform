@@ -1,3 +1,6 @@
 [submodule "backend/fastapi_app/sample_data/OpenDCAI/dataflow-instruct-10k"]
 	path = backend/fastapi_app/sample_data/OpenDCAI/dataflow-instruct-10k
 	url = https://huggingface.co/datasets/OpenDCAI/dataflow-instruct-10k
+[submodule "backend/fastapi_app/sample_data/OpenDCAI/dataflow-knowledge-med-40k"]
+	path = backend/fastapi_app/sample_data/OpenDCAI/dataflow-knowledge-med-40k
+	url = https://huggingface.co/datasets/OpenDCAI/dataflow-knowledge-med-40k
