@@ -1,0 +1,4 @@
+{"file": ".trellis/workflow.md", "reason": "Project workflow and conventions"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend development guide"}
+{"file": ".trellis/spec/backend/hf-datasets-api.md", "reason": "API reference"}
+{"file": "backend/fastapi_app/mock_dataflow.py", "reason": "Implementation reference"}
