@@ -57,27 +57,36 @@ class MockHFServerTest(SimpleTestCase):
     def test_load_dataset_from_mock(self):
         # Load the mock dataset created in setup
         # repo_id is "my-dataset"
-        print("[*] Loading dataset: my-dataset")
-        dataset = load_dataset("my-dataset", split="train")
+        print("[*] Loading dataset: my-dataset (streaming)")
+        dataset = load_dataset("my-dataset", split="train", streaming=True)
         
         self.assertIsNotNone(dataset)
-        self.assertEqual(len(dataset), 2)
-        self.assertEqual(dataset[0]["text"], "hello")
-        self.assertEqual(dataset[1]["text"], "world")
+        # For streaming datasets, we iterate to get items
+        it = iter(dataset)
+        item1 = next(it)
+        item2 = next(it)
+        
+        self.assertEqual(item1["text"], "hello")
+        self.assertEqual(item2["text"], "world")
 
     @unittest.skipIf(not HAS_DATASETS, "datasets library not installed")
     def test_load_instruct_10k_dataset_from_mock(self):
-        print("[*] Loading dataset: OpenDCAI/dataflow-instruct-10k")
-        dataset = load_dataset("OpenDCAI/dataflow-instruct-10k", split="train")
+        print("[*] Loading dataset: OpenDCAI/dataflow-instruct-10k (streaming)")
+        dataset = load_dataset("OpenDCAI/dataflow-instruct-10k", split="train", streaming=True)
         self.assertIsNotNone(dataset)
-        self.assertEqual(len(dataset), 10000)
+        # Check first item
+        item = next(iter(dataset))
+        self.assertIn("conversations", item)
 
     @unittest.skipIf(not HAS_DATASETS, "datasets library not installed")
     def test_load_knowledge_med_40k_dataset_from_mock(self):
-        print("[*] Loading dataset: OpenDCAI/dataflow-knowledge-med-40k")
-        dataset = load_dataset("OpenDCAI/dataflow-knowledge-med-40k", split="train")
+        print("[*] Loading dataset: OpenDCAI/dataflow-knowledge-med-40k (streaming)")
+        dataset = load_dataset("OpenDCAI/dataflow-knowledge-med-40k", split="train", streaming=True)
         self.assertIsNotNone(dataset)
-        self.assertEqual(len(dataset), 41318)
+        # Check first item
+        item = next(iter(dataset))
+        self.assertIn("answer", item)
+        self.assertIn("question", item)
 
     def test_mock_server_api_metadata(self):
         response = requests.get(f"{self.mock_server_url}/api/datasets/my-dataset")

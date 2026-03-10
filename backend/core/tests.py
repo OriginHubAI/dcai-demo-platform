@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
-from rest_framework.test import APITestCase
+from django.test import SimpleTestCase
+from rest_framework.test import APIClient
 
 
 class FakeResponse:
@@ -18,7 +19,7 @@ class FakeAsyncClient:
     async def get(self, url):
         if ':8002/health' in url:
             return FakeResponse(200)
-        if ':8003/health' in url or ':8003/' in url or ':18003/health' in url or ':18003/' in url:
+        if ':8003/health' in url or ':18003/health' in url or ':18003/' in url:
             return FakeResponse(200)
         if ':7860/health' in url:
             return FakeResponse(404)
@@ -27,7 +28,10 @@ class FakeAsyncClient:
         return FakeResponse(503)
 
 
-class ServicesHealthTests(APITestCase):
+class ServicesHealthTests(SimpleTestCase):
+    def setUp(self):
+        self.client = APIClient()
+
     @patch('core.views.httpx.AsyncClient', return_value=FakeAsyncClient())
     def test_services_health_endpoint(self, _mock_client):
         response = self.client.get('/api/v2/services/health')

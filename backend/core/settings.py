@@ -58,11 +58,9 @@ INSTALLED_APPS = [
     'third_party',
     'llm_chat',
     'train',
-    'dataflow',
     'loopai_proxy',
     'dfagent_proxy',
 ]
-
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',

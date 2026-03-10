@@ -14,7 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APIClient
 from dataflow.services import DataFlowCatalog
 
 User = get_user_model()
@@ -98,8 +98,9 @@ class DataflowIntegrationTest(SimpleTestCase):
         self.assertEqual(response.data['data']['status'], "RUNNING")
 
 
-class DataFlowWorkspaceTests(APITestCase):
+class DataFlowWorkspaceTests(SimpleTestCase):
     def setUp(self):
+        self.client = APIClient()
         self.tempdir = TemporaryDirectory()
         repo_root = Path(self.tempdir.name) / 'DataFlow'
         operators_root = repo_root / 'dataflow' / 'operators'
