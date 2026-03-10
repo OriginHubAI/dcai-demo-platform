@@ -20,6 +20,7 @@
 | [type-safety.md](./type-safety.md)                 | Python Type Hinting guidelines (`mypy`)          | Writing robust Python methods        |
 | [fastapi.md](./fastapi.md)                         | FastAPI microservice & data plane development     | Building FastAPI Type-B services   |
 | [authentication.md](./authentication.md)             | Token based Auth across microservices             | Dealing with Auth / Permissions   |
+| [hf-datasets-api.md](./hf-datasets-api.md)         | Hugging Face Datasets 核心接口与使用文档          | Implementing Dataset integrations |
 
 ---
 
@@ -37,7 +38,7 @@
 | **Use CursorPagination for infinite scrolling Lists**            | [pagination.md](./pagination.md)               |
 | **Use Type Annotations on all new Python methods**               | [type-safety.md](./type-safety.md)             |
 | **Format with Black, lint with Ruff/Flake8**                   | [quality.md](./quality.md)                   |
-| **Pass JWT properly via headers to Sub-Agents and Type-B Apps**| [authentication.md](./authentication.md) |
+| **Pass JWT properly via headers to Sub-Agents and Apps**| [authentication.md](./authentication.md) |
 | **Use Pydantic schemas for FastAPI validation**                | [fastapi.md](./fastapi.md)                     |
 
 ---
