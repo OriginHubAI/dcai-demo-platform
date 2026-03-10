@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 13
+- **Total Sessions**: 14
 - **Last Active**: 2026-03-10
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~436 | Active |
+| `journal-1.md` | ~468 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits |
 |---|------|-------|---------|
+| 14 | 2026-03-10 | Document mocking best practices | HEAD |
 | 13 | 2026-03-10 | Fix backend test MemoryError | `d073bb8` |
 | 12 | 2026-03-10 | Extract Specs for Dataflow UI, LoopAI and Agent | `cffa888`, `77b408c`, `196b995`, `ac02fbb`, `f7f6305`, `730370d` |
 | 11 | 2026-03-10 | Mock Server Advanced Features & OpenDCAI Datasets | `72bd62e`, `718bebb`, `bded6c3`, `1081353`, `f594a27` |

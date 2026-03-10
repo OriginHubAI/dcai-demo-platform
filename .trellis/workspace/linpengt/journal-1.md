@@ -434,3 +434,35 @@ Fixed MemoryError in backend chat tests by removing recursive nested 'with patch
 ### Next Steps
 
 - None - task complete
+
+
+## Session 14: Document mocking best practices
+
+**Date**: 2026-03-10
+**Task**: Document mocking best practices
+
+### Summary
+
+Updated .trellis/spec/backend/quality.md with a new 'Mocking Best Practices' section to prevent MemoryErrors during testing. This captures the lesson from fixing the recursive MagicMock issue in backend tests.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `HEAD` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
