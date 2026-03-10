@@ -8,28 +8,8 @@ from dotenv import load_dotenv
 
 def enforce_memory_limit():
     """Enforce virtual memory limit if TEST_MEMORY_LIMIT_GB is set."""
-    # Only enforce during 'test' command
-    if 'test' not in sys.argv:
-        return
-
-    try:
-        import resource
-        
-        # Load from environment
-        limit_gb = os.environ.get('TEST_MEMORY_LIMIT_GB')
-        if not limit_gb:
-            return
-
-        limit_gb = float(limit_gb)
-        limit_bytes = int(limit_gb * 1024 * 1024 * 1024)
-        
-        # Set both soft and hard limits
-        resource.setrlimit(resource.RLIMIT_AS, (limit_bytes, limit_bytes))
-        print(f"[*] Enforced virtual memory limit: {limit_gb}GB")
-    except (ImportError, ValueError, Exception) as e:
-        # resource module is only available on Unix
-        if not isinstance(e, ImportError):
-            print(f"[!] Warning: Could not enforce memory limit: {e}")
+    # Temporarily disabled
+    return
 
 
 def main():

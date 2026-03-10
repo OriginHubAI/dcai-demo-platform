@@ -18,6 +18,7 @@ A Hugging Face-style AI community platform built with Vue 3 + Vite (Frontend) an
     - [Backend Development](#backend-development)
       - [Running Backend Tests](#running-backend-tests)
       - [Using API Mode](#using-api-mode)
+  - [Docker Environment](#docker-environment)
   - [API Documentation](#api-documentation)
     - [API Endpoints](#api-endpoints)
   - [Contributing](#contributing)
@@ -209,6 +210,57 @@ To use the real backend API instead of mock data:
 2. Start both frontend and backend servers
 
 3. Restart the frontend to apply new environment variables
+
+## Docker Environment
+
+A Docker-based sandbox environment is available for secure tool execution and isolated development.
+
+### Building the Image
+
+From the project root, run:
+
+```bash
+docker build -t dcai-sandbox -f sandbox/Dockerfile .
+```
+
+The image includes:
+- Python 3.12
+- Node.js 22
+- Gemini CLI (`@google/gemini-cli`)
+- Project backend dependencies
+
+### Direct Docker Access
+
+For direct interactive access to the sandbox environment with host network and 16GB memory, add this function to your `~/.bashrc` or `~/.bash_aliases`:
+
+```bash
+function dcai_docker() {
+docker run -it --rm \
+    --network host \
+    --add-host=host.docker.internal:127.0.0.1 \
+    -v /etc/passwd:/etc/passwd:ro \
+    -v /etc/group:/etc/group:ro \
+    -v "$HOME":"$HOME" \
+    -u $(id -u):$(id -g) \
+    -w "$(pwd)" \
+    -e TERM=xterm-256color \
+    -e COLORTERM=truecolor \
+    -e LANG=C.UTF-8 \
+    -e LC_ALL=C.UTF-8 \
+    -e HTTPS_PROXY=$HTTPS_PROXY \
+    -e HTTP_PROXY=$HTTP_PROXY \
+    -e https_proxy=$https_proxy \
+    -e http_proxy=$http_proxy \
+    --memory=16g \
+    dcai-sandbox /bin/bash -c "
+        printf '\e[1;36m%s\e[0m\n' '-------------------------------------------------------'
+        printf '\e[1;32m%s\e[0m\n' '          🚀 Welcome to DCAI Docker Sandbox            '
+        printf '\e[1;34m%s\e[0m\n' '     User: linpengt | Memory: 16GB | Network: Host     '
+        printf '\e[1;36m%s\e[0m\n' '-------------------------------------------------------'
+        exec /bin/bash
+    "
+}
+```
 
 ## API Documentation
 
