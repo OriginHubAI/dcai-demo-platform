@@ -16,10 +16,10 @@ Implement a mock server for Hugging Face Datasets to facilitate internal testing
 6.  **Integration Tests**: Add tests in `backend/dataset/tests.py` using `datasets` library to verify the mock server.
 
 ## Acceptance Criteria
-- [ ] Mock server starts automatically when `ENABLE_MOCK_HF=True`.
-- [ ] `datasets.load_dataset()` can successfully load a dataset from the mock server.
-- [ ] Local sample files are served correctly via the mock server.
-- [ ] Integration tests pass.
+- [x] Mock server starts automatically when `ENABLE_MOCK_HF=True`.
+- [x] `datasets.load_dataset()` can successfully load a dataset from the mock server.
+- [x] Local sample files are served correctly via the mock server.
+- [x] Integration tests pass.
 
 ## Technical Notes
 - Use `hf-datasets-api.md` as the primary reference for API signatures and expected responses.
