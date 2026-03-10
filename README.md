@@ -16,6 +16,7 @@ A Hugging Face-style AI community platform built with Vue 3 + Vite (Frontend) an
     - [Environment Configuration](#environment-configuration)
     - [Frontend Development](#frontend-development)
     - [Backend Development](#backend-development)
+      - [Running Backend Tests](#running-backend-tests)
       - [Using API Mode](#using-api-mode)
   - [API Documentation](#api-documentation)
     - [API Endpoints](#api-endpoints)
@@ -174,6 +175,24 @@ python manage.py migrate
 # Start development server
 python manage.py runserver 0.0.0.0:8000
 ```
+
+#### Running Backend Tests
+
+The backend uses Django's test runner and includes integration tests for mock systems.
+
+```bash
+cd backend
+
+# Run all tests
+python manage.py test
+
+# Run specific module tests
+python manage.py test dataflow.tests  # Dataflow integration tests
+python manage.py test dataset.tests   # Hugging Face mock server tests
+python manage.py test user.tests      # User and Auth tests
+```
+
+> **Note**: Integration tests for `dataflow` and `dataset` automatically start their respective mock FastAPI servers if they are not already running. Ensure `ENABLE_MOCK_DATAFLOW=True` or `ENABLE_MOCK_HF=True` in your `.env` is NOT required for running tests specifically, as the test runner handles server lifecycle, but it IS required for these systems to work during regular `runserver` development.
 
 #### Using API Mode
 
