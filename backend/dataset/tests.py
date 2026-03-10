@@ -57,6 +57,7 @@ class MockHFServerTest(SimpleTestCase):
     def test_load_dataset_from_mock(self):
         # Load the mock dataset created in setup
         # repo_id is "my-dataset"
+        print("[*] Loading dataset: my-dataset")
         dataset = load_dataset("my-dataset", split="train")
         
         self.assertIsNotNone(dataset)
@@ -66,12 +67,14 @@ class MockHFServerTest(SimpleTestCase):
 
     @unittest.skipIf(not HAS_DATASETS, "datasets library not installed")
     def test_load_instruct_10k_dataset_from_mock(self):
+        print("[*] Loading dataset: OpenDCAI/dataflow-instruct-10k")
         dataset = load_dataset("OpenDCAI/dataflow-instruct-10k", split="train")
         self.assertIsNotNone(dataset)
         self.assertEqual(len(dataset), 10000)
 
     @unittest.skipIf(not HAS_DATASETS, "datasets library not installed")
     def test_load_knowledge_med_40k_dataset_from_mock(self):
+        print("[*] Loading dataset: OpenDCAI/dataflow-knowledge-med-40k")
         dataset = load_dataset("OpenDCAI/dataflow-knowledge-med-40k", split="train")
         self.assertIsNotNone(dataset)
         self.assertEqual(len(dataset), 41318)
