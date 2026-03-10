@@ -8,13 +8,38 @@ from dotenv import load_dotenv
 
 def enforce_memory_limit():
     """Enforce virtual memory limit if TEST_MEMORY_LIMIT_GB is set."""
-    # Temporarily disabled
-    return
+    # Only enforce during 'test' command
+    if 'test' not in sys.argv:
+        return
+
+    try:
+        import resource
+        
+        # Load from environment
+        limit_gb = os.environ.get('TEST_MEMORY_LIMIT_GB')
+        if not limit_gb or float(limit_gb) == -1:
+            return
+
+        limit_gb = float(limit_gb)
+        limit_bytes = int(limit_gb * 1024 * 1024 * 1024)
+        
+        # Set both soft and hard limits
+        resource.setrlimit(resource.RLIMIT_AS, (limit_bytes, limit_bytes))
+        print(f"[*] Enforced virtual memory limit: {limit_gb}GB")
+    except (ImportError, ValueError, Exception) as e:
+        # resource module is only available on Unix
+        if not isinstance(e, ImportError):
+            print(f"[!] Warning: Could not enforce memory limit: {e}")
 
 
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+    
+    # Always disable DEBUG when running tests to save memory and avoid huge error tracebacks
+    if 'test' in sys.argv:
+        os.environ['DEBUG'] = 'False'
+        sys.setrecursionlimit(500)
     
     # Load .env from project root
     BASE_DIR = Path(__file__).resolve().parent

@@ -231,34 +231,38 @@ The image includes:
 
 ### Direct Docker Access
 
-For direct interactive access to the sandbox environment with host network and 16GB memory, add this function to your `~/.bashrc` or `~/.bash_aliases`:
+For direct interactive access to the sandbox environment with host network and 24GB memory, add this function to your `~/.bashrc` or `~/.bash_aliases`:
 
 ```bash
 function dcai_docker() {
-docker run -it --rm \
-    --network host \
-    --add-host=host.docker.internal:127.0.0.1 \
-    -v /etc/passwd:/etc/passwd:ro \
-    -v /etc/group:/etc/group:ro \
-    -v "$HOME":"$HOME" \
-    -u $(id -u):$(id -g) \
-    -w "$(pwd)" \
-    -e TERM=xterm-256color \
-    -e COLORTERM=truecolor \
-    -e LANG=C.UTF-8 \
-    -e LC_ALL=C.UTF-8 \
-    -e HTTPS_PROXY=$HTTPS_PROXY \
-    -e HTTP_PROXY=$HTTP_PROXY \
-    -e https_proxy=$https_proxy \
-    -e http_proxy=$http_proxy \
-    --memory=16g \
-    dcai-sandbox /bin/bash -c "
-        printf '\e[1;36m%s\e[0m\n' '-------------------------------------------------------'
-        printf '\e[1;32m%s\e[0m\n' '          🚀 Welcome to DCAI Docker Sandbox            '
-        printf '\e[1;34m%s\e[0m\n' '     User: linpengt | Memory: 16GB | Network: Host     '
-        printf '\e[1;36m%s\e[0m\n' '-------------------------------------------------------'
-        exec /bin/bash
-    "
+    local mem="16g"
+    # 在宿主机层面预先格式化好欢迎行，避免在 docker 命令内部嵌套过于复杂的转义
+    local info="   User: $USER | Mem: ${mem^^} | Net: Host"
+
+    docker run -it --rm \
+        --network host \
+        --add-host=host.docker.internal:127.0.0.1 \
+        -v /etc/passwd:/etc/passwd:ro \
+        -v /etc/group:/etc/group:ro \
+        -v "$HOME":"$HOME" \
+        -u $(id -u):$(id -g) \
+        -w "$(pwd)" \
+        -e HOME="$HOME" \
+        -e TERM=xterm-256color \
+        -e COLORTERM=truecolor \
+        -e LANG=C.UTF-8 \
+        -e LC_ALL=C.UTF-8 \
+        -e HTTPS_PROXY="$HTTPS_PROXY" \
+        -e HTTP_PROXY="$HTTP_PROXY" \
+        --memory="$mem" \
+        dcai-sandbox /bin/bash -c "
+            L='------------------------------------------------------------'
+            printf '\e[1;36m%s\e[0m\n' \"\$L\"
+            printf '\e[1;32m   🚀 Welcome to DCAI Docker Sandbox\e[0m\n'
+            printf '\e[1;34m%s\e[0m\n' \"$info\"
+            printf '\e[1;36m%s\e[0m\n' \"\$L\"
+            exec /bin/bash
+        "
 }
 ```
 

@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import patch, MagicMock
 
 from django.test import SimpleTestCase
@@ -12,6 +13,12 @@ from df_conversation.models import DFConversation
 class ChatRoutingTests(SimpleTestCase):
     def setUp(self):
         self.client = APIClient()
+        self.catalog_patcher = patch('dataflow.services.catalog')
+        self.mock_catalog = self.catalog_patcher.start()
+        self.mock_catalog.list_packages.return_value = []
+
+    def tearDown(self):
+        self.catalog_patcher.stop()
 
     @patch('chat.views.transaction.atomic')
     @patch('chat.views.ChatMessageView._resolve_user')
@@ -23,7 +30,7 @@ class ChatRoutingTests(SimpleTestCase):
         mock_atomic.return_value.__enter__.return_value = MagicMock()
         mock_resolve_user.return_value = MagicMock()
         mock_conv.create.return_value = MagicMock(conversation_id='conv_123')
-        mock_df_conv.create.return_value = MagicMock(id='df_123')
+        mock_df_conv.create.return_value = MagicMock(id=uuid.UUID('e063cb5b-10b8-4b43-91be-65e460e80730'))
         
         # Also patch the original model objects for the assertions in test
         with patch('chat.models.Conversation.objects') as m1, \
@@ -83,20 +90,24 @@ class ChatRoutingTests(SimpleTestCase):
     @patch('chat.views.DFConversation.objects')
     @patch('chat.views.DFMessage.objects')
     def test_anonymous_sessions_get_distinct_demo_users(self, mock_df_msg, mock_df_conv, mock_q, mock_conv, mock_resolve_user, mock_atomic):
-        mock_atomic.return_value.__enter__.return_value = MagicMock()
-        mock_resolve_user.return_value = MagicMock()
-        mock_conv.create.return_value = MagicMock(conversation_id='conv_123')
-        mock_df_conv.create.return_value = MagicMock(id='df_123')
-        
-        with patch('chat.models.Conversation.objects') as m1:
-            m1.count.return_value = 2
+        try:
+            mock_atomic.return_value.__enter__.return_value = MagicMock()
+            mock_resolve_user.return_value = MagicMock()
+            mock_conv.create.return_value = MagicMock(conversation_id='conv_123')
+            mock_df_conv.create.return_value = MagicMock(id=uuid.UUID('e063cb5b-10b8-4b43-91be-65e460e80731'))
             
-            first = self.client.post('/api/v1/chat', {'question': '@DataFlow create pipeline'}, format='json')
-            second = self.client.post('/api/v1/chat', {'question': '@DataFlow create pipeline'}, format='json')
+            with patch('chat.models.Conversation.objects') as m1:
+                m1.count.return_value = 2
+                
+                first = self.client.post('/api/v1/chat', {'question': '@DataFlow create pipeline'}, format='json')
+                second = self.client.post('/api/v1/chat', {'question': '@DataFlow create pipeline'}, format='json')
 
-            self.assertEqual(first.status_code, 200)
-            self.assertEqual(second.status_code, 200)
-            self.assertEqual(Conversation.objects.count(), 2)
+                self.assertEqual(first.status_code, 200)
+                self.assertEqual(second.status_code, 200)
+                self.assertEqual(Conversation.objects.count(), 2)
+        except Exception as e:
+            print(f"CAUGHT EXCEPTION: {type(e)}: {e}")
+            raise
 
     @patch('chat.views.transaction.atomic')
     @patch('chat.views.ChatMessageView._resolve_user')
