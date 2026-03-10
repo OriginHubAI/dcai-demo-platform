@@ -9,6 +9,9 @@ import requests
 from django.test import SimpleTestCase
 from django.conf import settings
 
+# Set HF_ENDPOINT before importing datasets or huggingface_hub
+os.environ["HF_ENDPOINT"] = "http://localhost:8002"
+
 try:
     from datasets import load_dataset
     HAS_DATASETS = True
@@ -21,6 +24,9 @@ class MockHFServerTest(SimpleTestCase):
         super().setUpClass()
         cls.mock_server_port = 8002
         cls.mock_server_url = f"http://localhost:{cls.mock_server_port}"
+        
+        # Ensure HF_ENDPOINT matches the server we are about to start
+        os.environ["HF_ENDPOINT"] = cls.mock_server_url
         
         # Check if port is already in use
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -49,16 +55,14 @@ class MockHFServerTest(SimpleTestCase):
 
     @unittest.skipIf(not HAS_DATASETS, "datasets library not installed")
     def test_load_dataset_from_mock(self):
-        # Use patch.dict to ensure HF_ENDPOINT is set correctly
-        with unittest.mock.patch.dict(os.environ, {"HF_ENDPOINT": self.mock_server_url}):
-            # Load the mock dataset created in setup
-            # repo_id is "my-dataset"
-            dataset = load_dataset("my-dataset", split="train", trust_remote_code=True)
-            
-            self.assertIsNotNone(dataset)
-            self.assertEqual(len(dataset), 2)
-            self.assertEqual(dataset[0]["text"], "hello")
-            self.assertEqual(dataset[1]["text"], "world")
+        # Load the mock dataset created in setup
+        # repo_id is "my-dataset"
+        dataset = load_dataset("my-dataset", split="train")
+        
+        self.assertIsNotNone(dataset)
+        self.assertEqual(len(dataset), 2)
+        self.assertEqual(dataset[0]["text"], "hello")
+        self.assertEqual(dataset[1]["text"], "world")
 
     def test_mock_server_api_metadata(self):
         response = requests.get(f"{self.mock_server_url}/api/datasets/my-dataset")
