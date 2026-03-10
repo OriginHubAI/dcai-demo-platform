@@ -23,6 +23,7 @@
 | [hf-datasets-api.md](./hf-datasets-api.md)         | Hugging Face Datasets 核心接口与使用文档          | Implementing Dataset integrations |
 | [dataflow-webui-api.md](./dataflow-webui-api.md)   | Dataflow WebUI Backend API Specification         | Implementing backend for Dataflow WebUI |
 | [dataflow-loopai-api.md](./dataflow-loopai-api.md) | Dataflow LoopAI API Specification                | Integrating LoopAI & Remote LLM Training |
+| [dataflow-agent-api.md](./dataflow-agent-api.md)   | Dataflow Agent Architecture Specification        | Integrating Dataflow AI Agents |
 
 ---
 
