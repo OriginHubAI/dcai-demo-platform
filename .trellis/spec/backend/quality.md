@@ -128,6 +128,20 @@ When testing integrations with external or mock servers (e.g., Hugging Face, Dat
 - **Prefer `SimpleTestCase`**: Use `django.test.SimpleTestCase` instead of `TestCase` to avoid the overhead and potential migration failures of spinning up the entire test database.
 - **Mock Authentication**: If endpoints require authentication (`IsAuthenticated`), patch `has_permission` (`@unittest.mock.patch("rest_framework.permissions.IsAuthenticated.has_permission", return_value=True)`) rather than creating test users in the database.
 
+### Mocking Best Practices
+
+When using `unittest.mock` with Django/DRF:
+
+- **Avoid Redundant Nested Mocking**: Do not use `with patch(...)` to re-patch a model or object that is already patched via a decorator. This can lead to unpredictable behavior where the outer (configured) mock is overridden by a fresh, unconfigured `MagicMock`.
+- **Prevent `MagicMock` Recursion in JSON**: DRF's `JSONRenderer` will enter an infinite recursion loop if it attempts to serialize a `MagicMock` (e.g., when a mock is accidentally returned in an API response). This rapidly consumes memory and leads to a `MemoryError`.
+- **Configure Mocks Explicitly**: Always ensure mocks that might be accessed by the code under test (e.g., `create()`, `get()`) return a safe, serializable value (like a string or a configured mock with predictable attributes) instead of a default `MagicMock`.
+
+| Do                                     | Don't                                      |
+| -------------------------------------- | ------------------------------------------ |
+| Use `@patch` decorators for clarity    | Nest multiple `with patch` contexts        |
+| Configure `return_value` with safe types | Return default `MagicMock` in API responses |
+| Assert `call_count` or `call_args`     | Re-mock for simple count assertions        |
+
 ---
 
 ## Summary
