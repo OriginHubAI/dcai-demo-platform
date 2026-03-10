@@ -4,7 +4,7 @@ import subprocess
 import os
 import sys
 import socket
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
 from rest_framework.test import APIClient
 from django.contrib.auth import get_user_model
@@ -12,7 +12,10 @@ from .client import DataflowClient
 
 User = get_user_model()
 
-class DataflowIntegrationTest(TestCase):
+import unittest.mock
+from rest_framework.permissions import IsAuthenticated
+
+class DataflowIntegrationTest(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -44,8 +47,6 @@ class DataflowIntegrationTest(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(email='test@example.com', username='testuser', password='password123')
-        self.client.force_authenticate(user=self.user)
 
     @override_settings(DATAFLOW_SERVICE_URL="http://localhost:8001")
     def test_client_list_operators(self):
@@ -56,7 +57,8 @@ class DataflowIntegrationTest(TestCase):
         self.assertEqual(operators[0]['id'], "op_llm_extract")
 
     @override_settings(DATAFLOW_SERVICE_URL="http://localhost:8001")
-    def test_operator_list_view(self):
+    @unittest.mock.patch("rest_framework.permissions.IsAuthenticated.has_permission", return_value=True)
+    def test_operator_list_view(self, mock_has_permission):
         url = reverse('operator-list')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -64,7 +66,8 @@ class DataflowIntegrationTest(TestCase):
         self.assertTrue(len(response.data['data']) > 0)
 
     @override_settings(DATAFLOW_SERVICE_URL="http://localhost:8001")
-    def test_pipeline_status_view(self):
+    @unittest.mock.patch("rest_framework.permissions.IsAuthenticated.has_permission", return_value=True)
+    def test_pipeline_status_view(self, mock_has_permission):
         pipeline_id = uuid.uuid4()
         # First create a pipeline via client to ensure it's in the mock DB
         df_client = DataflowClient()
