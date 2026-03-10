@@ -1,6 +1,20 @@
 import os
 import json
+import subprocess
 from typing import Any, Dict, List, Optional
+
+def get_commit_hash(dataset_path: str) -> str:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"], 
+            cwd=dataset_path, 
+            capture_output=True, 
+            text=True, 
+            check=True
+        )
+        return result.stdout.strip()
+    except Exception:
+        return "mock-commit-hash-12345"
 from fastapi import FastAPI, APIRouter, HTTPException, Path, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
@@ -63,10 +77,11 @@ async def handle_api_request(repo_id: str, request: Request):
     if not siblings:
         siblings = [{"rfilename": "train.jsonl"}]
     
+    commit_hash = get_commit_hash(dataset_path)
     # Simple mock metadata
     return {
         "id": base_repo_id,
-        "sha": "mock-commit-hash-12345",
+        "sha": commit_hash,
         "lastModified": "2024-03-10T00:00:00.000Z",
         "siblings": siblings,
         "private": False,
@@ -75,9 +90,11 @@ async def handle_api_request(repo_id: str, request: Request):
 
 async def list_repo_commits(repo_id: str, revision: str):
     """Mock GET /api/datasets/{repo_id}/commits/{revision}"""
+    dataset_path = os.path.join(SAMPLE_DATA_DIR, repo_id)
+    commit_hash = get_commit_hash(dataset_path)
     return [
         {
-            "id": "mock-commit-hash-12345",
+            "id": commit_hash,
             "authors": [],
             "date": "2024-03-10T00:00:00.000Z",
             "title": "Mock commit",
@@ -164,8 +181,11 @@ async def resolve_file(repo_id: str, revision: str, path: str, request: Request)
     """Mock GET/HEAD /datasets/{repo_id}/resolve/{revision}/{path}"""
     # Map to local file: SAMPLE_DATA_DIR/{repo_id}/resolve/{revision}/{path}
     # In mock, we often use 'main' as the directory name instead of actual hashes
+    dataset_path = os.path.join(SAMPLE_DATA_DIR, repo_id)
+    commit_hash = get_commit_hash(dataset_path)
+    
     effective_revision = revision
-    if revision == "mock-commit-hash-12345":
+    if revision == commit_hash or revision == "mock-commit-hash-12345":
         effective_revision = "main"
 
     file_path = os.path.join(SAMPLE_DATA_DIR, repo_id, "resolve", effective_revision, path)
@@ -215,7 +235,7 @@ async def get_parquet_list(dataset: str):
                 }
             ]
         },
-        headers={"X-Revision": "mock-commit-hash-12345"}
+        headers={"X-Revision": get_commit_hash(os.path.join(SAMPLE_DATA_DIR, dataset))}
     )
 
 @router.get("/info")
@@ -236,7 +256,7 @@ async def get_dataset_info(dataset: str):
                 }
             }
         },
-        headers={"X-Revision": "mock-commit-hash-12345"}
+        headers={"X-Revision": get_commit_hash(os.path.join(SAMPLE_DATA_DIR, dataset))}
     )
 
 app.include_router(router)

@@ -69,7 +69,9 @@ class MockHFServerTest(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["id"], "my-dataset")
-        self.assertEqual(data["sha"], "mock-commit-hash-12345")
+        self.assertIn("sha", data)
+        self.assertTrue(isinstance(data["sha"], str))
+        self.assertTrue(len(data["sha"]) > 0)
 
     def test_mock_server_api_info(self):
         response = requests.get(f"{self.mock_server_url}/info?dataset=my-dataset")
