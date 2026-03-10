@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 11
+- **Total Sessions**: 12
 - **Last Active**: 2026-03-10
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~367 | Active |
+| `journal-1.md` | ~404 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits |
 |---|------|-------|---------|
+| 12 | 2026-03-10 | Extract Specs for Dataflow UI, LoopAI and Agent | `cffa888`, `77b408c`, `196b995`, `ac02fbb`, `f7f6305`, `730370d` |
 | 11 | 2026-03-10 | Mock Server Advanced Features & OpenDCAI Datasets | `72bd62e`, `718bebb`, `bded6c3`, `1081353`, `f594a27` |
 | 10 | 2026-03-10 | Implement Mock Datasets Server | `607bedd`, `2b64674`, `6003213`, `02b3469`, `4ad75df` |
 | 9 | 2026-03-09 | Dataflow Mock Auto-start Integration | - |

@@ -365,3 +365,40 @@ Enhanced the Hugging Face Mock Server to dynamically read real file directory st
 ### Next Steps
 
 - None - task complete
+
+
+## Session 12: Extract Specs for Dataflow UI, LoopAI and Agent
+
+**Date**: 2026-03-10
+**Task**: Extract Specs for Dataflow UI, LoopAI and Agent
+
+### Summary
+
+Analyzed three external dataflow modules (dataflow-webui, dataflow-loopai, dataflow-agent) and created detailed backend API and architectural specifications for future integration. Identified dataflow-agent as an SDK-first Gradio application and the others as standard FastAPI/Vue architectures.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `cffa888` | (see git log) |
+| `77b408c` | (see git log) |
+| `196b995` | (see git log) |
+| `ac02fbb` | (see git log) |
+| `f7f6305` | (see git log) |
+| `730370d` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
