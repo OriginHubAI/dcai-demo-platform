@@ -329,3 +329,39 @@ Implemented a mock FastAPI server for Hugging Face Datasets with auto-start logi
 ### Next Steps
 
 - None - task complete
+
+
+## Session 11: Mock Server Advanced Features & OpenDCAI Datasets
+
+**Date**: 2026-03-10
+**Task**: Mock Server Advanced Features & OpenDCAI Datasets
+
+### Summary
+
+Enhanced the Hugging Face Mock Server to dynamically read real file directory structures and git commit hashes. Integrated two actual OpenDCAI datasets as git submodules to serve as realistic mock data, and verified them using the datasets.load_dataset integration tests.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `72bd62e` | (see git log) |
+| `718bebb` | (see git log) |
+| `bded6c3` | (see git log) |
+| `1081353` | (see git log) |
+| `f594a27` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
