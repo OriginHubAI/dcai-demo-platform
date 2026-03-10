@@ -64,6 +64,18 @@ class MockHFServerTest(SimpleTestCase):
         self.assertEqual(dataset[0]["text"], "hello")
         self.assertEqual(dataset[1]["text"], "world")
 
+    @unittest.skipIf(not HAS_DATASETS, "datasets library not installed")
+    def test_load_instruct_10k_dataset_from_mock(self):
+        dataset = load_dataset("OpenDCAI/dataflow-instruct-10k", split="train")
+        self.assertIsNotNone(dataset)
+        self.assertEqual(len(dataset), 10000)
+
+    @unittest.skipIf(not HAS_DATASETS, "datasets library not installed")
+    def test_load_knowledge_med_40k_dataset_from_mock(self):
+        dataset = load_dataset("OpenDCAI/dataflow-knowledge-med-40k", split="train")
+        self.assertIsNotNone(dataset)
+        self.assertEqual(len(dataset), 41318)
+
     def test_mock_server_api_metadata(self):
         response = requests.get(f"{self.mock_server_url}/api/datasets/my-dataset")
         self.assertEqual(response.status_code, 200)
