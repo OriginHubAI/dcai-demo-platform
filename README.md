@@ -131,6 +131,10 @@ cp .env.example .env
 |----------|-------------|---------|
 | `VITE_DATA_MODE` | Data source mode: `mock` or `api` | `mock` |
 | `VITE_API_BASE_URL` | Backend API base URL | `http://localhost:8000` |
+| `ENABLE_MOCK_DATAFLOW` | Auto-start mock Dataflow server | `False` |
+| `ENABLE_MOCK_HF` | Auto-start mock Hugging Face Hub server | `False` |
+| `HF_SERVICE_URL` | Mock HF server base URL | `http://localhost:8002` |
+| `HF_ENDPOINT` | Endpoint for 'datasets' library | `http://localhost:8002` |
 
 ### Frontend Development
 

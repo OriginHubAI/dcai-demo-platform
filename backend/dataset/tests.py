@@ -1,0 +1,76 @@
+import os
+import sys
+import time
+import socket
+import subprocess
+import unittest
+import unittest.mock
+import requests
+from django.test import SimpleTestCase
+from django.conf import settings
+
+try:
+    from datasets import load_dataset
+    HAS_DATASETS = True
+except ImportError:
+    HAS_DATASETS = False
+
+class MockHFServerTest(SimpleTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.mock_server_port = 8002
+        cls.mock_server_url = f"http://localhost:{cls.mock_server_port}"
+        
+        # Check if port is already in use
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if s.connect_ex(('localhost', cls.mock_server_port)) != 0:
+                print(f"[*] Starting Mock HF Server for tests...")
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                mock_server_path = os.path.join(os.path.dirname(current_dir), 'fastapi_app', 'mock_hf.py')
+                
+                cls.mock_process = subprocess.Popen(
+                    [sys.executable, mock_server_path],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    env={**os.environ, "MOCK_HF_PORT": str(cls.mock_server_port)}
+                )
+                # Wait for server to start
+                time.sleep(2)
+            else:
+                cls.mock_process = None
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.mock_process:
+            cls.mock_process.terminate()
+            cls.mock_process.wait()
+        super().tearDownClass()
+
+    @unittest.skipIf(not HAS_DATASETS, "datasets library not installed")
+    def test_load_dataset_from_mock(self):
+        # Use patch.dict to ensure HF_ENDPOINT is set correctly
+        with unittest.mock.patch.dict(os.environ, {"HF_ENDPOINT": self.mock_server_url}):
+            # Load the mock dataset created in setup
+            # repo_id is "my-dataset"
+            dataset = load_dataset("my-dataset", split="train", trust_remote_code=True)
+            
+            self.assertIsNotNone(dataset)
+            self.assertEqual(len(dataset), 2)
+            self.assertEqual(dataset[0]["text"], "hello")
+            self.assertEqual(dataset[1]["text"], "world")
+
+    def test_mock_server_api_metadata(self):
+        response = requests.get(f"{self.mock_server_url}/api/datasets/my-dataset")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["id"], "my-dataset")
+        self.assertEqual(data["sha"], "mock-commit-hash-12345")
+
+    def test_mock_server_api_info(self):
+        response = requests.get(f"{self.mock_server_url}/info?dataset=my-dataset")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("dataset_info", data)
+        self.assertIn("default", data["dataset_info"])
+        self.assertEqual(data["dataset_info"]["default"]["features"]["text"]["dtype"], "string")
