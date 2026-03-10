@@ -178,12 +178,14 @@ python manage.py runserver 0.0.0.0:8000
 
 #### Running Backend Tests
 
-The backend uses Django's test runner and includes integration tests for mock systems.
+The backend uses Django's test runner and includes integration tests for mock systems. 
+
+A 16GB memory limit is automatically enforced when running tests if `TEST_MEMORY_LIMIT_GB=16` is set in your `.env` (configured via `manage.py`).
 
 ```bash
 cd backend
 
-# Run all tests
+# Run all tests (memory limit enforced via manage.py)
 python manage.py test
 
 # Run specific module tests
