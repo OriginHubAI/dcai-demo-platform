@@ -122,6 +122,12 @@ class TestProjectServices:
 | Error Handling      | Exceptions, proxy fails | Verify HTTPErrors are raised/caught |
 | Database Integrity  | Constraints             | Duplicate unique names         |
 
+### External Integrations and Mock Servers
+
+When testing integrations with external or mock servers (e.g., Hugging Face, Dataflow) where database setup is not strictly required:
+- **Prefer `SimpleTestCase`**: Use `django.test.SimpleTestCase` instead of `TestCase` to avoid the overhead and potential migration failures of spinning up the entire test database.
+- **Mock Authentication**: If endpoints require authentication (`IsAuthenticated`), patch `has_permission` (`@unittest.mock.patch("rest_framework.permissions.IsAuthenticated.has_permission", return_value=True)`) rather than creating test users in the database.
+
 ---
 
 ## Summary
