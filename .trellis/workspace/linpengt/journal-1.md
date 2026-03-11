@@ -466,3 +466,35 @@ Updated .trellis/spec/backend/quality.md with a new 'Mocking Best Practices' sec
 ### Next Steps
 
 - None - task complete
+
+
+## Session 15: Rename HF Mock Environment Variables
+
+**Date**: 2026-03-11
+**Task**: Rename HF Mock Environment Variables
+
+### Summary
+
+Renamed ENABLE_MOCK_HF to ENABLE_MOCK_HF_DATASETS and HF_SERVICE_URL to HF_DATASETS_SERVICE_URL across the codebase.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `84056b8` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
