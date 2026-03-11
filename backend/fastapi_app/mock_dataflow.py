@@ -164,4 +164,12 @@ app.include_router(router)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    import os
+    from urllib.parse import urlparse
+    
+    url = os.environ.get("DATAFLOW_SYSTEM_URL", "http://127.0.0.1:8001")
+    parsed = urlparse(url)
+    port = parsed.port or 8001
+    host = parsed.hostname or "0.0.0.0"
+    
+    uvicorn.run(app, host=host, port=port)

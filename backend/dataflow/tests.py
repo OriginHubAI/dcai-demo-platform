@@ -52,7 +52,7 @@ class DataflowIntegrationTest(SimpleTestCase):
     def setUp(self):
         self.client = APIClient()
 
-    @override_settings(DATAFLOW_SERVICE_URL="http://localhost:8001")
+    @override_settings(DATAFLOW_MOCK_URL="http://localhost:8001")
     def test_client_list_operators(self):
         client = DataflowClient()
         operators = client.list_operators()
@@ -60,7 +60,7 @@ class DataflowIntegrationTest(SimpleTestCase):
         self.assertTrue(len(operators) > 0)
         self.assertEqual(operators[0]['id'], "op_llm_extract")
 
-    @override_settings(DATAFLOW_SERVICE_URL="http://localhost:8001")
+    @override_settings(DATAFLOW_MOCK_URL="http://localhost:8001")
     @unittest.mock.patch("rest_framework.permissions.IsAuthenticated.has_permission", return_value=True)
     def test_operator_list_view(self, mock_has_permission):
         url = reverse('operator-list')
@@ -69,7 +69,7 @@ class DataflowIntegrationTest(SimpleTestCase):
         self.assertEqual(response.data['code'], 0)
         self.assertTrue(len(response.data['data']) > 0)
 
-    @override_settings(DATAFLOW_SERVICE_URL="http://localhost:8001")
+    @override_settings(DATAFLOW_MOCK_URL="http://localhost:8001")
     @unittest.mock.patch("rest_framework.permissions.IsAuthenticated.has_permission", return_value=True)
     def test_pipeline_status_view(self, mock_has_permission):
         pipeline_id = uuid.uuid4()

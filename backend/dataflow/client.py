@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 class DataflowClient:
     def __init__(self, base_url=None):
-        self.base_url = base_url or settings.DATAFLOW_SERVICE_URL
+        self.base_url = base_url or settings.DATAFLOW_MOCK_URL
         self.api_url = f"{self.base_url.rstrip('/')}/api/v1"
 
     def list_operators(self):

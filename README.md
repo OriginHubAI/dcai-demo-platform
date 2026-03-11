@@ -134,9 +134,25 @@ cp .env.example .env
 | `VITE_DATA_MODE` | Data source mode: `mock` or `api` | `mock` |
 | `VITE_API_BASE_URL` | Backend API base URL | `http://localhost:8000` |
 | `ENABLE_MOCK_DATAFLOW` | Auto-start mock Dataflow server | `False` |
+| `DATAFLOW_MOCK_URL` | Mock Dataflow proxy base URL | `http://localhost:8001` |
+| `DATAFLOW_SYSTEM_URL` | Dataflow system URL | `http://127.0.0.1:8001` |
 | `ENABLE_MOCK_HF_DATASETS` | Auto-start mock Hugging Face Hub server | `False` |
-| `HF_DATASETS_SERVICE_URL` | Mock HF server base URL | `http://localhost:8002` |
-| `HF_ENDPOINT` | Endpoint for 'datasets' library | `http://localhost:8002` |
+| `HF_DATASETS_MOCK_URL` | Mock HF server base URL | `http://localhost:8010` |
+| `HF_ENDPOINT` | Endpoint for 'datasets' library | `http://localhost:8010` |
+| `DATAFLOW_BACKEND_URL` | Dataflow backend service URL | `http://127.0.0.1:8002` |
+| `LOOPAI_BACKEND_URL` | LoopAI backend service URL | `http://127.0.0.1:18003` |
+| `DFAGENT_BACKEND_URL` | DFAgent backend service URL | `http://127.0.0.1:7860` |
+| `DATAFLOW_REPO_ROOT` | Absolute path to DataFlow repository | `/absolute/path/to/DataFlow` |
+| `DATAFLOW_OPERATORS_ROOT` | Absolute path to DataFlow operators | `/absolute/path/to/DataFlow/dataflow/operators` |
+| `CODE_SERVER_BASE_PORT` | Base port for Code Server instances | `18080` |
+| `PACKAGE_EDITOR_PORT` | Port for the Package Editor service | `18004` |
+| `PACKAGE_EDITOR_SANDBOX_ROOT` | Directory for Package Editor sandboxes | `/absolute/path/to/sandboxes/package-editor` |
+| `PROXY_TIMEOUT` | Proxy request timeout in seconds | `120` |
+| `LLM_PROVIDER_BASE_URL` | LLM Provider Base URL | `http://localhost:3000` |
+| `LLM_PROVIDER_API_KEY` | LLM Provider API Key | `your-api-key` |
+| `LLM_DEFAULT_MODEL` | Default LLM model | `gpt-4o` |
+| `LLM_AVAILABLE_MODELS` | Comma-separated list of available models | `gpt-4o,deepseek-chat` |
+| `LLM_REQUEST_TIMEOUT` | LLM API request timeout in seconds | `120` |
 
 ### Frontend Development
 

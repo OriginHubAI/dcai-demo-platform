@@ -23,7 +23,7 @@ class DatasetConfig(AppConfig):
             self._start_mock_hf_server()
 
     def _start_mock_hf_server(self):
-        service_url = settings.HF_DATASETS_SERVICE_URL
+        service_url = settings.HF_DATASETS_MOCK_URL
         try:
             port = int(service_url.split(':')[-1].rstrip('/'))
         except (ValueError, IndexError):
@@ -43,7 +43,7 @@ class DatasetConfig(AppConfig):
         try:
             # We also pass HF_ENDPOINT to the environment so datasets library uses it
             env = os.environ.copy()
-            env["HF_ENDPOINT"] = settings.HF_DATASETS_SERVICE_URL
+            env["HF_ENDPOINT"] = settings.HF_DATASETS_MOCK_URL
             
             subprocess.Popen(
                 [sys.executable, mock_server_path],

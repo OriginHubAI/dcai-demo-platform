@@ -10,7 +10,7 @@ from django.test import SimpleTestCase
 from django.conf import settings
 
 # Set HF_ENDPOINT before importing datasets or huggingface_hub
-os.environ["HF_ENDPOINT"] = "http://localhost:8002"
+os.environ["HF_ENDPOINT"] = "http://localhost:8010"
 
 try:
     from datasets import load_dataset
@@ -22,7 +22,7 @@ class MockHFServerTest(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.mock_server_port = 8002
+        cls.mock_server_port = 8010
         cls.mock_server_url = f"http://localhost:{cls.mock_server_port}"
         
         # Ensure HF_ENDPOINT matches the server we are about to start

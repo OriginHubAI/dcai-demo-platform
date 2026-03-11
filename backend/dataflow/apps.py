@@ -31,7 +31,7 @@ class DataflowConfig(AppConfig):
                     self._start_mock_server()
 
     def _start_mock_server(self):
-        service_url = settings.DATAFLOW_SERVICE_URL
+        service_url = getattr(settings, 'DATAFLOW_SYSTEM_URL', 'http://127.0.0.1:8001')
         # Extract port from URL (e.g., http://localhost:8001 -> 8001)
         try:
             port = int(service_url.split(':')[-1].rstrip('/'))

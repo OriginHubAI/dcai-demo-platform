@@ -256,6 +256,7 @@ ENABLE_MOCK_DATAFLOW = os.environ.get('ENABLE_MOCK_DATAFLOW', 'False') == 'True'
 ENABLE_MOCK_HF_DATASETS = os.environ.get('ENABLE_MOCK_HF_DATASETS', 'False') == 'True'
 HF_ENDPOINT = os.environ.get('HF_ENDPOINT', 'https://huggingface.co')
 HF_DATASETS_CACHE = os.environ.get('HF_DATASETS_CACHE', None)
-DATAFLOW_SERVICE_URL = os.environ.get('DATAFLOW_SERVICE_URL', 'http://localhost:8001')
-HF_DATASETS_SERVICE_URL = os.environ.get('HF_DATASETS_SERVICE_URL', 'http://localhost:8002')
+DATAFLOW_MOCK_URL = os.environ.get('DATAFLOW_MOCK_URL', 'http://localhost:8001')
+DATAFLOW_SYSTEM_URL = os.environ.get('DATAFLOW_SYSTEM_URL', 'http://127.0.0.1:8001')
+HF_DATASETS_MOCK_URL = os.environ.get('HF_DATASETS_MOCK_URL', 'http://localhost:8010')
 
