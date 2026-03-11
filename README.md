@@ -18,6 +18,7 @@ A Hugging Face-style AI community platform built with Vue 3 + Vite (Frontend) an
     - [Backend Development](#backend-development)
       - [Running Backend Tests](#running-backend-tests)
       - [Using API Mode](#using-api-mode)
+  - [Docker Environment](#docker-environment)
   - [API Documentation](#api-documentation)
     - [API Endpoints](#api-endpoints)
   - [Contributing](#contributing)
@@ -178,12 +179,14 @@ python manage.py runserver 0.0.0.0:8000
 
 #### Running Backend Tests
 
-The backend uses Django's test runner and includes integration tests for mock systems.
+The backend uses Django's test runner and includes integration tests for mock systems. 
+
+A 16GB memory limit is automatically enforced when running tests if `TEST_MEMORY_LIMIT_GB=16` is set in your `.env` (configured via `manage.py`).
 
 ```bash
 cd backend
 
-# Run all tests
+# Run all tests (memory limit enforced via manage.py)
 python manage.py test
 
 # Run specific module tests
@@ -207,6 +210,61 @@ To use the real backend API instead of mock data:
 2. Start both frontend and backend servers
 
 3. Restart the frontend to apply new environment variables
+
+## Docker Environment
+
+A Docker-based sandbox environment is available for secure tool execution and isolated development.
+
+### Building the Image
+
+From the project root, run:
+
+```bash
+docker build -t dcai-sandbox -f sandbox/Dockerfile .
+```
+
+The image includes:
+- Python 3.12
+- Node.js 22
+- Gemini CLI (`@google/gemini-cli`)
+- Project backend dependencies
+
+### Direct Docker Access
+
+For direct interactive access to the sandbox environment with host network and 24GB memory, add this function to your `~/.bashrc` or `~/.bash_aliases`:
+
+```bash
+function dcai_docker() {
+    local mem="16g"
+    # 在宿主机层面预先格式化好欢迎行，避免在 docker 命令内部嵌套过于复杂的转义
+    local info="   User: $USER | Mem: ${mem^^} | Net: Host"
+
+    docker run -it --rm \
+        --network host \
+        --add-host=host.docker.internal:127.0.0.1 \
+        -v /etc/passwd:/etc/passwd:ro \
+        -v /etc/group:/etc/group:ro \
+        -v "$HOME":"$HOME" \
+        -u $(id -u):$(id -g) \
+        -w "$(pwd)" \
+        -e HOME="$HOME" \
+        -e TERM=xterm-256color \
+        -e COLORTERM=truecolor \
+        -e LANG=C.UTF-8 \
+        -e LC_ALL=C.UTF-8 \
+        -e HTTPS_PROXY="$HTTPS_PROXY" \
+        -e HTTP_PROXY="$HTTP_PROXY" \
+        --memory="$mem" \
+        dcai-sandbox /bin/bash -c "
+            L='------------------------------------------------------------'
+            printf '\e[1;36m%s\e[0m\n' \"\$L\"
+            printf '\e[1;32m   🚀 Welcome to DCAI Docker Sandbox\e[0m\n'
+            printf '\e[1;34m%s\e[0m\n' \"$info\"
+            printf '\e[1;36m%s\e[0m\n' \"\$L\"
+            exec /bin/bash
+        "
+}
+```
 
 ## API Documentation
 

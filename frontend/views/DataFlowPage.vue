@@ -26,7 +26,10 @@
       <SortDropdown v-model="sortBy" :options="translatedSortOptions" />
     </div>
     <!-- Results -->
-    <div v-if="paginatedItems.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div v-if="loading" class="text-center py-16 text-gray-500">
+      <p class="text-lg">Loading package workspace...</p>
+    </div>
+    <div v-else-if="paginatedItems.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <DataFlowCard v-for="pkg in paginatedItems" :key="pkg.id" :pkg="pkg" />
     </div>
     <div v-else class="text-center py-16 text-gray-500">
@@ -67,9 +70,11 @@ onMounted(async () => {
 
 const translatedCategories = computed(() => [
   { value: 'all', label: t('packages.categories.all') },
-  { value: 'multimodal', label: t('packages.categories.multimodal') },
+  { value: 'core', label: 'Core' },
+  { value: 'training', label: 'Training' },
+  { value: 'rag', label: 'RAG' },
   { value: 'science', label: t('packages.categories.science') },
-  { value: 'time-series', label: t('packages.categories.timeSeries') },
+  { value: 'multimodal', label: t('packages.categories.multimodal') },
 ])
 
 const translatedSortOptions = computed(() => [
@@ -110,7 +115,7 @@ const filtered = computed(() => {
   return result
 })
 
-const { currentPage, totalPages, paginatedItems, totalItems } = usePagination(filtered, 12)
+const { currentPage, totalPages, paginatedItems, totalItems } = usePagination(filtered, 24)
 
 watch([activeCategory, searchQuery], () => {
   currentPage.value = 1

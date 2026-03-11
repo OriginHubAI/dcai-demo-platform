@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sandbox": "./sandbox/start_sandbox.sh"
   },
   "dependencies": {
     "graphology": "^0.26.0",

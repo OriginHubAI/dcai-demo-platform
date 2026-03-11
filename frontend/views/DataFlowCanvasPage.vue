@@ -1,7 +1,48 @@
 <template>
-  <div class="h-[calc(100vh-57px)] flex overflow-hidden bg-[#f7f8fa]">
-    <!-- Main Canvas Area -->
-    <div class="flex-1 flex flex-col overflow-hidden">
+  <div class="h-[calc(100vh-57px)] flex flex-col overflow-hidden bg-[#f7f8fa]">
+
+    <!-- Mode switcher bar -->
+    <div class="flex items-center gap-3 px-4 py-2 bg-white border-b border-gray-200 flex-shrink-0">
+      <span class="text-xs text-gray-500 font-medium">Canvas Mode:</span>
+      <button
+        @click="setCanvasMode('builtin')"
+        class="text-xs px-3 py-1 rounded-full border transition-colors"
+        :class="canvasMode === 'builtin' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-600 border-gray-300 hover:border-blue-300'"
+      >Built-in</button>
+      <button
+        @click="setCanvasMode('dataflow-webui')"
+        class="text-xs px-3 py-1 rounded-full border transition-colors"
+        :class="canvasMode === 'dataflow-webui' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-600 border-gray-300 hover:border-blue-300'"
+      >DataFlow-WebUI</button>
+    </div>
+
+    <!-- DataFlow-WebUI iframe mode -->
+    <div v-if="canvasMode === 'dataflow-webui'" class="flex-1 relative">
+      <div v-if="iframeLoading" class="absolute inset-0 flex items-center justify-center bg-white z-10">
+        <div class="text-center">
+          <div class="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p class="text-sm text-gray-500">Loading DataFlow-WebUI...</p>
+        </div>
+      </div>
+      <div v-if="iframeError" class="absolute inset-0 flex items-center justify-center bg-white z-10">
+        <div class="text-center">
+          <p class="text-gray-500 mb-2">DataFlow-WebUI service is not available.</p>
+          <p class="text-xs text-gray-400">Make sure the embedded DataFlow-WebUI service is running.</p>
+          <button @click="reloadIframe" class="mt-3 text-xs px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Retry</button>
+        </div>
+      </div>
+      <iframe
+        v-show="!iframeLoading && !iframeError"
+        ref="dfIframe"
+        :src="dataflowWebUIUrl"
+        class="w-full h-full border-none"
+        @load="onIframeLoad"
+        @error="onIframeError"
+      />
+    </div>
+
+    <!-- Built-in canvas mode -->
+    <div v-else class="flex-1 flex overflow-hidden">
       <!-- Top Toolbar -->
       <div class="flex items-center justify-between px-4 py-2.5 bg-white border-b border-gray-200 flex-shrink-0">
       <div class="flex items-center gap-2">
@@ -265,19 +306,77 @@
       </div>
     </div>
     </div>
+    <!-- end built-in canvas v-else -->
 
     <!-- Agent Dialog Sidebar -->
     <AgentDialogSidebar
-      v-if="agentSidebarExpanded"
+      v-if="agentSidebarExpanded && canvasMode === 'builtin'"
       @close="agentSidebarExpanded = false"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import AgentDialogSidebar from '../components/dataflow/AgentDialogSidebar.vue'
 
+// ── iframe mode ──────────────────────────────────────────────────────────────
+const route = useRoute()
+const appOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://127.0.0.1:18001'
+const dataflowBackendUrl = `${appOrigin}/embedded/dataflow-backend`
+const initialCanvasMode = route.query.mode === 'webui'
+  ? 'dataflow-webui'
+  : (localStorage.getItem('dcai.canvas.mode') || 'builtin')
+const canvasMode = ref(initialCanvasMode)  // 'builtin' | 'dataflow-webui'
+const dfIframe = ref(null)
+const iframeLoading = ref(false)
+const iframeError = ref(false)
+const dataflowWebUIUrl = `${appOrigin}/embedded/dataflow-webui/?dcaiApiBase=${encodeURIComponent(dataflowBackendUrl)}`
+
+function setCanvasMode(mode) {
+  canvasMode.value = mode
+  localStorage.setItem('dcai.canvas.mode', mode)
+  if (mode === 'dataflow-webui') {
+    iframeLoading.value = true
+    iframeError.value = false
+  }
+}
+
+function onIframeLoad() {
+  iframeLoading.value = false
+  iframeError.value = false
+  // Inject auth token into DataFlow-WebUI via PostMessage
+  const token = localStorage.getItem('access_token') || ''
+  dfIframe.value?.contentWindow?.postMessage({
+    type: 'DCAI_INIT',
+    token,
+    apiBaseUrl: dataflowBackendUrl,
+  }, '*')
+}
+
+function onIframeError() {
+  iframeLoading.value = false
+  iframeError.value = true
+}
+
+function reloadIframe() {
+  iframeError.value = false
+  iframeLoading.value = true
+  if (dfIframe.value) dfIframe.value.src = dataflowWebUIUrl
+}
+
+// Listen for events from DataFlow-WebUI iframe
+function onMessage(event) {
+  if (event.data?.type === 'PIPELINE_SAVED') {
+    console.log('[DataFlow] pipeline saved:', event.data.pipelineId)
+  }
+  if (event.data?.type === 'PIPELINE_RUN') {
+    console.log('[DataFlow] pipeline run task:', event.data.taskId)
+  }
+}
+
+// ── built-in canvas ───────────────────────────────────────────────────────────
 const canvasContainer = ref(null)
 const activeTool = ref('select')
 const selectedNode = ref(null)
@@ -664,12 +763,25 @@ function updateViewportSize() {
 }
 
 onMounted(() => {
+  if (canvasMode.value === 'dataflow-webui') {
+    iframeLoading.value = true
+  }
   updateViewportSize()
   window.addEventListener('resize', updateViewportSize)
+  window.addEventListener('message', onMessage)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateViewportSize)
+  window.removeEventListener('message', onMessage)
+})
+
+watch(() => route.query.mode, (mode) => {
+  if (mode === 'webui') {
+    setCanvasMode('dataflow-webui')
+  } else if (mode === 'builtin') {
+    setCanvasMode('builtin')
+  }
 })
 </script>
 

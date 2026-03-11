@@ -38,6 +38,7 @@ const props = defineProps({
 
 const colorValues = {
   red: '#ef4444', orange: '#f97316', yellow: '#eab308', green: '#22c55e',
+  emerald: '#10b981',
   teal: '#14b8a6', cyan: '#06b6d4', blue: '#3b82f6', indigo: '#6366f1',
   purple: '#a855f7', pink: '#ec4899',
 }

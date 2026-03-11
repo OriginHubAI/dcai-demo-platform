@@ -10,6 +10,66 @@ from rest_framework.response import Response
 # Sample Apps data
 SAMPLE_APPS = [
     {
+        'id': 'OpenDCAI/Dataflow-LoopAI',
+        'author': 'OpenDCAI',
+        'title': 'DataFlow-LoopAI',
+        'emoji': '🔄',
+        'colorFrom': 'blue',
+        'colorTo': 'indigo',
+        'description': 'Platform-integrated LoopAI workspace for task creation, streaming agent output, and training orchestration.',
+        'category': 'agent-based',
+        'sdk': 'embedded',
+        'likes': 1500,
+        'status': 'running',
+        'hardware': 'A100',
+        'downloads': 32000,
+        'lastModified': '2026-03-08',
+        'tags': ['loopai', 'training', 'agent', 'streaming'],
+        'license': 'apache-2.0',
+        'type': 'proxied',
+        'integration': {'kind': 'loopai'},
+    },
+    {
+        'id': 'OpenDCAI/DataFlow-Agent',
+        'author': 'OpenDCAI',
+        'title': 'DataFlow-Agent',
+        'emoji': '🌊',
+        'colorFrom': 'teal',
+        'colorTo': 'blue',
+        'description': 'Embedded DataFlow-Agent workspace for operator QA, pipeline recommendation, and web collection.',
+        'category': 'agent-based',
+        'sdk': 'gradio',
+        'likes': 1800,
+        'status': 'running',
+        'hardware': 'A100',
+        'downloads': 28000,
+        'lastModified': '2026-03-08',
+        'tags': ['dfagent', 'operator', 'pipeline', 'gradio'],
+        'license': 'apache-2.0',
+        'type': 'proxied',
+        'integration': {'kind': 'dfagent'},
+    },
+    {
+        'id': 'OpenDCAI/PackageEditor-Agent',
+        'author': 'OpenDCAI',
+        'title': 'PackageEditor-Agent',
+        'emoji': '🧰',
+        'colorFrom': 'emerald',
+        'colorTo': 'teal',
+        'description': 'OpenCode web workspace for editing DataFlow operators inside an isolated sandbox copy, without writing to the main DataFlow repository.',
+        'category': 'agent-based',
+        'sdk': 'embedded',
+        'likes': 1200,
+        'status': 'running',
+        'hardware': 'CPU',
+        'downloads': 12000,
+        'lastModified': '2026-03-08',
+        'tags': ['opencode', 'package-editor', 'sandbox', 'operator-dev'],
+        'license': 'mit',
+        'type': 'proxied',
+        'integration': {'kind': 'package-editor'},
+    },
+    {
         'id': 'OpenDCAI/DocDancer-DataGenerator',
         'author': 'OpenDCAI',
         'title': 'DocDancer Data Generator',
@@ -136,24 +196,6 @@ SAMPLE_APPS = [
         'license': 'mit',
     },
     {
-        'id': 'OpenDCAI/Dataflow-LoopAI',
-        'author': 'OpenDCAI',
-        'title': 'DataFlow-LoopAI',
-        'emoji': '🔄',
-        'colorFrom': 'purple',
-        'colorTo': 'pink',
-        'description': 'AI-powered dataflow automation tool for building intelligent workflows and pipelines.',
-        'category': 'text-generation',
-        'sdk': 'gradio',
-        'likes': 1500,
-        'status': 'running',
-        'hardware': 'A100',
-        'downloads': 32000,
-        'lastModified': '2025-04-11',
-        'tags': ['dataflow', 'workflow', 'automation', 'pipeline'],
-        'license': 'apache-2.0',
-    },
-    {
         'id': 'OpenDCAI/Chem-CoT-Generator',
         'author': 'OpenDCAI',
         'title': 'Chemistry CoT Data Generator',
@@ -196,8 +238,15 @@ SAMPLE_APPS = [
 @permission_classes([AllowAny])
 def apps_list(request):
     """List Apps"""
-    page = int(request.query_params.get('page', 1))
-    page_size = int(request.query_params.get('page_size', 20))
+    try:
+        page = max(1, int(request.query_params.get('page', 1)))
+        page_size = max(1, min(100, int(request.query_params.get('page_size', 20))))
+    except (TypeError, ValueError):
+        return Response({
+            'code': 400,
+            'msg': 'invalid pagination parameters',
+            'data': {}
+        }, status=400)
     category = request.query_params.get('category', None)
     sdk = request.query_params.get('sdk', None)
     
@@ -246,5 +295,5 @@ def apps_detail(request, app_id):
 
 urlpatterns = [
     path('apps', apps_list, name='apps-list'),
-    path('apps/<str:app_id>', apps_detail, name='apps-detail'),
+    path('apps/<path:app_id>', apps_detail, name='apps-detail'),
 ]

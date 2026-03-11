@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  sandbox:
+    build:
+      context: ..
+      dockerfile: sandbox/Dockerfile
+    container_name: dcai_sandbox
+    volumes:
+      - ..:/workspace
+    working_dir: /workspace
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - ../.env
+    deploy:
+      resources:
+        limits:
+          memory: 32G
+    # Increase shared memory size if needed (e.g. for PyTorch or heavy data processing)
+    shm_size: '2gb'
+    tty: true
+    stdin_open: true
+    # Keep the container running
+    command: /bin/bash
