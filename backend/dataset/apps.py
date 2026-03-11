@@ -11,7 +11,7 @@ class DatasetConfig(AppConfig):
     name = 'dataset'
 
     def ready(self):
-        if not getattr(settings, 'ENABLE_MOCK_HF', False):
+        if not getattr(settings, 'ENABLE_MOCK_HF_DATASETS', False):
             return
 
         # Avoid starting the mock server during migrations, collecting static, etc.
@@ -23,7 +23,7 @@ class DatasetConfig(AppConfig):
             self._start_mock_hf_server()
 
     def _start_mock_hf_server(self):
-        service_url = settings.HF_SERVICE_URL
+        service_url = settings.HF_DATASETS_SERVICE_URL
         try:
             port = int(service_url.split(':')[-1].rstrip('/'))
         except (ValueError, IndexError):
@@ -43,7 +43,7 @@ class DatasetConfig(AppConfig):
         try:
             # We also pass HF_ENDPOINT to the environment so datasets library uses it
             env = os.environ.copy()
-            env["HF_ENDPOINT"] = settings.HF_SERVICE_URL
+            env["HF_ENDPOINT"] = settings.HF_DATASETS_SERVICE_URL
             
             subprocess.Popen(
                 [sys.executable, mock_server_path],

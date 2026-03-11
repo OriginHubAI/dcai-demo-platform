@@ -134,8 +134,8 @@ cp .env.example .env
 | `VITE_DATA_MODE` | Data source mode: `mock` or `api` | `mock` |
 | `VITE_API_BASE_URL` | Backend API base URL | `http://localhost:8000` |
 | `ENABLE_MOCK_DATAFLOW` | Auto-start mock Dataflow server | `False` |
-| `ENABLE_MOCK_HF` | Auto-start mock Hugging Face Hub server | `False` |
-| `HF_SERVICE_URL` | Mock HF server base URL | `http://localhost:8002` |
+| `ENABLE_MOCK_HF_DATASETS` | Auto-start mock Hugging Face Hub server | `False` |
+| `HF_DATASETS_SERVICE_URL` | Mock HF server base URL | `http://localhost:8002` |
 | `HF_ENDPOINT` | Endpoint for 'datasets' library | `http://localhost:8002` |
 
 ### Frontend Development
@@ -195,7 +195,7 @@ python manage.py test dataset.tests   # Hugging Face mock server tests
 python manage.py test user.tests      # User and Auth tests
 ```
 
-> **Note**: Integration tests for `dataflow` and `dataset` automatically start their respective mock FastAPI servers if they are not already running. Ensure `ENABLE_MOCK_DATAFLOW=True` or `ENABLE_MOCK_HF=True` in your `.env` is NOT required for running tests specifically, as the test runner handles server lifecycle, but it IS required for these systems to work during regular `runserver` development.
+> **Note**: Integration tests for `dataflow` and `dataset` automatically start their respective mock FastAPI servers if they are not already running. Ensure `ENABLE_MOCK_DATAFLOW=True` or `ENABLE_MOCK_HF_DATASETS=True` in your `.env` is NOT required for running tests specifically, as the test runner handles server lifecycle, but it IS required for these systems to work during regular `runserver` development.
 
 #### Using API Mode
 
