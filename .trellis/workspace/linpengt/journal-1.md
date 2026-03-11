@@ -498,3 +498,35 @@ Renamed ENABLE_MOCK_HF to ENABLE_MOCK_HF_DATASETS and HF_SERVICE_URL to HF_DATAS
 ### Next Steps
 
 - None - task complete
+
+
+## Session 16: Environment Configuration Updates
+
+**Date**: 2026-03-11
+**Task**: Environment Configuration Updates
+
+### Summary
+
+Renamed DATAFLOW_SERVICE_URL and HF_DATASETS_SERVICE_URL to MOCK_URL, added DATAFLOW_SYSTEM_URL, and updated README and .env configurations
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7f921f3` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
