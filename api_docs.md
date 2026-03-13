@@ -22,6 +22,8 @@
 16. [会话(Conversation)接口](#16-会话conversation接口)
 17. [第三方接口](#17-第三方接口)
 18. [LLM 聊天接口](#18-llm-聊天接口)
+19. [训练(Train)接口](#19-训练train-接口)
+20. [HF 数据集接口 (LocalFS)](#20-hf-数据集接口-localfs)
 
 ---
 
@@ -1627,6 +1629,80 @@
 
 ---
 
+## 20. HF 数据集接口 (LocalFS)
+
+基础路径: `/api/hf/`
+- **URL 配置**: [`backend/dataset/hf_urls.py`](backend/dataset/hf_urls.py)
+- **服务代码**: [`backend/dataset/services.py`](backend/dataset/services.py)
+- **视图代码**: [`backend/dataset/hf_views.py`](backend/dataset/hf_views.py)
+
+提供兼容 Hugging Face Hub 和 Datasets Server (Viewer) 的本地文件系统接口。
+
+### 20.1 Hub 接口 (数据集管理)
+
+#### 列出数据集
+- **URL**: `/api/hf/api/datasets`
+- **方法**: GET
+- **描述**: 获取本地所有数据集列表。支持 `search` 和 `limit` 参数。
+
+#### 获取数据集元数据
+- **URL**: `/api/hf/api/datasets/<path:repo_id>`
+- **方法**: GET/HEAD
+- **描述**: 获取指定数据集的详细信息及文件列表（siblings）。同时兼容 `/tree/`, `/paths-info/` 等 Git 探查接口。
+
+#### 下载/预览文件 (Resolve)
+- **URL**: `/api/hf/datasets/<path:repo_id>/resolve/<str:revision>/<path:path>`
+- **方法**: GET/HEAD
+- **描述**: 下载或流式读取数据集中的特定文件。
+
+#### 创建数据集仓库
+- **URL**: `/api/hf/api/repos/create`
+- **方法**: POST
+- **描述**: 在本地创建一个新的数据集目录。
+- **请求参数**: `{"name": "namespace/repo_name"}`
+
+#### 删除数据集仓库
+- **URL**: `/api/hf/api/datasets/<path:repo_id>`
+- **方法**: DELETE
+- **描述**: 删除本地数据集目录及其所有内容。
+
+#### 上传文件
+- **URL**: `/api/hf/api/datasets/<path:repo_id>/upload/<str:revision>/<path:path>`
+- **方法**: POST
+- **描述**: 上传并持久化文件到数据集的特定路径。
+
+### 20.2 Viewer 接口 (数据探查)
+
+#### 检查可用性
+- **URL**: `/api/hf/is-valid`
+- **方法**: GET
+- **描述**: 检查数据集是否支持预览和查看。
+- **参数**: `dataset=<repo_id>`
+
+#### 获取 Split 列表
+- **URL**: `/api/hf/splits`
+- **方法**: GET
+- **描述**: 列出数据集包含的所有 Split（如 train, test）。
+- **参数**: `dataset=<repo_id>`
+
+#### 获取数据行 (Rows)
+- **URL**: `/api/hf/rows` 或 `/api/hf/first-rows`
+- **方法**: GET
+- **描述**: 分页读取数据集内容。支持 JSONL, JSON, CSV, Parquet。
+- **参数**:
+  - `dataset=<repo_id>`
+  - `split=<split_name>` (默认 train)
+  - `offset=<int>` (默认 0)
+  - `length=<int>` (默认 100)
+
+#### 获取数据集信息 (Info)
+- **URL**: `/api/hf/info`
+- **方法**: GET
+- **描述**: 获取数据集结构信息，包含自动推断的列类型（dtypes）。
+- **参数**: `dataset=<repo_id>`
+
+---
+
 ## 核心配置
 
 ### 主 URL 配置
@@ -1645,6 +1721,7 @@
 | Document | `/api/v1/` | [`document/urls.py`](document/urls.py) |
 | Dataset V1 | `/api/v1/` | [`apps/dataset/urls_v1.py`](apps/dataset/urls_v1.py) |
 | Dataset V2 | `/api/v2/` | [`apps/dataset/urls.py`](apps/dataset/urls.py) |
+| HF Datasets | `/api/hf/` | [`backend/dataset/hf_urls.py`](backend/dataset/hf_urls.py) |
 | Task | `/api/v1/` | [`task/urls.py`](task/urls.py) |
 | Pipeline | `/api/v2/` | [`apps/pipelines/urls.py`](apps/pipelines/urls.py) |
 | Template | `/api/v1/` | [`template/urls.py`](template/urls.py) |
@@ -1749,5 +1826,5 @@ data: {"content_type": "on_complete"}
 
 ---
 
-*文档生成时间: 2026-02-23*
-*版本: v1.1*
+*文档生成时间: 2026-03-13*
+*版本: v1.2*
