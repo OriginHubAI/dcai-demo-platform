@@ -2,7 +2,7 @@
 Main URL Configuration for ADP Backend
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from drf_spectacular.views import (
@@ -12,6 +12,7 @@ from drf_spectacular.views import (
 )
 
 from .views import services_health
+from dataset.hf_views import hf_list_datasets, hf_dataset_metadata, hf_resolve_file, hf_parquet_list, hf_dataset_info
 
 urlpatterns = [
     # Admin
@@ -26,6 +27,9 @@ urlpatterns = [
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     
+    # HF-compatible hub APIs
+    path('api/hf/', include('dataset.hf_urls')),
+
     # API v1 endpoints
     path('api/v1/', include('user.urls')),
     path('api/v1/', include('agent.urls')),

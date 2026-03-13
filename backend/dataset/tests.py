@@ -1,64 +1,31 @@
 import os
-import sys
-import time
-import socket
-import subprocess
 import unittest
-import unittest.mock
 import requests
-from django.test import SimpleTestCase
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.conf import settings
 
-# Set HF_ENDPOINT before importing datasets or huggingface_hub
-os.environ["HF_ENDPOINT"] = "http://localhost:8010"
+# We force the live server to use port 8010 so we can set HF_ENDPOINT globally
+os.environ["HF_ENDPOINT"] = "http://localhost:8010/api/hf"
 
-try:
-    from datasets import load_dataset
-    HAS_DATASETS = True
-except ImportError:
-    HAS_DATASETS = False
+import datasets
+from datasets import load_dataset
 
-class MockHFServerTest(SimpleTestCase):
+class DatasetHFCompatibilityTest(StaticLiveServerTestCase):
+    port = 8010
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.mock_server_port = 8010
-        cls.mock_server_url = f"http://localhost:{cls.mock_server_port}"
-        
-        # Ensure HF_ENDPOINT matches the server we are about to start
-        os.environ["HF_ENDPOINT"] = cls.mock_server_url
-        
-        # Check if port is already in use
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            if s.connect_ex(('localhost', cls.mock_server_port)) != 0:
-                print(f"[*] Starting Mock HF Server for tests...")
-                current_dir = os.path.dirname(os.path.abspath(__file__))
-                mock_server_path = os.path.join(os.path.dirname(current_dir), 'fastapi_app', 'mock_hf.py')
-                
-                cls.mock_process = subprocess.Popen(
-                    [sys.executable, mock_server_path],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    env={**os.environ, "MOCK_HF_PORT": str(cls.mock_server_port)}
-                )
-                # Wait for server to start
-                time.sleep(2)
-            else:
-                cls.mock_process = None
 
     @classmethod
     def tearDownClass(cls):
-        if cls.mock_process:
-            cls.mock_process.terminate()
-            cls.mock_process.wait()
         super().tearDownClass()
 
-    @unittest.skipIf(not HAS_DATASETS, "datasets library not installed")
-    def test_load_dataset_from_mock(self):
-        # Load the mock dataset created in setup
-        # repo_id is "my-dataset"
-        print("[*] Loading dataset: my-dataset (streaming)")
-        dataset = load_dataset("my-dataset", split="train", streaming=True)
+    def test_load_dataset_from_django(self):
+        # Load the mock dataset: test-namespace/local-test-dataset
+        print(f"[*] Loading dataset: test-namespace/local-test-dataset from {self.live_server_url}")
+        # Need trust_remote_code=True for local dataset script
+        dataset = load_dataset("test-namespace/local-test-dataset", split="train", streaming=True, trust_remote_code=True)
         
         self.assertIsNotNone(dataset)
         # For streaming datasets, we iterate to get items
@@ -69,36 +36,44 @@ class MockHFServerTest(SimpleTestCase):
         self.assertEqual(item1["text"], "hello")
         self.assertEqual(item2["text"], "world")
 
-    @unittest.skipIf(not HAS_DATASETS, "datasets library not installed")
-    def test_load_instruct_10k_dataset_from_mock(self):
-        print("[*] Loading dataset: OpenDCAI/dataflow-instruct-10k (streaming)")
-        dataset = load_dataset("OpenDCAI/dataflow-instruct-10k", split="train", streaming=True)
+    def test_load_instruct_10k_dataset_from_django(self):
+        print(f"[*] Loading dataset: OpenDCAI/dataflow-instruct-10k from {self.live_server_url}")
+        # repo_id is "OpenDCAI/dataflow-instruct-10k"
+        dataset = load_dataset("OpenDCAI/dataflow-instruct-10k", split="train", streaming=True, trust_remote_code=True)
         self.assertIsNotNone(dataset)
         # Check first item
         item = next(iter(dataset))
         self.assertIn("conversations", item)
 
-    @unittest.skipIf(not HAS_DATASETS, "datasets library not installed")
-    def test_load_knowledge_med_40k_dataset_from_mock(self):
-        print("[*] Loading dataset: OpenDCAI/dataflow-knowledge-med-40k (streaming)")
-        dataset = load_dataset("OpenDCAI/dataflow-knowledge-med-40k", split="train", streaming=True)
+    def test_load_knowledge_med_40k_dataset_from_django(self):
+        print(f"[*] Loading dataset: OpenDCAI/dataflow-knowledge-med-40k from {self.live_server_url}")
+        dataset = load_dataset("OpenDCAI/dataflow-knowledge-med-40k", split="train", streaming=True, trust_remote_code=True)
         self.assertIsNotNone(dataset)
         # Check first item
         item = next(iter(dataset))
         self.assertIn("answer", item)
         self.assertIn("question", item)
 
-    def test_mock_server_api_metadata(self):
-        response = requests.get(f"{self.mock_server_url}/api/datasets/my-dataset")
+    def test_django_api_list(self):
+        response = requests.get(f"{self.live_server_url}/api/hf/api/datasets")
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["id"], "my-dataset")
+        ids = [d["id"] for d in data]
+        self.assertIn("test-namespace/local-test-dataset", ids)
+
+    def test_django_api_metadata(self):
+        # We use re_path in core/urls.py for this
+        response = requests.get(f"{self.live_server_url}/api/hf/api/datasets/test-namespace/local-test-dataset")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        print("METADATA response:", data)
+        self.assertEqual(data["id"], "test-namespace/local-test-dataset")
         self.assertIn("sha", data)
         self.assertTrue(isinstance(data["sha"], str))
         self.assertTrue(len(data["sha"]) > 0)
 
-    def test_mock_server_api_info(self):
-        response = requests.get(f"{self.mock_server_url}/info?dataset=my-dataset")
+    def test_django_api_info(self):
+        response = requests.get(f"{self.live_server_url}/api/hf/info?dataset=test-namespace/local-test-dataset")
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertIn("dataset_info", data)
