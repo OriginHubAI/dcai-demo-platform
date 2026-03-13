@@ -12,8 +12,9 @@ class LocalTestDataset(datasets.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager):
         # We assume the file is resolved via HF Hub
+        # Use simple path, dl_manager handles resolution relative to script base
         downloaded_files = dl_manager.download_and_extract({
-            "train": "resolve/main/train.jsonl"
+            "train": "train.jsonl"
         })
         return [
             datasets.SplitGenerator(name=datasets.Split.TRAIN, gen_kwargs={"filepath": downloaded_files["train"]}),
