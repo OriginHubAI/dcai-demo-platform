@@ -5,6 +5,8 @@ import logging
 from django.http import FileResponse, HttpResponse, JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
+from drf_spectacular.types import OpenApiTypes
 from .services import hfds
 
 logger = logging.getLogger('django')
@@ -12,6 +14,15 @@ logger = logging.getLogger('django')
 
 # --- Hub APIs ---
 
+@extend_schema(
+    summary="List datasets",
+    description="List all available datasets with optional search filter",
+    parameters=[
+        OpenApiParameter('search', OpenApiTypes.STR, description='Search query'),
+        OpenApiParameter('limit', OpenApiTypes.INT, description='Max results (default: 100)'),
+    ],
+    responses={200: OpenApiTypes.OBJECT}
+)
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def hf_list_datasets(request):
@@ -36,6 +47,11 @@ def hf_list_datasets(request):
     return JsonResponse(results[:limit], safe=False)
 
 
+@extend_schema(
+    summary="Get dataset metadata",
+    description="Get metadata for a dataset, including file tree, paths info, and commits",
+    responses={200: OpenApiTypes.OBJECT, 404: OpenApiTypes.OBJECT}
+)
 @api_view(['GET', 'HEAD', 'POST', 'DELETE'])
 @permission_classes([AllowAny])
 def hf_dataset_metadata(request, repo_id):
@@ -136,6 +152,11 @@ def _hf_commits(request, repo_id_with_suffix):
     }], safe=False)
 
 
+@extend_schema(
+    summary="Resolve dataset file",
+    description="Download or access a specific file from a dataset",
+    responses={200: OpenApiTypes.BINARY, 404: OpenApiTypes.OBJECT}
+)
 @api_view(['GET', 'HEAD', 'DELETE'])
 @permission_classes([AllowAny])
 def hf_resolve_file(request, repo_id, revision, path):
@@ -150,6 +171,12 @@ def hf_resolve_file(request, repo_id, revision, path):
     return FileResponse(open(file_path, 'rb'), content_type=content_type or 'application/octet-stream')
 
 
+@extend_schema(
+    summary="Create dataset repository",
+    description="Create a new dataset repository",
+    request=OpenApiTypes.OBJECT,
+    responses={201: OpenApiTypes.OBJECT, 400: OpenApiTypes.OBJECT}
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def hf_create_repo(request):
@@ -173,6 +200,12 @@ def hf_delete_repo(request, repo_id):
     return JsonResponse(metadata)
 
 
+@extend_schema(
+    summary="Upload file to dataset",
+    description="Upload a file to a dataset repository",
+    request=OpenApiTypes.BINARY,
+    responses={200: OpenApiTypes.OBJECT, 404: OpenApiTypes.OBJECT}
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def hf_upload_file(request, repo_id, revision, path):
@@ -188,6 +221,12 @@ def hf_upload_file(request, repo_id, revision, path):
 
 # --- Viewer APIs ---
 
+@extend_schema(
+    summary="Check dataset validity",
+    description="Check if a dataset is valid and available for viewing",
+    parameters=[OpenApiParameter('dataset', OpenApiTypes.STR, required=True)],
+    responses={200: OpenApiTypes.OBJECT, 404: OpenApiTypes.OBJECT}
+)
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def hf_is_valid(request):
@@ -197,6 +236,12 @@ def hf_is_valid(request):
     return JsonResponse({"preview": True, "viewer": True, "search": False, "filter": False, "statistics": False})
 
 
+@extend_schema(
+    summary="Get dataset splits",
+    description="Get available splits for a dataset",
+    parameters=[OpenApiParameter('dataset', OpenApiTypes.STR, required=True)],
+    responses={200: OpenApiTypes.OBJECT, 404: OpenApiTypes.OBJECT}
+)
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def hf_get_splits(request):
@@ -209,6 +254,12 @@ def hf_get_splits(request):
     return JsonResponse(splits)
 
 
+@extend_schema(
+    summary="Get dataset info",
+    description="Get detailed information about a dataset including features and splits",
+    parameters=[OpenApiParameter('dataset', OpenApiTypes.STR, required=True)],
+    responses={200: OpenApiTypes.OBJECT, 404: OpenApiTypes.OBJECT}
+)
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def hf_dataset_info(request):
@@ -232,6 +283,16 @@ def hf_dataset_info(request):
     })
 
 
+@extend_schema(
+    summary="Get dataset rows",
+    description="Get paginated rows from a dataset",
+    parameters=[
+        OpenApiParameter('dataset', OpenApiTypes.STR, required=True),
+        OpenApiParameter('offset', OpenApiTypes.INT, description='Starting row index'),
+        OpenApiParameter('length', OpenApiTypes.INT, description='Number of rows to return'),
+    ],
+    responses={200: OpenApiTypes.OBJECT, 400: OpenApiTypes.OBJECT}
+)
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def hf_get_rows(request):
