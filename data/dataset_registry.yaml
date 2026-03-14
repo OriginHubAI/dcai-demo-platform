@@ -335,4 +335,20 @@ datasets:
     type: json
     num_samples: 3
     file_size: 197
+  7ef2d9b1f5:
+    id: 7ef2d9b1f5
+    name: train
+    pipeline: main
+    root: /home/linpengt/workspace/dcai-platform/backend/../data/hub_datasets/test-namespace/local-test-dataset/resolve/main/train.jsonl
+    type: jsonl
+    num_samples: 2
+    file_size: 60
+  254c81eb33:
+    id: 254c81eb33
+    name: data
+    pipeline: main
+    root: /home/linpengt/workspace/dcai-platform/backend/../data/hub_datasets/test-namespace/upload-test/resolve/main/data.jsonl
+    type: jsonl
+    num_samples: 1
+    file_size: 40
 repos: {}

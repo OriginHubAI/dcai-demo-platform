@@ -17,7 +17,7 @@ class FakeAsyncClient:
         return False
 
     async def get(self, url):
-        if ':8002/health' in url:
+        if ':8002/health' in url or ':18000/health' in url or ':18000/' in url:
             return FakeResponse(200)
         if ':8003/health' in url or ':18003/health' in url or ':18003/' in url:
             return FakeResponse(200)

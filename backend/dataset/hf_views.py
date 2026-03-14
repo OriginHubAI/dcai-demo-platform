@@ -45,6 +45,8 @@ def hf_dataset_metadata(request, repo_id):
         return _hf_paths_info(request, repo_id)
     if "/tree/" in repo_id:
         return _hf_tree(request, repo_id)
+    if "/commits/" in repo_id:
+        return _hf_commits(request, repo_id)
     if "/revision/" in repo_id:
         repo_id = repo_id.split("/revision/", 1)[0]
 
@@ -117,6 +119,21 @@ def _hf_tree(request, repo_id_with_suffix):
                 "oid": "mock-oid",
             })
     return JsonResponse(results, safe=False)
+
+
+def _hf_commits(request, repo_id_with_suffix):
+    repo_id, revision = repo_id_with_suffix.split("/commits/", 1)
+    metadata = hfds.get_metadata(repo_id)
+    if not metadata:
+        return JsonResponse({"error": "Dataset not found"}, status=404)
+    commit_hash = metadata.get("sha", "mock-commit-hash-12345")
+    return JsonResponse([{
+        "id": commit_hash,
+        "authors": [],
+        "date": "2026-03-14T00:00:00.000Z",
+        "title": "Mock commit",
+        "message": "Mock commit message"
+    }], safe=False)
 
 
 @api_view(['GET', 'HEAD', 'DELETE'])

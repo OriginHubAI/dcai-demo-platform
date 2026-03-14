@@ -3,9 +3,7 @@ import io
 import requests
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 
-# Force HF_ENDPOINT before any HF lib import
-os.environ["HF_ENDPOINT"] = "http://localhost:8010/api/hf"
-
+# HF_ENDPOINT will be set dynamically in setUpClass to point to the test server
 import datasets
 from datasets import load_dataset
 from .services import hfds
