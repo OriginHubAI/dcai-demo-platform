@@ -1063,12 +1063,14 @@ curl -X POST http://localhost:8000/workflows/create \
 4. `GET /api/v1/tasks/executions` - 前端需要展示执行历史列表
 
 **P1（重要功能，尽快实现）：**
+
 5. `GET /api/v1/tasks/execution/{task_id}/result` - 前端需要预览执行结果
 6. `POST /api/v1/tasks/execution/{task_id}/kill` - 用户需要能够取消任务
 7. `GET /api/v1/pipelines/templates` - 提供模板可以降低使用门槛
 8. `PUT /api/v1/pipelines/{pipeline_id}` - 用户需要能够修改 Pipeline
 
 **P2（增强功能，后续实现）：**
+
 9. `GET /api/v1/tasks/execution/{task_id}/log` - 调试和监控需要
 10. `GET /api/v1/tasks/execution/{task_id}/download` - 大规模数据下载
 11. `POST /api/v1/tasks/execute` - 同步执行（小规模场景）
