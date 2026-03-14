@@ -135,7 +135,7 @@ class AgentRouter:
     def _guess_package_id(self, message: str) -> str:
         normalized = message.lower()
         try:
-            from dataflow.services import catalog
+            from df.services import catalog
         except Exception:
             return 'core_text'
 

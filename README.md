@@ -18,6 +18,7 @@ A Hugging Face-style AI community platform built with Vue 3 + Vite (Frontend) an
     - [Backend Development](#backend-development)
       - [Running Backend Tests](#running-backend-tests)
       - [Using API Mode](#using-api-mode)
+    - [DataFlow-WebUI Integration (ASGI Mode)](#dataflow-webui-integration-asgi-mode)
   - [Docker Environment](#docker-environment)
   - [API Documentation](#api-documentation)
     - [API Endpoints](#api-endpoints)
@@ -227,9 +228,72 @@ To use the real backend API instead of mock data:
 
 3. Restart the frontend to apply new environment variables
 
-## Docker Environment
+## DataFlow-WebUI Integration (ASGI Mode)
 
-A Docker-based sandbox environment is available for secure tool execution and isolated development.
+DataFlow-WebUI is embedded directly into dcai-platform via a single-process ASGI dispatcher — no separate DataFlow-WebUI service is needed.
+
+**Route ownership (handled by `backend/core/asgi.py`):**
+
+| Path | Handler |
+|------|---------|
+| `/embedded/dataflow-webui/*` | DataFlow-WebUI React frontend (FastAPI static files) |
+| `/api/v1/*` | DataFlow-WebUI backend API (FastAPI, in-iframe calls) |
+| `/api/v2/dataflow/pipelines/*` … | DataFlow-WebUI compat (path rewritten to `/api/v1/`) |
+| `/api/hf/*` | dcai-platform HF datasets service (Django) |
+| everything else | Django |
+
+### Step 1 — Build DataFlow-WebUI frontend (one-time)
+
+```bash
+cd ../DCAI-DataFlow-WebUI/frontend
+npx vite build --mode embedded
+# Output: DCAI-DataFlow-WebUI/frontend/dist/  (served by FastAPI)
+```
+
+### Step 2 — Start the ASGI server
+
+```bash
+cd backend
+
+# Install dependencies (first time)
+pip install -r requirements.txt
+
+# Run migrations
+python manage.py migrate
+
+# Start unified ASGI server (Django + DataFlow-WebUI FastAPI in one process)
+uvicorn core.asgi:application --host 0.0.0.0 --port 18000
+```
+
+> **Note**: The default `EXTERNAL_HF_API_URL` is `http://localhost:18000/api/hf`.
+> If you run on a different port, set this env var to match:
+> ```bash
+> EXTERNAL_HF_API_URL=http://localhost:8000/api/hf uvicorn core.asgi:application --port 8000
+> ```
+
+### Step 3 — Start dcai-platform frontend (dev mode)
+
+```bash
+# from project root
+npm run dev
+# Vite dev server proxies /api and /embedded/* to http://127.0.0.1:18000
+```
+
+### DataFlow-WebUI location
+
+The ASGI dispatcher resolves DataFlow-WebUI's backend via the `DATAFLOW_WEBUI_BACKEND_DIR` env var.
+Default: `<dcai-platform>/../DCAI-DataFlow-WebUI/backend`.
+Override if your directory layout differs:
+
+```bash
+DATAFLOW_WEBUI_BACKEND_DIR=/path/to/DCAI-DataFlow-WebUI/backend uvicorn core.asgi:application ...
+```
+
+If the directory is not found, the server starts normally with DataFlow-WebUI disabled (pure Django ASGI).
+
+---
+
+## Docker Environment
 
 ### Building the Image
 

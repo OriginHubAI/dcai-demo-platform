@@ -28,6 +28,14 @@ redis>=5.0,<6.0
 
 # Validation
 pydantic>=2.0,<3.0
+pydantic-settings>=2.0,<3.0  # required by DataFlow-WebUI config
+
+# Data processing (required by DataFlow-WebUI)
+pandas>=2.0,<3.0
+PyYAML>=6.0,<7.0
+
+# Logging (required by DataFlow-WebUI)
+loguru>=0.7,<1.0
 
 # File storage
 django-storages>=1.14,<2.0

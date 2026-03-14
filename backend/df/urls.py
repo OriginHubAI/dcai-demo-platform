@@ -1,7 +1,6 @@
 """DataFlow URL Configuration."""
-from django.urls import path, re_path
+from django.urls import path
 
-from .proxy_views import dataflow_proxy
 from .views import (
     package_detail,
     package_editor_start,
@@ -22,16 +21,11 @@ urlpatterns = [
     path('packages/<str:package_id>/editor/start', package_editor_start, name='package-editor-start'),
     path('packages/<str:package_id>/editor/stop', package_editor_stop, name='package-editor-stop'),
     path('packages/<str:package_id>/test', package_test, name='package-test'),
-    
-    # Dataflow System Integration (Mock specific routes)
+
+    # Django-native DataFlow views (not proxied — handled here regardless of ASGI routing)
     path('operators', OperatorListView.as_view(), name='operator-list'),
     path('pipelines/<uuid:pipeline_id>/status', PipelineStatusView.as_view(), name='pipeline-status'),
 
-    # DataFlow-WebUI proxy routes
-    re_path(r'^pipelines/(?P<path>.*)$', dataflow_proxy),
-    re_path(r'^operators/(?P<path>.*)$', dataflow_proxy),
-    re_path(r'^tasks/(?P<path>.*)$', dataflow_proxy),
-    re_path(r'^datasets/(?P<path>.*)$', dataflow_proxy),
-    re_path(r'^serving/(?P<path>.*)$', dataflow_proxy),
-    re_path(r'^prompts/(?P<path>.*)$', dataflow_proxy),
+    # pipelines/*, operators/*, tasks/*, datasets/*, serving/*, prompts/* are now handled
+    # by the DataFlow-WebUI FastAPI app via ASGI routing in core/asgi.py.
 ]

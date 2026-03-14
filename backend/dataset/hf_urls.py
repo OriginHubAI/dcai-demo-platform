@@ -17,6 +17,13 @@ urlpatterns = [
     path('first-rows', hf_get_rows, name='hf-first-rows'),
     path('info', hf_dataset_info, name='hf-dataset-info'),
     path('parquet', hf_parquet_list, name='hf-parquet-list'),
+    # Same viewer endpoints under /viewer/ prefix (used by embedded DataFlow-WebUI)
+    path('viewer/is-valid', hf_is_valid, name='hf-viewer-is-valid'),
+    path('viewer/splits', hf_get_splits, name='hf-viewer-get-splits'),
+    path('viewer/rows', hf_get_rows, name='hf-viewer-get-rows'),
+    path('viewer/first-rows', hf_get_rows, name='hf-viewer-first-rows'),
+    path('viewer/info', hf_dataset_info, name='hf-viewer-dataset-info'),
+    path('viewer/parquet', hf_parquet_list, name='hf-viewer-parquet-list'),
 
     # More specific routes MUST come before greedy metadata route
     # Parameterized Hub APIs (Write)
@@ -29,6 +36,6 @@ urlpatterns = [
     # Metadata (greedy to catch /tree/, /paths-info/, /revision/)
     re_path(r'^api/datasets/(?P<repo_id>.*)$', hf_dataset_metadata, name='hf-dataset-metadata'),
     
-    # Resolve/Download
-    re_path(r'^datasets/(?P<repo_id>.*)/resolve/(?P<revision>[^/]+)/(?P<path>.*)$', hf_resolve_file, name='hf-resolve-file'),
+    # Resolve/Download — non-greedy repo_id so double resolve/ in path is handled by view
+    re_path(r'^datasets/(?P<repo_id>.+?)/resolve/(?P<revision>[^/]+)/(?P<path>.+)$', hf_resolve_file, name='hf-resolve-file'),
 ]

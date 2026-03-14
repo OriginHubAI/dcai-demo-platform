@@ -13,7 +13,7 @@ from df_conversation.models import DFConversation
 class ChatRoutingTests(SimpleTestCase):
     def setUp(self):
         self.client = APIClient()
-        self.catalog_patcher = patch('dataflow.services.catalog')
+        self.catalog_patcher = patch('df.services.catalog')
         self.mock_catalog = self.catalog_patcher.start()
         self.mock_catalog.list_packages.return_value = []
 

@@ -10,7 +10,7 @@ from django.conf import settings
 
 class DataflowConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'dataflow'
+    name = 'df'
     verbose_name = 'DataFlow'
 
     _cleanup_registered = False

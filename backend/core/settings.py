@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'knowledgebase',
     'document',
     'dataset',
-    'dataflow',
+    'df',
     'task',
     'template',
     'organization',
@@ -91,6 +91,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
+ASGI_APPLICATION = 'core.asgi.application'
 
 # Database
 DATABASES = {
@@ -259,4 +260,18 @@ HF_DATASETS_CACHE = os.environ.get('HF_DATASETS_CACHE', None)
 DATAFLOW_MOCK_URL = os.environ.get('DATAFLOW_MOCK_URL', 'http://localhost:8001')
 DATAFLOW_SYSTEM_URL = os.environ.get('DATAFLOW_SYSTEM_URL', 'http://127.0.0.1:8001')
 HF_DATASETS_MOCK_URL = os.environ.get('HF_DATASETS_MOCK_URL', 'http://localhost:8010')
+
+# Dataset file registry — flat-file datasets (jsonl/json/parquet/csv)
+# DATASET_SCAN_DIR: directory tree to scan for data files on startup.
+#   Default: <repo-root>/DCAI-DataFlow-WebUI/backend/data/dataflow_core/example_data
+#   Override with env var DATASET_SCAN_DIR to point anywhere.
+_REPO_ROOT = os.path.abspath(os.path.join(BASE_DIR, '..', '..'))
+DATASET_SCAN_DIR = os.environ.get(
+    'DATASET_SCAN_DIR',
+    os.path.join(_REPO_ROOT, 'DCAI-DataFlow-WebUI', 'backend', 'data', 'dataflow_core', 'example_data'),
+)
+DATASET_REGISTRY_PATH = os.environ.get(
+    'DATASET_REGISTRY_PATH',
+    os.path.join(BASE_DIR, '..', 'data', 'dataset_registry.yaml'),
+)
 

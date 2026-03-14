@@ -1,6 +1,7 @@
 """
 Chat views for ADP Backend
 """
+import asyncio
 import json
 import uuid
 from django.contrib.auth import get_user_model
@@ -232,7 +233,7 @@ class ChatStreamView(ChatMessageView):
 
         route = AgentRouter().route(question)
         if route:
-            def _route_stream():
+            async def _route_stream():
                 yield _sse_event({
                     'type': 'route',
                     'data': {
@@ -269,7 +270,7 @@ class ChatStreamView(ChatMessageView):
                 'data': {},
             }, status=503)
 
-        def _stream():
+        async def _stream():
             collected = ''
             yield _sse_event({
                 'type': 'start',
@@ -277,19 +278,41 @@ class ChatStreamView(ChatMessageView):
                 'model': model,
             })
             try:
-                for chunk in chat_provider.stream(prompt_messages, model=model):
+                loop = asyncio.get_running_loop()
+                queue: asyncio.Queue = asyncio.Queue()
+
+                def _run_sync_stream():
+                    try:
+                        for chunk in chat_provider.stream(prompt_messages, model=model):
+                            loop.call_soon_threadsafe(queue.put_nowait, chunk)
+                    finally:
+                        loop.call_soon_threadsafe(queue.put_nowait, None)
+
+                loop.run_in_executor(None, _run_sync_stream)
+
+                while True:
+                    chunk = await queue.get()
+                    if chunk is None:
+                        break
                     collected += chunk
                     yield _sse_event({'type': 'delta', 'content': chunk})
-                question_record.answer = collected
-                question_record.save(update_fields=['answer'])
+
+                def _save_answer():
+                    question_record.answer = collected
+                    question_record.save(update_fields=['answer'])
+
+                await asyncio.to_thread(_save_answer)
                 yield _sse_event({
                     'type': 'done',
                     'conversation_id': conversation.conversation_id,
                     'model': model,
                 })
             except Exception as exc:  # pragma: no cover - network failure path
-                question_record.answer = collected
-                question_record.save(update_fields=['answer'])
+                def _save_answer_on_error():
+                    question_record.answer = collected
+                    question_record.save(update_fields=['answer'])
+
+                await asyncio.to_thread(_save_answer_on_error)
                 yield _sse_event({
                     'type': 'error',
                     'message': f'LLM request failed: {exc}',

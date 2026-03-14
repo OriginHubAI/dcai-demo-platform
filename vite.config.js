@@ -17,17 +17,16 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: apiTarget,
           changeOrigin: true,
-        }
-        ,
+        },
+        // In ASGI-integrated mode, /embedded/* is served by the same uvicorn ASGI
+        // server as the Django/FastAPI backend (no separate DataFlow-WebUI process).
         '/embedded/dataflow-webui': {
-          target: 'http://127.0.0.1:8002',
+          target: apiTarget,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/embedded\/dataflow-webui/, ''),
         },
         '/embedded/dataflow-backend': {
-          target: 'http://127.0.0.1:8002',
+          target: apiTarget,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/embedded\/dataflow-backend/, ''),
         }
       }
     }
