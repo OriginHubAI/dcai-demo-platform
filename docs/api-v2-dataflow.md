@@ -23,6 +23,41 @@ This document describes all DataFlow-related API endpoints (excluding datasets).
 
 ---
 
+## 架构说明 / Architecture Overview
+
+### 代理层设计 / Proxy Layer Design
+
+DataFlow API 采用双层架构设计：
+
+DataFlow API uses a dual-layer architecture:
+
+```
+Frontend (Vue 3)
+    ↓ VITE_BACKEND_PREFIX
+/api/v2/dataflow/*  (Django Proxy Layer)
+    ↓ Forward to
+/api/v1/*  (FastAPI DataFlow-WebUI Backend)
+```
+
+**Django 代理层 / Django Proxy Layer**:
+- 位置 / Location: `backend/df/proxy_views.py`
+- 功能 / Function: 统一认证、请求转发、错误处理
+- 目标 / Target: `DATAFLOW_BACKEND_URL` (默认 `http://localhost:8002`)
+
+**支持的部署模式 / Supported Deployment Modes**:
+
+1. **集成模式 / Integrated Mode** (推荐 / Recommended)
+   - 前端配置 / Frontend: `VITE_BACKEND_PREFIX=/api/v2/dataflow`
+   - 所有请求通过 Django 代理层，统一认证和日志
+   - All requests go through Django proxy for unified auth and logging
+
+2. **独立模式 / Standalone Mode**
+   - 前端配置 / Frontend: `VITE_BACKEND_PREFIX=/api/v1`
+   - 前端直接访问 FastAPI 后端（需要独立部署）
+   - Frontend directly accesses FastAPI backend (requires separate deployment)
+
+---
+
 ## 响应格式 / Response Format
 
 所有 API 响应遵循统一的信封格式：
@@ -117,7 +152,7 @@ Operator query APIs for retrieving available operators and their details.
 
 ### 1. 列出算子（简化版）/ List Operators (Simplified)
 
-**路径 / Path**: `GET /api/v1/operators/`
+**路径 / Path**: `GET /api/v2/dataflow/operators/`
 
 **功能 / Function**: 返回所有注册算子的简化列表
 
@@ -136,7 +171,7 @@ Operator query APIs for retrieving available operators and their details.
 
 ### 2. 列出算子详情 / List Operators Details
 
-**路径 / Path**: `GET /api/v1/operators/details`
+**路径 / Path**: `GET /api/v2/dataflow/operators/details`
 
 **功能 / Function**: 返回所有算子的详细信息（包含参数定义）
 
@@ -146,7 +181,7 @@ Operator query APIs for retrieving available operators and their details.
 
 ### 3. 获取单个算子详情 / Get Operator Detail by Name
 
-**路径 / Path**: `GET /api/v1/operators/details/{op_name}`
+**路径 / Path**: `GET /api/v2/dataflow/operators/details/{op_name}`
 
 **路径参数 / Path Parameters**: `op_name` (string, required) - 算子名称
 
@@ -164,13 +199,13 @@ Task execution and management APIs for running pipelines and querying execution 
 
 ### 1. 列出所有执行记录 / List Executions
 
-**路径 / Path**: `GET /api/v1/tasks/executions`
+**路径 / Path**: `GET /api/v2/dataflow/tasks/executions`
 
 **功能 / Function**: 返回所有 Pipeline 执行记录
 
 ### 2. 查询执行状态 / Get Execution Status
 
-**路径 / Path**: `GET /api/v1/tasks/execution/{task_id}/status`
+**路径 / Path**: `GET /api/v2/dataflow/tasks/execution/{task_id}/status`
 
 **路径参数 / Path Parameters**: `task_id` (string, required)
 
@@ -180,7 +215,7 @@ Task execution and management APIs for running pipelines and querying execution 
 
 ### 3. 查询执行结果 / Get Task Result
 
-**路径 / Path**: `GET /api/v1/tasks/execution/{task_id}/result`
+**路径 / Path**: `GET /api/v2/dataflow/tasks/execution/{task_id}/result`
 
 **路径参数 / Path Parameters**: `task_id` (string, required)
 
@@ -190,13 +225,13 @@ Task execution and management APIs for running pipelines and querying execution 
 
 ### 4. 获取执行日志 / Get Execution Log
 
-**路径 / Path**: `GET /api/v1/tasks/execution/{task_id}/log`
+**路径 / Path**: `GET /api/v2/dataflow/tasks/execution/{task_id}/log`
 
 **查询参数 / Query Parameters**: `operator_name` (string, optional) - 指定算子名称
 
 ### 5. 下载执行结果 / Download Task Result
 
-**路径 / Path**: `GET /api/v1/tasks/execution/{task_id}/download`
+**路径 / Path**: `GET /api/v2/dataflow/tasks/execution/{task_id}/download`
 
 **查询参数 / Query Parameters**: `step` (int, optional) - 步骤索引（从 0 开始）
 
@@ -204,7 +239,7 @@ Task execution and management APIs for running pipelines and querying execution 
 
 ### 6. 执行 Pipeline / Execute Pipeline
 
-**路径 / Path**: `POST /api/v1/tasks/execute?pipeline_id={pipeline_id}`
+**路径 / Path**: `POST /api/v2/dataflow/tasks/execute?pipeline_id={pipeline_id}`
 
 **功能 / Function**: 同步执行 Pipeline，等待完成后返回结果
 
@@ -212,7 +247,7 @@ Task execution and management APIs for running pipelines and querying execution 
 
 ### 7. 异步执行 Pipeline / Execute Pipeline Async
 
-**路径 / Path**: `POST /api/v1/tasks/execute-async?pipeline_id={pipeline_id}`
+**路径 / Path**: `POST /api/v2/dataflow/tasks/execute-async?pipeline_id={pipeline_id}`
 
 **功能 / Function**: 异步执行 Pipeline（使用 Ray），立即返回 task_id
 
@@ -227,7 +262,7 @@ Task execution and management APIs for running pipelines and querying execution 
 
 ### 8. 终止执行 / Kill Execution
 
-**路径 / Path**: `POST /api/v1/tasks/execution/{task_id}/kill`
+**路径 / Path**: `POST /api/v2/dataflow/tasks/execution/{task_id}/kill`
 
 **功能 / Function**: 终止正在执行的 Pipeline 任务
 
@@ -241,19 +276,19 @@ Pipeline management APIs for creating, querying, updating, and deleting pipeline
 
 ### 1. 列出所有 Pipeline / List Pipelines
 
-**路径 / Path**: `GET /api/v1/pipelines/`
+**路径 / Path**: `GET /api/v2/dataflow/pipelines/`
 
 **功能 / Function**: 返回所有注册的 Pipeline 列表
 
 ### 2. 列出模板 Pipeline / List Template Pipelines
 
-**路径 / Path**: `GET /api/v1/pipelines/templates`
+**路径 / Path**: `GET /api/v2/dataflow/pipelines/templates`
 
 **功能 / Function**: 返回所有预置（template）Pipeline 列表
 
 ### 3. 创建 Pipeline / Create Pipeline
 
-**路径 / Path**: `POST /api/v1/pipelines/`
+**路径 / Path**: `POST /api/v2/dataflow/pipelines/`
 
 **请求体 / Request Body**: PipelineIn schema（包含 name, description, config）
 
@@ -261,19 +296,19 @@ Pipeline management APIs for creating, querying, updating, and deleting pipeline
 
 ### 4. 获取 Pipeline 详情 / Get Pipeline
 
-**路径 / Path**: `GET /api/v1/pipelines/{pipeline_id}`
+**路径 / Path**: `GET /api/v2/dataflow/pipelines/{pipeline_id}`
 
 **错误响应 / Error Response**: `404` - Pipeline not found
 
 ### 5. 更新 Pipeline / Update Pipeline
 
-**路径 / Path**: `PUT /api/v1/pipelines/{pipeline_id}`
+**路径 / Path**: `PUT /api/v2/dataflow/pipelines/{pipeline_id}`
 
 **请求体 / Request Body**: PipelineUpdateIn schema（部分更新）
 
 ### 6. 删除 Pipeline / Delete Pipeline
 
-**路径 / Path**: `DELETE /api/v1/pipelines/{pipeline_id}`
+**路径 / Path**: `DELETE /api/v2/dataflow/pipelines/{pipeline_id}`
 
 **错误响应 / Error Response**: `404` - Pipeline not found
 
@@ -603,22 +638,65 @@ Database manager configuration APIs for creating and managing database manager i
 
 ### 代理路由说明 / Proxy Route Notes
 
-部分 API 路径通过 Django 代理转发到 DataFlow Backend 服务：
+所有 `/api/v2/dataflow/*` 路径通过 Django 代理转发到 DataFlow Backend 服务：
 
-Some API paths are proxied through Django to the DataFlow Backend service:
+All `/api/v2/dataflow/*` paths are proxied through Django to the DataFlow Backend service:
 
-- `/api/v1/operators/*` (除 `/` `/details` `/details/{name}`)
-- `/api/v1/tasks/*`
-- `/api/v1/pipelines/*`
+**已实现的代理端点 / Implemented Proxy Endpoints**:
+- `/api/v2/dataflow/operators/*` → `/api/v1/operators/*`
+- `/api/v2/dataflow/tasks/*` → `/api/v1/tasks/*`
+- `/api/v2/dataflow/pipelines/*` → `/api/v1/pipelines/*`
+- `/api/v2/dataflow/serving/*` → `/api/v1/serving/*`
+- `/api/v2/dataflow/preferences/*` → `/api/v1/preferences/*`
+- `/api/v2/dataflow/prompts/*` → `/api/v1/prompts/*`
+- `/api/v2/dataflow/text2sql_database/*` → `/api/v1/text2sql_database/*`
+- `/api/v2/dataflow/text2sql_database_manager/*` → `/api/v1/text2sql_database_manager/*`
 
-代理目标由环境变量 `DATAFLOW_BACKEND_URL` 配置（默认: `http://localhost:8002`）
+**直接实现的端点 / Direct Endpoints** (不经过代理 / No proxy):
+- `/api/v2/dataflow/packages/*` - 在 Django 中直接实现
 
-Proxy target is configured by `DATAFLOW_BACKEND_URL` env var (default: `http://localhost:8002`)
+**代理配置 / Proxy Configuration**:
+- 环境变量 / Env var: `DATAFLOW_BACKEND_URL` (默认 / default: `http://localhost:8002`)
+- 超时设置 / Timeout: `PROXY_TIMEOUT` (默认 / default: 120 秒 / seconds)
+- 实现文件 / Implementation: `backend/df/proxy_views.py`
 
 ### 认证说明 / Authentication Notes
 
 - Packages API: AllowAny
 - 其他 API: 根据具体端点配置，部分需要认证
+
+
+### 前端配置 / Frontend Configuration
+
+**环境变量 / Environment Variable**: `VITE_BACKEND_PREFIX`
+
+**配置文件 / Config Files**:
+- 开发环境 / Development: `dataflow-webui/frontend/.env.development`
+- 生产环境 / Production: `dataflow-webui/frontend/.env.production`
+
+**配置示例 / Configuration Examples**:
+
+```bash
+# 独立模式 / Standalone Mode (默认 / default)
+VITE_BACKEND_PREFIX=/api/v1
+
+# 集成模式 / Integrated Mode (与 dcai-platform 集成)
+VITE_BACKEND_PREFIX=/api/v2/dataflow
+```
+
+**实现位置 / Implementation**:
+- 配置文件 / Config: `dataflow-webui/frontend/src/axios/config.js`
+- 导出变量 / Export: `dfApiPrefix`
+- 使用方式 / Usage: 所有 DataFlow API 调用自动使用该前缀
+
+**示例 / Example**:
+```javascript
+// API 调用会自动拼接前缀
+// API calls automatically prepend the prefix
+dfApiPrefix + '/datasets/'
+// → /api/v1/datasets/ (standalone)
+// → /api/v2/dataflow/datasets/ (integrated)
+```
 
 
 ### Operators 底层实现 / Implementation Details

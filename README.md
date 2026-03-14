@@ -251,17 +251,15 @@ DataFlow-WebUI is embedded directly into dcai-platform via a single-process ASGI
 | `/api/v1/tasks/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
 | `/api/v1/pipelines/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
 | `/api/v1/datasets/*`, `/api/v1/serving/*`, etc. | DataFlow-WebUI FastAPI (in-iframe calls, passthrough) |
-| `/api/v2/dataflow/operators` | Django `df` app — `OperatorListView` (exact match) |
+| `/api/v2/dataflow/packages/*` | Django `df` app (direct implementation) |
 | `/api/v2/dataflow/operators/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
 | `/api/v2/dataflow/tasks/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
 | `/api/v2/dataflow/pipelines/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
-| `/api/v2/dataflow/packages/*` | Django `df` app |
-| `/api/v2/dataflow/datasets/*` | DataFlow-WebUI compat (rewritten to `/api/v1/datasets/*`) |
-| `/api/v2/dataflow/serving/*` | DataFlow-WebUI compat (rewritten to `/api/v1/serving/*`) |
-| `/api/v2/dataflow/prompts/*` | DataFlow-WebUI compat (rewritten to `/api/v1/prompts/*`) |
-| `/api/v2/dataflow/preferences/*` | DataFlow-WebUI compat (rewritten to `/api/v1/preferences/*`) |
-| `/api/v2/dataflow/text2sql_database/*` | DataFlow-WebUI compat (rewritten to `/api/v1/text2sql_database/*`) |
-| `/api/v2/dataflow/text2sql_database_manager/*` | DataFlow-WebUI compat (rewritten to `/api/v1/text2sql_database_manager/*`) |
+| `/api/v2/dataflow/serving/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
+| `/api/v2/dataflow/preferences/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
+| `/api/v2/dataflow/prompts/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
+| `/api/v2/dataflow/text2sql_database/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
+| `/api/v2/dataflow/text2sql_database_manager/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
 | `/api/hf/*` | dcai-platform HF datasets service (Django) |
 | everything else | Django |
 
