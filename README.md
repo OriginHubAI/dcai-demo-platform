@@ -107,6 +107,7 @@ DCAI (Data-Centric AI) Platform is a comprehensive AI community hub that provide
 ├── package.json                  # Node.js dependencies
 ├── vite.config.js                # Vite configuration
 ├── tailwind.config.js            # Tailwind CSS configuration
+├── dataflow-webui/               # DataFlow-WebUI (git submodule → OpenDCAI/DataFlow-WebUI)
 └── .env.example                  # Environment variables template
 ```
 
@@ -119,6 +120,14 @@ DCAI (Data-Centric AI) Platform is a comprehensive AI community hub that provide
 - **Python** 3.8 or later
 - **pip** (comes with Python)
 - **Redis** (optional, for caching and Celery)
+
+### Clone (with submodules)
+
+```bash
+git clone --recurse-submodules https://github.com/OriginHubAI/dcai-hf-webui.git
+# Or, if already cloned:
+git submodule update --init --recursive
+```
 
 ### Environment Configuration
 
@@ -249,9 +258,9 @@ DataFlow-WebUI is embedded directly into dcai-platform via a single-process ASGI
 ### Step 1 — Build DataFlow-WebUI frontend (one-time)
 
 ```bash
-cd ../DCAI-DataFlow-WebUI/frontend
+cd dataflow-webui/frontend
 npx vite build --mode embedded
-# Output: DCAI-DataFlow-WebUI/frontend/dist/  (served by FastAPI)
+# Output: dataflow-webui/frontend/dist/  (served by FastAPI)
 ```
 
 ### Step 2 — Start the ASGI server
@@ -286,11 +295,11 @@ npm run dev
 ### DataFlow-WebUI location
 
 The ASGI dispatcher resolves DataFlow-WebUI's backend via the `DATAFLOW_WEBUI_BACKEND_DIR` env var.
-Default: `<dcai-platform>/../DCAI-DataFlow-WebUI/backend`.
+Default: `<dcai-platform>/dataflow-webui/backend`.
 Override if your directory layout differs:
 
 ```bash
-DATAFLOW_WEBUI_BACKEND_DIR=/path/to/DCAI-DataFlow-WebUI/backend uvicorn core.asgi:application ...
+DATAFLOW_WEBUI_BACKEND_DIR=/path/to/DataFlow-WebUI/backend uvicorn core.asgi:application ...
 ```
 
 If the directory is not found, the server starts normally with DataFlow-WebUI disabled (pure Django ASGI).

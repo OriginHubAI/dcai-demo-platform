@@ -1,3 +1,7 @@
+[submodule "dataflow-webui"]
+	path = dataflow-webui
+	url = https://github.com/OpenDCAI/DataFlow-WebUI.git
+
 [submodule "backend/fastapi_app/sample_data/OpenDCAI/dataflow-instruct-10k"]
 	path = backend/fastapi_app/sample_data/OpenDCAI/dataflow-instruct-10k
 	url = https://huggingface.co/datasets/OpenDCAI/dataflow-instruct-10k
