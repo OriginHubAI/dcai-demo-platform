@@ -394,6 +394,115 @@ Prompt management APIs for querying operator-related prompt templates.
 
 **功能 / Function**: 返回 Prompt 类的源码
 
+### Prompts 底层实现 / Implementation Details
+
+#### 核心架构 / Core Architecture
+
+**依赖注入容器 / Dependency Injection Container**:
+- 文件：`dataflow-webui/backend/app/core/container.py`
+- 全局单例：`container.prompt_registry = PromptRegistry()`
+- 作用：控制各 Registry 初始化顺序，避免循环依赖
+
+**PromptRegistry 初始化**:
+```python
+self._prompt_registry = PROMPT_REGISTRY      # DataFlow 核心 Prompt 注册表
+self._operator_registry = OPERATOR_REGISTRY  # DataFlow 核心 Operator 注册表
+self._operator_registry._get_all()           # 确保所有算子已加载
+```
+
+#### API 路由层 / API Router Layer
+
+**文件**: `dataflow-webui/backend/app/api/v1/endpoints/prompts.py`
+
+所有端点通过 `container.prompt_registry` 调用服务层方法：
+
+```python
+router = APIRouter(tags=["prompts"])
+
+@router.get("/operator-mapping")
+def get_operator_prompt_mapping():
+    return ok(container.prompt_registry.list_operator_prompts())
+
+@router.get("/prompt-info")
+def get_prompt_info():
+    return ok(container.prompt_registry.list_prompt_info())
+```
+
+#### 核心方法实现 / Core Method Implementation
+
+**1. list_operator_prompts() - 算子到 Prompts 映射**
+
+工作流程：
+1. 获取所有算子：`operator_map = self._operator_registry.get_obj_map()`
+2. 遍历算子，读取 `ALLOWED_PROMPTS` 属性
+3. 构造 `{operator_name: [prompt_names]}` 映射
+
+**2. list_prompt_info() - Prompt 详细信息**
+
+工作流程：
+1. 构建反向映射：Prompt → 关联的 Operators
+2. 获取 Prompt 分类：`self._prompt_registry.get_type_of_objects()`
+3. 使用 `inspect` 模块提取：
+   - 类路径：`f"{cls.__module__}.{cls.__name__}"`
+   - 文档字符串：`inspect.getdoc(cls)`
+   - 方法参数：`inspect.signature(method)`
+
+**3. get_prompts(operator_name) - 根据算子获取 Prompts**
+
+工作流程：
+1. 从 `operator_registry` 获取算子类
+2. 读取 `ALLOWED_PROMPTS` 属性
+3. 返回 `{prompt_name: full_class_path}` 映射
+
+**4. get_prompt_source(prompt_name) - 获取源码**
+
+工作流程：
+1. 从 `PROMPT_REGISTRY` 获取 Prompt 类
+2. 使用 `inspect.getsource(cls)` 获取源码
+3. 返回源码字符串
+
+#### 关键技术点 / Key Technical Points
+
+**算子-Prompt 关联机制**:
+- DataFlow 约定：算子类定义 `ALLOWED_PROMPTS = [PromptClass1, PromptClass2]`
+- 通过 `getattr(op_cls, "ALLOWED_PROMPTS", [])` 读取关联
+
+**反射技术应用**:
+- `inspect.getsource()`: 获取类源码
+- `inspect.signature()`: 获取方法签名
+- `inspect.getdoc()`: 获取文档字符串
+- `inspect.Parameter`: 解析参数定义
+
+**参数提取健壮性**:
+```python
+def _safe_json_val(val):
+    if val is inspect.Parameter.empty:
+        return None
+    if isinstance(val, type) or callable(val):
+        return str(val)  # 不可序列化的值转为字符串
+    return val
+```
+
+#### 完整调用链 / Complete Call Chain
+
+```
+客户端 GET /api/v2/dataflow/prompts/operator-mapping
+    ↓
+ASGI dispatcher (backend/core/asgi.py)
+    ↓ 路径重写
+/api/v1/prompts/operator-mapping
+    ↓
+DataFlow-WebUI FastAPI app
+    ↓
+prompts.router.get_operator_prompt_mapping()
+    ↓
+container.prompt_registry.list_operator_prompts()
+    ↓
+遍历 OPERATOR_REGISTRY，读取 ALLOWED_PROMPTS
+    ↓
+返回 {operator: [prompts]} 映射
+```
+
 ---
 
 ## Text2SQL Database API
@@ -511,6 +620,68 @@ Proxy target is configured by `DATAFLOW_BACKEND_URL` env var (default: `http://l
 - Packages API: AllowAny
 - 其他 API: 根据具体端点配置，部分需要认证
 
----
 
-**文档生成时间 / Generated**: 2026-03-14
+### Operators 底层实现 / Implementation Details
+
+#### 核心架构 / Core Architecture
+
+**依赖注入容器 / Dependency Injection Container**:
+- 文件：`dataflow-webui/backend/app/core/container.py`
+- 全局单例：`container.operator_registry = OperatorRegistry()`
+- 作用：控制各 Registry 初始化顺序，避免循环依赖
+
+**OperatorRegistry 初始化**:
+```python
+self._op_registry = OPERATOR_REGISTRY  # DataFlow 核心注册表
+self._op_registry._init_loaders()      # 触发算子加载
+self.op_obj_map = self._op_registry.get_obj_map()  # 缓存映射
+```
+
+
+#### get_op_list() 工作流程 / get_op_list() Workflow
+
+1. **遍历已加载算子**：`for op_name, op_cls in self.op_obj_map.items()`
+2. **获取分类信息**：从 `op_to_type` 获取三级分类（level_1, level_2）
+3. **获取多语言描述**：调用 `op_cls.get_desc(lang=lang)`
+4. **获取 Prompt 模板**：读取 `op_cls.ALLOWED_PROMPTS` 属性
+5. **返回简化列表**：包含 name, type, description, allowed_prompts
+
+#### DataFlow 核心注册表 / DataFlow Core Registry
+
+**来源**：`dataflow.utils.registry.OPERATOR_REGISTRY`
+
+**功能**：
+- 自动发现：扫描 `dataflow/operators/` 目录
+- 装饰器注册：`@OPERATOR_REGISTRY.register()` 注册算子
+- 延迟加载：使用 loader 机制按需加载算子类
+
+
+#### 缓存机制 / Caching Mechanism
+
+**内存缓存**：
+- `op_obj_map`: `{op_name: op_class}` 映射
+- `op_to_type`: 算子分类信息
+
+**文件缓存**：
+- 文件：`ops.zh.json` / `ops.en.json`
+- 生成：`dump_ops_to_json()` 方法
+- 用途：`GET /operators/details` 读取详细信息
+
+#### 完整调用链 / Complete Call Chain
+
+```
+客户端 GET /api/v1/operators/?lang=zh
+    ↓
+ASGI dispatcher (backend/core/asgi.py)
+    ↓
+DataFlow-WebUI FastAPI app
+    ↓
+operators.router.list_operators(lang="zh")
+    ↓
+container.operator_registry.get_op_list(lang="zh")
+    ↓
+遍历 op_obj_map，调用 op_cls.get_desc(lang)
+    ↓
+返回简化算子列表
+```
+
