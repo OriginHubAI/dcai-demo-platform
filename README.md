@@ -246,12 +246,22 @@ DataFlow-WebUI is embedded directly into dcai-platform via a single-process ASGI
 | Path | Handler |
 |------|---------|
 | `/embedded/dataflow-webui/*` | DataFlow-WebUI React frontend (FastAPI static files) |
-| `/api/v1/*` | DataFlow-WebUI backend API (FastAPI, in-iframe calls) |
-| `/api/v2/dataflow/tasks/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
-| `/api/v2/dataflow/pipelines/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
+| `/embedded/dataflow-backend/*` | DataFlow-WebUI frontend API calls (FastAPI, prefix stripped) |
+| `/api/v1/operators/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
+| `/api/v1/tasks/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
+| `/api/v1/pipelines/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
+| `/api/v1/datasets/*`, `/api/v1/serving/*`, etc. | DataFlow-WebUI FastAPI (in-iframe calls, passthrough) |
 | `/api/v2/dataflow/operators` | Django `df` app — `OperatorListView` (exact match) |
 | `/api/v2/dataflow/operators/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
-| `/api/v2/dataflow/datasets/*` … | DataFlow-WebUI compat (path rewritten to `/api/v1/`) |
+| `/api/v2/dataflow/tasks/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
+| `/api/v2/dataflow/pipelines/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
+| `/api/v2/dataflow/packages/*` | Django `df` app |
+| `/api/v2/dataflow/datasets/*` | DataFlow-WebUI compat (rewritten to `/api/v1/datasets/*`) |
+| `/api/v2/dataflow/serving/*` | DataFlow-WebUI compat (rewritten to `/api/v1/serving/*`) |
+| `/api/v2/dataflow/prompts/*` | DataFlow-WebUI compat (rewritten to `/api/v1/prompts/*`) |
+| `/api/v2/dataflow/preferences/*` | DataFlow-WebUI compat (rewritten to `/api/v1/preferences/*`) |
+| `/api/v2/dataflow/text2sql_database/*` | DataFlow-WebUI compat (rewritten to `/api/v1/text2sql_database/*`) |
+| `/api/v2/dataflow/text2sql_database_manager/*` | DataFlow-WebUI compat (rewritten to `/api/v1/text2sql_database_manager/*`) |
 | `/api/hf/*` | dcai-platform HF datasets service (Django) |
 | everything else | Django |
 
