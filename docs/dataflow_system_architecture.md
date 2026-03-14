@@ -844,3 +844,297 @@ curl -X POST http://localhost:8000/workflows/create \
 - 建议客户端根据 `code` 进行错误处理
 
 ---
+
+## 6. 待完善接口清单
+
+根据 DataFlow-WebUI 的 API 设计（`docs/api-v2-dataflow.md`），DataFlow System 后端需要补充以下接口以支持完整的前端功能。
+
+### 6.1 Operators API 增强
+
+**当前状态：** 已实现基础算子列表查询
+
+**需要补充：**
+
+#### 6.1.1 获取算子详细信息（带参数定义）
+
+**端点：** `GET /api/v1/operators/details`
+
+**功能：** 返回所有算子的详细配置信息，包括参数定义、输入输出端口、类别分组等
+
+**响应格式：**
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "category_1": {
+      "category_2": [
+        {
+          "name": "operator_name",
+          "description": "算子描述",
+          "parameters": {
+            "param1": {
+              "type": "string",
+              "required": true,
+              "default": null,
+              "description": "参数说明"
+            }
+          },
+          "input_ports": ["input"],
+          "output_ports": ["output"]
+        }
+      ]
+    }
+  }
+}
+```
+
+#### 6.1.2 获取单个算子详情
+
+**端点：** `GET /api/v1/operators/details/{op_name}`
+
+**功能：** 返回指定算子的详细配置信息
+
+**路径参数：**
+- `op_name` (string) - 算子名称
+
+
+---
+
+### 6.2 Tasks API（执行管理）
+
+**当前状态：** 使用 Workflows API，但接口设计与前端需求不匹配
+
+**需要重构为 Tasks API：**
+
+#### 6.2.1 列出所有执行记录
+
+**端点：** `GET /api/v1/tasks/executions`
+
+**功能：** 返回所有 Pipeline 执行记录列表
+
+**查询参数：**
+- `pipeline_id` (optional) - 过滤特定 Pipeline 的执行记录
+- `status` (optional) - 过滤特定状态的执行记录
+- `limit` (optional, default: 50) - 返回记录数
+- `offset` (optional, default: 0) - 分页偏移
+
+#### 6.2.2 查询执行状态（算子粒度）
+
+**端点：** `GET /api/v1/tasks/execution/{task_id}/status`
+
+**功能：** 返回任务执行状态，包含每个算子的执行状态
+
+**映射关系：**
+- `task_id` → Prefect `flow_run_id`
+- `operators[].status` → Prefect `sub_flow_run` 状态
+
+#### 6.2.3 查询执行结果
+
+**端点：** `GET /api/v1/tasks/execution/{task_id}/result`
+
+**功能：** 返回任务执行结果的预览数据
+
+**查询参数：**
+- `step` (int, optional) - 步骤索引，null 表示最后一个步骤
+- `limit` (int, optional, default: 5) - 返回数据条数
+
+**实现要点：**
+- 从 S3 读取结果文件（JSONL 格式）
+- 返回前 N 条记录作为预览
+- 提供完整的 S3 路径供下载
+
+
+#### 6.2.4 获取执行日志
+
+**端点：** `GET /api/v1/tasks/execution/{task_id}/log`
+
+**功能：** 返回任务执行日志
+
+**查询参数：**
+- `operator_name` (string, optional) - 指定算子名称，不指定则返回所有日志
+
+**实现要点：**
+- 从 Prefect 获取 Flow Run 和 Sub-flow Run 的日志
+- 支持按算子名称过滤
+- 按时间顺序排序
+
+#### 6.2.5 下载执行结果
+
+**端点：** `GET /api/v1/tasks/execution/{task_id}/download`
+
+**功能：** 下载任务执行结果文件（JSONL 格式）
+
+**查询参数：**
+- `step` (int, optional) - 步骤索引（从 0 开始），不指定则下载最后一步的结果
+
+**响应：**
+- Content-Type: `application/x-ndjson`
+- Content-Disposition: `attachment; filename="result_{task_id}_{step}.jsonl"`
+
+**实现要点：**
+- 从 S3 读取完整结果文件
+- 流式传输，避免内存溢出
+- 支持大文件下载
+
+
+#### 6.2.6 执行 Pipeline（同步）
+
+**端点：** `POST /api/v1/tasks/execute?pipeline_id={pipeline_id}`
+
+**功能：** 同步执行 Pipeline，等待完成后返回结果
+
+**实现要点：**
+- 创建 Workflow 并等待执行完成
+- 超时时间建议 30 分钟
+- 适用于小规模、快速执行的 Pipeline
+
+#### 6.2.7 异步执行 Pipeline
+
+**端点：** `POST /api/v1/tasks/execute-async?pipeline_id={pipeline_id}`
+
+**功能：** 异步执行 Pipeline，立即返回 task_id
+
+**实现要点：**
+- 创建 Workflow 后立即返回
+- 客户端通过 `GET /tasks/execution/{task_id}/status` 轮询状态
+
+#### 6.2.8 终止执行
+
+**端点：** `POST /api/v1/tasks/execution/{task_id}/kill`
+
+**功能：** 终止正在执行的 Pipeline 任务
+
+**实现要点：**
+- 调用 Prefect API 取消 Flow Run
+- 清理 Ray 集群中的运行任务
+- 更新数据库中的任务状态
+
+
+---
+
+### 6.3 Pipelines API 增强
+
+**当前状态：** 已实现基础的创建和查询
+
+**需要补充：**
+
+#### 6.3.1 列出模板 Pipeline
+
+**端点：** `GET /api/v1/pipelines/templates`
+
+**功能：** 返回所有预置（template）Pipeline 列表
+
+**实现要点：**
+- 在数据库中标记模板 Pipeline（`is_template` 字段）
+- 用户可以基于模板创建新的 Pipeline
+
+#### 6.3.2 更新 Pipeline
+
+**端点：** `PUT /api/v1/pipelines/{pipeline_id}`
+
+**功能：** 更新已存在的 Pipeline 定义
+
+**实现要点：**
+- 验证更新后的 DAG 是否有效
+- 不影响已创建的 Workflow 执行
+
+#### 6.3.3 删除 Pipeline
+
+**端点：** `DELETE /api/v1/pipelines/{pipeline_id}`
+
+**功能：** 删除 Pipeline 定义
+
+**实现要点：**
+- 检查是否有正在执行的 Workflow
+- 可选：软删除（标记为已删除）或硬删除
+
+
+---
+
+### 6.4 实现优先级建议
+
+根据前端功能需求，建议按以下优先级实现：
+
+**P0（核心功能，必须实现）：**
+1. `GET /api/v1/operators/details` - 前端需要算子参数定义来构建配置表单
+2. `POST /api/v1/tasks/execute-async` - 异步执行是主要使用场景
+3. `GET /api/v1/tasks/execution/{task_id}/status` - 前端需要轮询任务状态
+4. `GET /api/v1/tasks/executions` - 前端需要展示执行历史列表
+
+**P1（重要功能，尽快实现）：**
+5. `GET /api/v1/tasks/execution/{task_id}/result` - 前端需要预览执行结果
+6. `POST /api/v1/tasks/execution/{task_id}/kill` - 用户需要能够取消任务
+7. `GET /api/v1/pipelines/templates` - 提供模板可以降低使用门槛
+8. `PUT /api/v1/pipelines/{pipeline_id}` - 用户需要能够修改 Pipeline
+
+**P2（增强功能，后续实现）：**
+9. `GET /api/v1/tasks/execution/{task_id}/log` - 调试和监控需要
+10. `GET /api/v1/tasks/execution/{task_id}/download` - 大规模数据下载
+11. `POST /api/v1/tasks/execute` - 同步执行（小规模场景）
+12. `DELETE /api/v1/pipelines/{pipeline_id}` - Pipeline 管理
+
+
+---
+
+### 6.5 接口对齐注意事项
+
+#### 6.5.1 命名约定
+
+- DataFlow-WebUI 使用 `tasks` 表示执行实例
+- DataFlow System 使用 `workflows` 表示执行实例
+- **建议：** 在 API 层统一使用 `tasks`，内部实现仍使用 Prefect 的 `workflows` 概念
+
+#### 6.5.2 响应格式
+
+- 所有接口返回统一的信封格式：`{code, msg, data}`
+- `code=0` 表示成功，其他值表示错误
+- 错误信息包含在 `msg` 字段中
+
+#### 6.5.3 状态映射
+
+Prefect 状态 → API 状态：
+- `PENDING` → `queued`
+- `RUNNING` → `RUNNING`
+- `COMPLETED` → `COMPLETED`
+- `FAILED` → `FAILED`
+- `CANCELLED` → `CANCELLED`
+- `CRASHED` → `FAILED`
+
+#### 6.5.4 ID 映射
+
+- `task_id` (API) ↔ `flow_run_id` (Prefect)
+- `pipeline_id` (API) ↔ `pipeline_key` (Database)
+- `operator_name` (API) ↔ `operator_name` (Registry)
+
+
+---
+
+### 6.6 技术实现建议
+
+#### 6.6.1 日志聚合
+
+- 使用 Prefect API 获取 Flow Run 日志
+- 考虑使用 ELK/Loki 等日志系统进行集中管理
+- 支持实时日志流（WebSocket 或 SSE）
+
+#### 6.6.2 结果存储
+
+- 统一使用 S3 存储中间结果和最终结果
+- 结果路径格式：`s3://{bucket}/{prefix}/{flow_run_id}/{sub_flow_run_id}/{task_idx}/output.jsonl`
+- 支持结果过期自动清理
+
+#### 6.6.3 性能优化
+
+- 执行列表接口支持分页和过滤
+- 结果预览接口限制返回数据量
+- 下载接口使用流式传输
+- 状态查询接口考虑缓存（Redis）
+
+#### 6.6.4 错误处理
+
+- 统一的异常处理和错误码定义
+- 详细的错误信息帮助调试
+- 区分用户错误（400）和系统错误（500）
+
+---
