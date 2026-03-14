@@ -79,3 +79,32 @@ def _proxy(request, target_url: str, stream: bool = False):
 def dataflow_proxy(request, path=''):
     target = f"{DATAFLOW_BACKEND_URL}/api/v1/{path}"
     return _proxy(request, target)
+
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
+@permission_classes([AllowAny])
+def task_proxy(request, subpath=''):
+    """Proxy task lifecycle requests to DataFlow-WebUI backend."""
+    path = f"tasks/{subpath}"
+    target = f"{DATAFLOW_BACKEND_URL}/api/v1/{path}"
+    # /newly endpoint uses long-polling — enable streaming
+    stream = subpath.rstrip('/').endswith('/newly')
+    return _proxy(request, target, stream=stream)
+
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
+@permission_classes([AllowAny])
+def pipeline_proxy(request, subpath=''):
+    """Proxy pipeline requests to DataFlow-WebUI backend."""
+    path = f"pipelines/{subpath}"
+    target = f"{DATAFLOW_BACKEND_URL}/api/v1/{path}"
+    return _proxy(request, target)
+
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
+@permission_classes([AllowAny])
+def operator_subpath_proxy(request, subpath=''):
+    """Proxy operator sub-path requests to DataFlow-WebUI backend."""
+    path = f"operators/{subpath}"
+    target = f"{DATAFLOW_BACKEND_URL}/api/v1/{path}"
+    return _proxy(request, target)

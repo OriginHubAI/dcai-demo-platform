@@ -9,9 +9,8 @@ from .views import (
     package_files,
     package_list,
     package_test,
-    OperatorListView,
-    PipelineStatusView,
 )
+from .proxy_views import task_proxy, pipeline_proxy, operator_subpath_proxy
 
 urlpatterns = [
     path('packages', package_list, name='package-list'),
@@ -22,10 +21,17 @@ urlpatterns = [
     path('packages/<str:package_id>/editor/stop', package_editor_stop, name='package-editor-stop'),
     path('packages/<str:package_id>/test', package_test, name='package-test'),
 
-    # Django-native DataFlow views (not proxied — handled here regardless of ASGI routing)
-    path('operators', OperatorListView.as_view(), name='operator-list'),
-    path('pipelines/<uuid:pipeline_id>/status', PipelineStatusView.as_view(), name='pipeline-status'),
+    # Operators: all paths proxied to DataFlow backend (AllowAny, consistent with other proxy views)
+    path('operators', operator_subpath_proxy, name='operator-list'),
+    path('operators/', operator_subpath_proxy, name='operator-list-slash'),
+    path('operators/<path:subpath>', operator_subpath_proxy, name='operator-subpath'),
 
-    # pipelines/*, operators/*, tasks/*, datasets/*, serving/*, prompts/* are now handled
-    # by the DataFlow-WebUI FastAPI app via ASGI routing in core/asgi.py.
+    # Pipelines: root (with and without trailing slash) + sub-paths all proxied to DataFlow backend
+    path('pipelines', pipeline_proxy, name='pipeline-proxy-bare'),
+    path('pipelines/', pipeline_proxy, name='pipeline-proxy-root'),
+    path('pipelines/<path:subpath>', pipeline_proxy, name='pipeline-proxy'),
+
+    # Tasks: all paths proxied to DataFlow backend
+    path('tasks', task_proxy, name='task-list'),
+    path('tasks/<path:subpath>', task_proxy, name='task-proxy'),
 ]

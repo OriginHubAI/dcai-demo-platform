@@ -54,6 +54,9 @@ urlpatterns = [
     path('api/v2/dfagent/', include('dfagent_proxy.urls')),
     path('api/v2/', include('knowledgebase.urls')),
     path('api/v2/', include('apps.urls')),
+
+    # DataFlow /api/v1/ passthrough — tasks, pipelines, operators proxied to DATAFLOW_BACKEND_URL
+    path('api/v1/', include('df.v1_urls')),
     
     # API admin endpoints
     path('api/admin/', include('customadmin.urls')),

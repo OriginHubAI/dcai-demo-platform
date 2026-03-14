@@ -238,7 +238,11 @@ DataFlow-WebUI is embedded directly into dcai-platform via a single-process ASGI
 |------|---------|
 | `/embedded/dataflow-webui/*` | DataFlow-WebUI React frontend (FastAPI static files) |
 | `/api/v1/*` | DataFlow-WebUI backend API (FastAPI, in-iframe calls) |
-| `/api/v2/dataflow/pipelines/*` … | DataFlow-WebUI compat (path rewritten to `/api/v1/`) |
+| `/api/v2/dataflow/tasks/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
+| `/api/v2/dataflow/pipelines/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
+| `/api/v2/dataflow/operators` | Django `df` app — `OperatorListView` (exact match) |
+| `/api/v2/dataflow/operators/*` | Django `df` app → httpx proxy → `DATAFLOW_BACKEND_URL` |
+| `/api/v2/dataflow/datasets/*` … | DataFlow-WebUI compat (path rewritten to `/api/v1/`) |
 | `/api/hf/*` | dcai-platform HF datasets service (Django) |
 | everything else | Django |
 
