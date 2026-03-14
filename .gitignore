@@ -33,7 +33,6 @@ __pycache__
 # external modules
 DataFlow
 dataflow-system
-dataflow-webui
 dataflow-loopai
 dataflow-agent
 hf-datasets
