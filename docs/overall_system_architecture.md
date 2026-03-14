@@ -324,3 +324,145 @@ graph TD
    - 依赖 MyScale 底层强大的结构化过滤及海量多模态数据混合近邻搜索能力，此时的数据集不再仅支持表面元数据（如大小、格式）维度上的筛选。
    - 科研人员、自动驾驶评估系统或后续关联应用中的模型分析工具（如 `LoopAI Analyzer`）、DataMaster 对话查询等，均可直接对衍生数据集执行高精度的语义检索指令与关键字筛选（如快速定位包含特定天气的帧段、提取具备罕见特征的高潜长尾数据），以此高效支撑长尾数据发现、精准的模型评估和调优迭代。
 
+---
+
+## 6. DataFlow-System API 实现状态分析
+
+> **代码库位置**: `/home/linpengt/workspace/dataflow-system-upcoming`
+> **最后更新**: 2026-03-14
+> **技术栈**: FastAPI + Prefect + Ray + PostgreSQL
+
+### 6.1 架构差异说明
+
+**dataflow-system-upcoming** 采用了与 **dataflow-webui** 不同的架构设计：
+
+| 维度 | dataflow-webui | dataflow-system-upcoming |
+|------|----------------|--------------------------|
+| **编排引擎** | Ray (分布式计算) | Prefect (工作流编排) |
+| **术语体系** | Pipeline → Task Execution | Pipeline → Workflow Execution |
+| **执行单元** | Operator | Task (Prefect Task) |
+| **状态管理** | 内存 + JSON 文件 | PostgreSQL 持久化 |
+| **回调机制** | 轮询 | Webhook 事件驱动 |
+
+**核心概念映射**:
+- `Pipeline` (dataflow-webui) ≈ `Workflow` (dataflow-system-upcoming)
+- `Task Execution` ≈ `Workflow Execution`
+- `Operator` ≈ `Prefect Task`
+
+### 6.2 前端需求 API 实现状态对比
+
+基于前端优先级需求列表，以下是 dataflow-system-upcoming 的实现完成度分析：
+
+#### P0 (核心功能) - 部分实现 50%
+
+| 前端需求 API | dataflow-system-upcoming 实现 | 状态 | 文件位置 | 说明 |
+|-------------|-------------------------------|------|---------|------|
+| `GET /api/v1/operators/details` | `GET /operators` | ⚠️ 简化版 | `operators.py:14-24` | 仅返回基本列表，**缺少详细参数定义**（前端需要用于构建配置表单） |
+| `POST /api/v1/tasks/execute-async` | `POST /workflows/create` | ✅ 等效 | `workflow.py:25-65` | 使用 Prefect 异步执行，立即返回 workflow_id |
+| `GET /api/v1/tasks/execution/{task_id}/status` | `GET /workflows/{workflow_id}/status` | ⚠️ 部分 | `workflow.py:68-83` | 支持 workflow 级别状态，**缺少算子粒度状态** |
+| `GET /api/v1/tasks/executions` | `GET /pipelines/{pipeline_key}/workflows` | ⚠️ 受限 | `pipelines.py:86-103` | 需要提供 pipeline_key，**无法列出所有执行记录** |
+
+**关键差距**:
+- **Operators API 不完整**: 前端需要算子的详细参数定义（类型、默认值、验证规则）来动态构建配置表单，当前实现仅返回算子名称列表
+- **缺少算子粒度状态**: 前端需要实时展示每个算子的执行进度，当前仅支持整体 workflow 状态
+- **执行记录查询受限**: 前端需要全局执行历史列表，当前必须指定 pipeline_key 才能查询
+
+#### P1 (重要功能) - 大部分未实现 25%
+
+| 前端需求 API | dataflow-system-upcoming 实现 | 状态 | 文件位置 | 说明 |
+|-------------|-------------------------------|------|---------|------|
+| `GET /api/v1/tasks/execution/{task_id}/result` | `GET /workflows/{workflow_id}/results` | ❌ 未实现 | `workflow.py:184-194` | 接口存在但抛出 `NotImplementedError` |
+| `POST /api/v1/tasks/execution/{task_id}/kill` | `POST /workflows/{workflow_id}/cancel` | ✅ 已实现 | `workflow.py:150-166` | 通过 Prefect 取消 workflow |
+| `GET /api/v1/pipelines/templates` | ❌ 无对应 API | ❌ 缺失 | - | 完全缺失模板功能 |
+| `PUT /api/v1/pipelines/{pipeline_id}` | ❌ 无对应 API | ❌ 缺失 | - | 无法更新 Pipeline 定义 |
+
+**关键差距**:
+- **结果查询未实现**: 前端无法预览执行结果数据
+- **缺少模板支持**: 无法提供预置 Pipeline 降低使用门槛
+- **缺少 Pipeline 更新**: 用户无法修改已创建的 Pipeline
+
+#### P2 (增强功能) - 全部未实现 0%
+
+| 前端需求 API | dataflow-system-upcoming 实现 | 状态 | 说明 |
+|-------------|-------------------------------|------|------|
+| `GET /api/v1/tasks/execution/{task_id}/log` | ❌ 无对应 API | ❌ 缺失 | 无法查看执行日志 |
+| `GET /api/v1/tasks/execution/{task_id}/download` | ❌ 无对应 API | ❌ 缺失 | 无法下载结果文件 |
+| `POST /api/v1/tasks/execute` | ❌ 无对应 API | ❌ 缺失 | 缺少同步执行模式 |
+| `DELETE /api/v1/pipelines/{pipeline_id}` | ❌ 无对应 API | ❌ 缺失 | 无法删除 Pipeline |
+
+**关键差距**: 所有调试、监控、数据导出功能均缺失
+
+### 6.3 已实现的额外功能
+
+dataflow-system-upcoming 提供了一些前端需求列表中未提及的功能：
+
+| API Endpoint | 功能描述 | 状态 | 文件位置 |
+|-------------|---------|------|---------|
+| `POST /pipelines/create` | 创建 Pipeline 定义 | ✅ | `pipelines.py:16-46` |
+| `POST /pipelines/run` | 创建并立即运行 Pipeline | ✅ | `pipelines.py:49-83` |
+| `GET /workflows/{workflow_id}/sub-workflows` | 列出子 workflow | ✅ | `workflow.py:86-101` |
+| `GET /workflows/{workflow_id}/{sub_workflow_id}/status` | 查询子 workflow 状态 | ✅ | `workflow.py:104-125` |
+| `POST /workflows/{workflow_id}/pause` | 暂停 workflow | ❌ NotImplemented | `workflow.py:128-136` |
+| `POST /workflows/{workflow_id}/resume` | 恢复 workflow | ❌ NotImplemented | `workflow.py:139-147` |
+| `PATCH /workflows/{workflow_id}/priority` | 更新优先级 | ❌ NotImplemented | `workflow.py:169-181` |
+| `POST /prefect/callback` | Prefect webhook 回调 | ✅ | `prefect.py:11-39` |
+
+**架构优势**:
+- ✅ 支持子 workflow 查询（更细粒度的监控能力）
+- ✅ Webhook 回调机制（事件驱动架构，无需轮询）
+- ✅ PostgreSQL 持久化（更可靠的状态管理）
+
+### 6.4 实现完成度总结
+
+| 优先级 | 完成度 | 已实现 | 部分实现 | 未实现 |
+|--------|--------|--------|----------|--------|
+| **P0** | 50% | 1/4 | 3/4 | 0/4 |
+| **P1** | 25% | 1/4 | 0/4 | 3/4 |
+| **P2** | 0% | 0/4 | 0/4 | 4/4 |
+| **总计** | 25% | 2/12 | 3/12 | 7/12 |
+
+### 6.5 集成建议
+
+**如果要使用 dataflow-system-upcoming 支持前端，需要补充实现以下功能：**
+
+#### 短期必须 (P0 补全)
+1. **增强 Operators API** (`GET /operators/details`)
+   - 返回完整的参数定义（类型、默认值、验证规则、UI 组件类型）
+   - 支持多语言参数描述
+   - 参考 dataflow-webui 的 `OperatorDetailSchema` 结构
+
+2. **实现算子粒度状态查询**
+   - 扩展 `GET /workflows/{workflow_id}/status` 返回每个算子的执行状态
+   - 或新增 `GET /workflows/{workflow_id}/operators/status` 端点
+
+3. **实现全局执行记录列表**
+   - 新增 `GET /workflows` 端点，支持分页和过滤
+   - 无需强制提供 pipeline_key
+
+#### 中期重要 (P1 补全)
+4. **实现结果查询** - 完成 `GET /workflows/{workflow_id}/results` 的实现
+5. **添加 Pipeline 模板** - 新增 `GET /pipelines/templates` 端点
+6. **支持 Pipeline 更新** - 新增 `PUT /pipelines/{pipeline_key}` 端点
+
+#### 长期增强 (P2 补全)
+7. **日志查询** - 新增 `GET /workflows/{workflow_id}/logs` 端点
+8. **结果下载** - 新增 `GET /workflows/{workflow_id}/download` 端点
+9. **同步执行** - 新增 `POST /workflows/execute-sync` 端点（小规模场景）
+10. **Pipeline 删除** - 新增 `DELETE /pipelines/{pipeline_key}` 端点
+
+### 6.6 两套系统对比与选型建议
+
+| 维度 | dataflow-webui | dataflow-system-upcoming |
+|------|----------------|--------------------------|
+| **前端集成就绪度** | ✅ 100% (12/12) | ⚠️ 25% (3/12) |
+| **编排引擎成熟度** | Ray (分布式计算) | Prefect (工作流编排) ⭐ |
+| **状态持久化** | JSON 文件 | PostgreSQL ⭐ |
+| **监控粒度** | 算子级别 ⭐ | Workflow 级别 |
+| **事件机制** | 轮询 | Webhook ⭐ |
+| **开发工作量** | 无需额外开发 | 需补充 7-10 个 API |
+
+**选型建议**:
+- **短期快速上线**: 使用 **dataflow-webui**，所有前端需求 API 已完整实现
+- **长期架构升级**: 投入开发资源补全 **dataflow-system-upcoming**，获得更成熟的编排引擎和更可靠的状态管理
+- **混合方案**: 前端先对接 dataflow-webui，后端逐步迁移到 dataflow-system-upcoming，通过适配层保持 API 兼容性
+

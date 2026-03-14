@@ -137,3 +137,68 @@ Errors usually return `code != 0`, and UI displays the `message` field natively.
 
 ## Download File Parsing
 The frontend supports standard Blob download via Axios. It checks if the `responseType` is `blob` or `arraybuffer`. If the backend returns a JSON error instead of a blob, the frontend attempts to read it using `await data.text()` and handles the JSON error message appropriately.
+
+---
+
+## Implementation Status (dataflow-webui backend)
+
+> **Last Updated**: 2026-03-14
+> **Location**: `dataflow-webui/backend/app/api/v1/endpoints/`
+
+### Core DataFlow APIs - Implementation Complete ✅
+
+All priority features for DataFlow Pipeline execution are fully implemented in the FastAPI backend.
+
+#### P0 (Core Features) - 100% Complete
+
+| API Endpoint | Status | Implementation | Notes |
+|-------------|--------|----------------|-------|
+| `GET /api/v1/operators/details` | ✅ | `operators.py:40-65` | Cache-based, multi-language support |
+| `POST /api/v1/tasks/execute-async` | ✅ | `tasks.py:272-306` | Ray-based async execution |
+| `GET /api/v1/tasks/execution/{task_id}/status` | ✅ | `tasks.py:32-56` | Operator-level status tracking |
+| `GET /api/v1/tasks/executions` | ✅ | `tasks.py:23-30` | List all execution records |
+
+#### P1 (Important Features) - 100% Complete
+
+| API Endpoint | Status | Implementation | Notes |
+|-------------|--------|----------------|-------|
+| `GET /api/v1/tasks/execution/{task_id}/result` | ✅ | `tasks.py:58-84` | Supports step & limit params |
+| `POST /api/v1/tasks/execution/{task_id}/kill` | ✅ | `tasks.py:309-343` | Ray task cancellation |
+| `GET /api/v1/pipelines/templates` | ✅ | `pipelines.py:31-40` | Pre-built pipeline templates |
+| `PUT /api/v1/pipelines/{pipeline_id}` | ✅ | `pipelines.py:68-84` | Partial update support |
+
+#### P2 (Enhancement Features) - 100% Complete
+
+| API Endpoint | Status | Implementation | Notes |
+|-------------|--------|----------------|-------|
+| `GET /api/v1/tasks/execution/{task_id}/log` | ✅ | `tasks.py:87-115` | Operator-level log filtering |
+| `GET /api/v1/tasks/execution/{task_id}/download` | ✅ | `tasks.py:118-192` | JSONL file download |
+| `POST /api/v1/tasks/execute` | ✅ | `tasks.py:196-269` | Synchronous execution |
+| `DELETE /api/v1/pipelines/{pipeline_id}` | ✅ | `pipelines.py:86-97` | Pipeline deletion |
+
+### Additional Implemented APIs
+
+| Category | Endpoint | Status | Implementation |
+|----------|----------|--------|----------------|
+| **Pipelines** | `GET /api/v1/pipelines/` | ✅ | `pipelines.py:19-28` |
+| | `POST /api/v1/pipelines/` | ✅ | `pipelines.py:42-59` |
+| | `GET /api/v1/pipelines/{id}` | ✅ | `pipelines.py:61-66` |
+| **Operators** | `GET /api/v1/operators/` | ✅ | `operators.py:23-36` |
+| | `GET /api/v1/operators/details/{name}` | ✅ | `operators.py:68-112` |
+
+### Architecture Highlights
+
+- **Service Layer Pattern**: Business logic in `*_registry` services
+- **Error Handling**: Unified exception handling with detailed error context
+- **Async Support**: Ray integration for distributed task execution
+- **Logging**: Structured logging with loguru
+- **File Operations**: Support for large dataset downloads (JSONL format)
+
+### Frontend Integration Ready
+
+All APIs required by the frontend priority list are implemented and ready for integration. The backend supports:
+- ✅ Operator parameter definitions for dynamic form building
+- ✅ Async execution with status polling
+- ✅ Execution history and result preview
+- ✅ Task cancellation and log viewing
+- ✅ Template-based pipeline creation
