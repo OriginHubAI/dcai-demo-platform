@@ -16,10 +16,10 @@ class ConversationSerializer(serializers.ModelSerializer):
 
 class ConversationCreateSerializer(serializers.ModelSerializer):
     """Conversation creation serializer"""
-    
+
     class Meta:
         model = Conversation
-        fields = ['agent_id', 'share_id', 'title']
+        fields = ['agent_id', 'title']
     
     def create(self, validated_data):
         import uuid
