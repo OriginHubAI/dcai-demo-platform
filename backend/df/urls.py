@@ -1,5 +1,5 @@
 """DataFlow URL Configuration."""
-from django.urls import path
+from django.urls import path, re_path
 
 from .views import (
     package_detail,
@@ -10,7 +10,16 @@ from .views import (
     package_list,
     package_test,
 )
-from .proxy_views import task_proxy, pipeline_proxy, operator_subpath_proxy
+from .proxy_views import (
+    task_proxy,
+    pipeline_proxy,
+    operator_subpath_proxy,
+    serving_proxy,
+    preferences_proxy,
+    prompts_proxy,
+    text2sql_database_proxy,
+    text2sql_database_manager_proxy,
+)
 
 urlpatterns = [
     path('packages', package_list, name='package-list'),
@@ -34,4 +43,19 @@ urlpatterns = [
     # Tasks: all paths proxied to DataFlow backend
     path('tasks', task_proxy, name='task-list'),
     path('tasks/<path:subpath>', task_proxy, name='task-proxy'),
+
+    # Serving: all paths proxied to DataFlow backend
+    re_path(r'^serving(/(?P<subpath>.*))?$', serving_proxy, name='serving-proxy'),
+
+    # Preferences: all paths proxied to DataFlow backend
+    re_path(r'^preferences(/(?P<subpath>.*))?$', preferences_proxy, name='preferences-proxy'),
+
+    # Prompts: all paths proxied to DataFlow backend
+    re_path(r'^prompts(/(?P<subpath>.*))?$', prompts_proxy, name='prompts-proxy'),
+
+    # Text2SQL Database: all paths proxied to DataFlow backend
+    re_path(r'^text2sql_database(/(?P<subpath>.*))?$', text2sql_database_proxy, name='text2sql-database-proxy'),
+
+    # Text2SQL Database Manager: all paths proxied to DataFlow backend
+    re_path(r'^text2sql_database_manager(/(?P<subpath>.*))?$', text2sql_database_manager_proxy, name='text2sql-database-manager-proxy'),
 ]

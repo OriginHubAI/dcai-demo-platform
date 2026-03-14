@@ -108,3 +108,48 @@ def operator_subpath_proxy(request, subpath=''):
     path = f"operators/{subpath}"
     target = f"{DATAFLOW_BACKEND_URL}/api/v1/{path}"
     return _proxy(request, target)
+
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
+@permission_classes([AllowAny])
+def serving_proxy(request, subpath=''):
+    """Proxy serving requests to DataFlow-WebUI backend."""
+    path = f"serving/{subpath}"
+    target = f"{DATAFLOW_BACKEND_URL}/api/v1/{path}"
+    return _proxy(request, target)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([AllowAny])
+def preferences_proxy(request, subpath=''):
+    """Proxy preferences requests to DataFlow-WebUI backend."""
+    path = f"preferences/{subpath}"
+    target = f"{DATAFLOW_BACKEND_URL}/api/v1/{path}"
+    return _proxy(request, target)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def prompts_proxy(request, subpath=''):
+    """Proxy prompts requests to DataFlow-WebUI backend."""
+    path = f"prompts/{subpath}"
+    target = f"{DATAFLOW_BACKEND_URL}/api/v1/{path}"
+    return _proxy(request, target)
+
+
+@api_view(['GET', 'POST', 'DELETE'])
+@permission_classes([AllowAny])
+def text2sql_database_proxy(request, subpath=''):
+    """Proxy text2sql_database requests to DataFlow-WebUI backend."""
+    path = f"text2sql_database/{subpath}"
+    target = f"{DATAFLOW_BACKEND_URL}/api/v1/{path}"
+    return _proxy(request, target)
+
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([AllowAny])
+def text2sql_database_manager_proxy(request, subpath=''):
+    """Proxy text2sql_database_manager requests to DataFlow-WebUI backend."""
+    path = f"text2sql_database_manager/{subpath}"
+    target = f"{DATAFLOW_BACKEND_URL}/api/v1/{path}"
+    return _proxy(request, target)
