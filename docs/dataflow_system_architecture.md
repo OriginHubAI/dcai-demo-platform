@@ -141,3 +141,706 @@ class OperatorABC:
         """
         pass
 ```
+
+---
+
+## 5. REST API 接口文档
+
+DataFlow System 通过 FastAPI 提供 RESTful API 接口，供前端或外部系统调用。所有 API 端点均返回统一的响应格式。
+
+### 5.1 通用响应格式
+
+所有 API 端点返回 `DataflowSystemResponse` 格式：
+
+```python
+class DataflowSystemResponse(BaseModel):
+    code: int          # 响应码：0=成功, 400=请求错误, 404=未找到, 500=内部错误
+    message: str       # 响应消息
+    data: Optional[Any] = None  # 响应数据（成功时包含具体数据）
+```
+
+**响应码定义：**
+- `0` - SUCCESS: 请求成功
+- `400` - BAD_REQUEST: 请求参数错误或业务逻辑错误
+- `404` - NOT_FOUND: 资源未找到
+- `500` - INTERNAL_ERROR: 服务器内部错误
+
+### 5.2 算子管理 API (Operators)
+
+#### 5.2.1 列出所有可用算子
+
+**端点：** `GET /operators`
+
+**描述：** 查询系统中所有已注册的算子及其配置信息。算子在系统启动时从 Ray 集群加载并保存到数据库。
+
+**请求参数：** 无
+
+**响应示例：**
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": [
+    {
+      "id": "operator_id_1",
+      "name": "LLMExtractor",
+      "type": "AI_SERVICE",
+      "type1": "EXTRACTION",
+      "type2": "LLM",
+      "description": "使用大语言模型提取结构化信息",
+      "parameters": {
+        "model": {"type": "string", "required": true},
+        "prompt_template": {"type": "string", "required": true},
+        "temperature": {"type": "float", "default": 0.7}
+      }
+    }
+  ]
+}
+```
+
+**错误响应：**
+- `500` - 查询算子列表失败
+
+---
+
+### 5.3 流水线管理 API (Pipelines)
+
+#### 5.3.1 创建流水线定义
+
+**端点：** `POST /pipelines/create`
+
+**描述：** 创建一个新的流水线定义，包含节点（算子）和边（数据流连接）的 DAG 结构。流水线定义保存到数据库，但不立即执行。
+
+**请求体：**
+```json
+{
+  "pipeline_key": "uuid",
+  "pipeline_config": {
+    "name": "数据处理流水线",
+    "task_type": "data_processing",
+    "nodes": [
+      {
+        "id": "node_uuid_1",
+        "task_idx": 0,
+        "operator_name": "DataLoader",
+        "operator_type": "INPUT",
+        "config": {
+          "init": {},
+          "run": {
+            "input_key": "input",
+            "output_key": "loaded_data"
+          }
+        }
+      }
+    ],
+    "edges": [
+      {
+        "source": "node_uuid_1",
+        "target": "node_uuid_2",
+        "source_port": "loaded_data",
+        "target_port": "input"
+      }
+    ]
+  }
+}
+```
+
+**响应示例：**
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "pipeline_key": "uuid"
+  }
+}
+```
+
+**错误响应：**
+- `400` - 流水线配置错误（如存在环、节点配置无效等）
+
+#### 5.3.2 创建流水线并运行工作流
+
+**端点：** `POST /pipelines/run`
+
+**描述：** 一次性完成流水线定义创建和工作流执行。这是创建流水线定义和创建工作流的组合操作。
+
+**请求体：**
+```json
+{
+  "pipeline_key": "uuid",
+  "pipeline_config": { /* 同 5.3.1 */ },
+  "priority": 50,
+  "datasets_config": [
+    {
+      "dataset_id": "dataset_uuid",
+      "bucket_name": "my-bucket",
+      "storage_options": {
+        "key": "access_key",
+        "secret": "secret_key",
+        "client_kwargs": {
+          "endpoint_url": "https://s3.example.com",
+          "region_name": "us-east-1"
+        }
+      },
+      "s3_files": ["s3://bucket/file1.jsonl"],
+      "s3_directory": null
+    }
+  ],
+  "output_storage_config": {
+    "bucket_name": "output-bucket",
+    "storage_options": { /* 同上 */ },
+    "s3_result_directory": "results/2024-01-01"
+  }
+}
+```
+
+**响应示例：**
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "pipeline_key": "uuid",
+    "workflow_id": "flow_run_uuid"
+  }
+}
+```
+
+**错误响应：**
+- `400` - 流水线配置错误或工作流创建失败
+
+#### 5.3.3 列出流水线的所有工作流
+
+**端点：** `GET /pipelines/{pipeline_key}/workflows`
+
+**描述：** 查询指定流水线的所有工作流执行记录。
+
+**路径参数：**
+- `pipeline_key` (UUID) - 流水线唯一标识
+
+**响应示例：**
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "pipeline_key": "uuid",
+    "workflow_ids": ["workflow_uuid_1", "workflow_uuid_2"]
+  }
+}
+```
+
+**错误响应：**
+- `500` - 查询失败
+
+---
+
+### 5.4 工作流管理 API (Workflows)
+
+#### 5.4.1 创建工作流
+
+**端点：** `POST /workflows/create`
+
+**描述：** 基于已存在的流水线定义创建一个新的工作流执行实例。工作流会提交到 Prefect 集群进行调度执行。
+
+**请求体：**
+```json
+{
+  "pipeline_key": "uuid",
+  "priority": 50,
+  "datasets_config": [
+    {
+      "dataset_id": "dataset_uuid",
+      "bucket_name": "my-bucket",
+      "storage_options": {
+        "key": "access_key",
+        "secret": "secret_key",
+        "client_kwargs": {
+          "endpoint_url": "https://s3.example.com",
+          "region_name": "us-east-1"
+        }
+      },
+      "s3_files": ["s3://bucket/file1.jsonl", "s3://bucket/file2.jsonl"],
+      "s3_directory": ["s3://bucket/data/"]
+    }
+  ],
+  "output_storage_config": {
+    "bucket_name": "output-bucket",
+    "storage_options": { /* 同上 */ },
+    "s3_result_directory": "results/2024-01-01"
+  }
+}
+```
+
+**字段说明：**
+- `priority`: 工作流优先级 (0-100)，数值越大优先级越高
+- `datasets_config`: 输入数据集配置列表
+  - `s3_files`: S3 文件路径列表（优先使用）
+  - `s3_directory`: S3 目录路径列表
+- `output_storage_config`: 输出存储配置
+  - `s3_result_directory`: 结果存储目录前缀
+
+**响应示例：**
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "pipeline_key": "uuid",
+    "workflow_id": "flow_run_uuid"
+  }
+}
+```
+
+**错误响应：**
+- `400` - 流水线定义不存在或参数错误
+
+#### 5.4.2 查询工作流状态
+
+**端点：** `GET /workflows/{workflow_id}/status`
+
+**描述：** 查询指定工作流的执行状态。
+
+**路径参数：**
+- `workflow_id` (UUID) - 工作流唯一标识（即 Prefect Flow Run ID）
+
+**响应示例：**
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "workflow_id": "uuid",
+    "status": "RUNNING"
+  }
+}
+```
+
+**状态值：**
+- `PENDING` - 等待执行
+- `RUNNING` - 执行中
+- `COMPLETED` - 执行成功
+- `FAILED` - 执行失败
+- `CANCELLED` - 已取消
+- `CRASHED` - 崩溃
+
+**错误响应：**
+- `500` - 查询状态失败
+
+#### 5.4.3 列出子工作流
+
+**端点：** `GET /workflows/{workflow_id}/sub-workflows`
+
+**描述：** 列出指定工作流的所有子工作流（Sub-flow）ID。每个算子节点对应一个子工作流。
+
+**路径参数：**
+- `workflow_id` (UUID) - 工作流唯一标识
+
+**响应示例：**
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "workflow_id": "uuid",
+    "sub_workflow_id_list": ["sub_flow_uuid_1", "sub_flow_uuid_2"]
+  }
+}
+```
+
+**错误响应：**
+- `500` - 查询失败
+
+#### 5.4.4 查询子工作流状态
+
+**端点：** `GET /workflows/{workflow_id}/{sub_workflow_id}/status`
+
+**描述：** 查询指定子工作流的执行状态。
+
+**路径参数：**
+- `workflow_id` (UUID) - 工作流唯一标识
+- `sub_workflow_id` (UUID) - 子工作流唯一标识
+
+**响应示例：**
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "workflow_id": "uuid",
+    "sub_workflow_id": "sub_uuid",
+    "status": "COMPLETED"
+  }
+}
+```
+
+**错误响应：**
+- `500` - 查询状态失败
+
+#### 5.4.5 取消工作流
+
+**端点：** `POST /workflows/{workflow_id}/cancel`
+
+**描述：** 取消正在执行或等待执行的工作流。
+
+**路径参数：**
+- `workflow_id` (UUID) - 工作流唯一标识
+
+**响应示例：**
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": null
+}
+```
+
+**错误响应：**
+- `500` - 取消失败
+
+#### 5.4.6 暂停工作流 (未实现)
+
+**端点：** `POST /workflows/{workflow_id}/pause`
+
+**状态：** `NotImplementedError`
+
+**描述：** 暂停正在执行的工作流（功能待实现）。
+
+#### 5.4.7 恢复工作流 (未实现)
+
+**端点：** `POST /workflows/{workflow_id}/resume`
+
+**状态：** `NotImplementedError`
+
+**描述：** 恢复已暂停的工作流（功能待实现）。
+
+#### 5.4.8 更新工作流优先级 (未实现)
+
+**端点：** `PATCH /workflows/{workflow_id}/priority`
+
+**状态：** `NotImplementedError`
+
+**描述：** 动态调整工作流的执行优先级（功能待实现）。
+
+**预期请求体：**
+```json
+{
+  "priority": 80
+}
+```
+
+#### 5.4.9 获取工作流结果 (未实现)
+
+**端点：** `GET /workflows/{workflow_id}/results`
+
+**状态：** `NotImplementedError`
+
+**描述：** 获取工作流执行完成后的结果文件路径（功能待实现）。
+
+**预期响应格式：**
+```json
+{
+  "s3_files": ["s3://bucket/results/file1.jsonl"],
+  "storage_options": {
+    "key": "access_key",
+    "secret": "secret_key",
+    "client_kwargs": {
+      "endpoint_url": "https://s3.example.com",
+      "region_name": "us-east-1"
+    }
+  }
+}
+```
+
+---
+
+### 5.5 Prefect 回调 API (Prefect Callbacks)
+
+#### 5.5.1 接收 Prefect Webhook 通知
+
+**端点：** `POST /prefect/callback`
+
+**描述：** 接收来自 Prefect CustomWebhookNotificationBlock 的 Webhook 通知。Prefect 在工作流、子工作流或算子任务状态变化时会调用此端点。
+
+**请求体：**
+```json
+{
+  "subject": "Workflow State Changed",
+  "body": {
+    "state": "COMPLETED",
+    "flow_run_id": "uuid"
+  }
+}
+```
+
+**支持的回调类型：**
+
+1. **工作流回调 (WorkflowCallbackPayload)**
+```json
+{
+  "subject": "Workflow Callback",
+  "body": {
+    "state": "RUNNING",
+    "flow_run_id": "workflow_uuid"
+  }
+}
+```
+
+2. **子工作流回调 (SubFlowCallbackPayload)**
+```json
+{
+  "subject": "Sub-flow Callback",
+  "body": {
+    "state": "COMPLETED",
+    "sub_flow_run_id": "sub_workflow_uuid"
+  }
+}
+```
+
+3. **算子任务回调 (OperatorTaskCallbackPayload)**
+```json
+{
+  "subject": "Operator Task Callback",
+  "body": {
+    "state": "FAILED",
+    "sub_flow_run_id": "sub_workflow_uuid",
+    "operator_task_run_id": "task_uuid",
+    "operator_task_name": "LLMExtractor"
+  }
+}
+```
+
+**响应示例：**
+```json
+{
+  "ok": true
+}
+```
+
+**错误响应：**
+- `400` - 无效的 payload 类型
+
+---
+
+### 5.6 核心数据模型
+
+#### 5.6.1 Node (节点)
+
+```python
+class Node(BaseModel):
+    id: UUID                    # 节点唯一标识
+    task_idx: int              # 任务索引（执行顺序）
+    operator_name: str         # 算子名称
+    operator_type: str         # 算子类型
+    config: NodeConfig         # 节点配置
+        - init: Dict[str, Any]   # 初始化参数
+        - run: Dict[str, Any]    # 运行时参数
+```
+
+#### 5.6.2 Edge (边)
+
+```python
+class Edge(BaseModel):
+    source: UUID               # 源节点 ID
+    target: UUID               # 目标节点 ID
+    source_port: str          # 源节点输出端口
+    target_port: str          # 目标节点输入端口
+```
+
+#### 5.6.3 DatasetConfig (数据集配置)
+
+```python
+class DatasetConfig(BaseModel):
+    dataset_id: UUID                      # 数据集 ID
+    bucket_name: str                      # S3 桶名称
+    storage_options: S3StorageOptions     # S3 访问配置
+    s3_files: Optional[List[str]]         # S3 文件列表（优先）
+    s3_directory: Optional[List[str]]     # S3 目录列表
+```
+
+#### 5.6.4 OutputStorageConfig (输出存储配置)
+
+```python
+class OutputStorageConfig(BaseModel):
+    bucket_name: str                      # 输出桶名称
+    storage_options: S3StorageOptions     # S3 访问配置
+    s3_result_directory: str              # 结果目录前缀
+```
+
+**结果路径格式：**
+```
+s3://{bucket_name}/{s3_result_directory}/{flow_run_id}/{sub_flow_run_id}/{task_idx}/output.jsonl
+```
+
+---
+
+### 5.7 API 使用示例
+
+#### 5.7.1 完整工作流示例
+
+**步骤 1: 查询可用算子**
+```bash
+curl -X GET http://localhost:8000/operators
+```
+
+**步骤 2: 创建流水线并运行**
+```bash
+curl -X POST http://localhost:8000/pipelines/run \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pipeline_key": "550e8400-e29b-41d4-a716-446655440000",
+    "pipeline_config": {
+      "name": "文本处理流水线",
+      "task_type": "text_processing",
+      "nodes": [
+        {
+          "id": "node-1",
+          "task_idx": 0,
+          "operator_name": "TextLoader",
+          "operator_type": "INPUT",
+          "config": {
+            "init": {},
+            "run": {"input_key": "text", "output_key": "loaded_text"}
+          }
+        },
+        {
+          "id": "node-2",
+          "task_idx": 1,
+          "operator_name": "LLMExtractor",
+          "operator_type": "PROCESSOR",
+          "config": {
+            "init": {"model": "gpt-4"},
+            "run": {"input_key": "loaded_text", "output_key": "extracted_data"}
+          }
+        }
+      ],
+      "edges": [
+        {
+          "source": "node-1",
+          "target": "node-2",
+          "source_port": "loaded_text",
+          "target_port": "loaded_text"
+        }
+      ]
+    },
+    "priority": 50,
+    "datasets_config": [
+      {
+        "dataset_id": "dataset-uuid",
+        "bucket_name": "input-bucket",
+        "storage_options": {
+          "key": "your-access-key",
+          "secret": "your-secret-key",
+          "client_kwargs": {
+            "endpoint_url": "https://s3.amazonaws.com",
+            "region_name": "us-east-1"
+          }
+        },
+        "s3_files": ["s3://input-bucket/data.jsonl"]
+      }
+    ],
+    "output_storage_config": {
+      "bucket_name": "output-bucket",
+      "storage_options": {
+        "key": "your-access-key",
+        "secret": "your-secret-key",
+        "client_kwargs": {
+          "endpoint_url": "https://s3.amazonaws.com",
+          "region_name": "us-east-1"
+        }
+      },
+      "s3_result_directory": "results/2024-03-14"
+    }
+  }'
+```
+
+**步骤 3: 查询工作流状态**
+```bash
+curl -X GET http://localhost:8000/workflows/{workflow_id}/status
+```
+
+**步骤 4: 查询子工作流列表**
+```bash
+curl -X GET http://localhost:8000/workflows/{workflow_id}/sub-workflows
+```
+
+**步骤 5: 取消工作流（如需要）**
+```bash
+curl -X POST http://localhost:8000/workflows/{workflow_id}/cancel
+```
+
+#### 5.7.2 分步创建示例
+
+**先创建流水线定义：**
+```bash
+curl -X POST http://localhost:8000/pipelines/create \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pipeline_key": "pipeline-uuid",
+    "pipeline_config": { /* 流水线配置 */ }
+  }'
+```
+
+**再创建工作流执行：**
+```bash
+curl -X POST http://localhost:8000/workflows/create \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pipeline_key": "pipeline-uuid",
+    "priority": 50,
+    "datasets_config": [ /* 数据集配置 */ ],
+    "output_storage_config": { /* 输出配置 */ }
+  }'
+```
+
+---
+
+### 5.8 API 设计要点总结
+
+#### 5.8.1 关键概念
+
+1. **Pipeline (流水线)**: 定义时配置，包含节点和边的 DAG 结构，可复用
+2. **Workflow (工作流)**: 运行时实例，基于 Pipeline 定义创建，包含具体的数据集和输出配置
+3. **Sub-workflow (子工作流)**: 每个算子节点对应一个子工作流，由 Prefect 调度
+4. **Operator (算子)**: 具体的数据处理单元，在 Ray 集群中执行
+
+#### 5.8.2 API 调用流程
+
+```
+1. GET /operators
+   ↓ (查询可用算子)
+2. POST /pipelines/create
+   ↓ (创建流水线定义)
+3. POST /workflows/create
+   ↓ (创建工作流实例)
+4. GET /workflows/{id}/status
+   ↓ (轮询状态)
+5. GET /workflows/{id}/results
+   (获取结果)
+```
+
+**或使用快捷方式：**
+```
+1. GET /operators
+   ↓
+2. POST /pipelines/run
+   ↓ (一步完成创建和运行)
+3. GET /workflows/{id}/status
+```
+
+#### 5.8.3 状态管理
+
+- 工作流状态由 Prefect 管理，通过 API 查询
+- 支持通过 Webhook 接收状态变化通知
+- 可取消正在执行的工作流
+- 暂停/恢复功能待实现
+
+#### 5.8.4 错误处理
+
+- 所有 API 返回统一的 `DataflowSystemResponse` 格式
+- `code=0` 表示成功，其他值表示错误
+- 错误信息包含在 `message` 字段中
+- 建议客户端根据 `code` 进行错误处理
+
+---
