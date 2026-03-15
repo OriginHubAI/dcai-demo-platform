@@ -51,7 +51,7 @@ _dataflow_app = None
 _backend_dir = os.environ.get(
     "DATAFLOW_WEBUI_BACKEND_DIR",
     os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "..", "DCAI-DataFlow-WebUI", "backend")
+        os.path.join(os.path.dirname(__file__), "..", "..", "dataflow-webui", "backend")
     ),
 )
 
@@ -68,6 +68,14 @@ if os.path.isdir(_backend_dir):
     os.environ.setdefault("ENABLE_HF_API", "false")
     # DataFlow-WebUI delegates HF hub API calls to dcai-platform's HF datasets service.
     os.environ.setdefault("EXTERNAL_HF_API_URL", "http://localhost:18000/api/hf")
+    
+    # Pass LLM configuration to DataFlow-WebUI for Builtin_LLM serving initialization
+    if "LLM_PROVIDER_BASE_URL" in os.environ:
+        os.environ.setdefault("LLM_PROVIDER_BASE_URL", os.environ["LLM_PROVIDER_BASE_URL"])
+    if "LLM_PROVIDER_API_KEY" in os.environ:
+        os.environ.setdefault("LLM_PROVIDER_API_KEY", os.environ["LLM_PROVIDER_API_KEY"])
+    if "LLM_DEFAULT_MODEL" in os.environ:
+        os.environ.setdefault("LLM_DEFAULT_MODEL", os.environ["LLM_DEFAULT_MODEL"])
 
     try:
         from app.main import app as _dataflow_app  # type: ignore[import]

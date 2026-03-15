@@ -261,12 +261,12 @@ DATAFLOW_SYSTEM_URL = os.environ.get('DATAFLOW_SYSTEM_URL', 'http://127.0.0.1:80
 
 # Dataset file registry — flat-file datasets (jsonl/json/parquet/csv)
 # DATASET_SCAN_DIR: directory tree to scan for data files on startup.
-#   Default: <repo-root>/DCAI-DataFlow-WebUI/backend/data/dataflow_core/example_data
+#   Default: <repo-root>/dataflow-webui/backend/data/dataflow_core/example_data
 #   Override with env var DATASET_SCAN_DIR to point anywhere.
 _REPO_ROOT = os.path.abspath(os.path.join(BASE_DIR, '..', '..'))
 DATASET_SCAN_DIR = os.environ.get(
     'DATASET_SCAN_DIR',
-    os.path.join(_REPO_ROOT, 'DCAI-DataFlow-WebUI', 'backend', 'data', 'dataflow_core', 'example_data'),
+    os.path.join(_REPO_ROOT, 'dataflow-webui', 'backend', 'data', 'dataflow_core', 'example_data'),
 )
 DATASET_REGISTRY_PATH = os.environ.get(
     'DATASET_REGISTRY_PATH',
