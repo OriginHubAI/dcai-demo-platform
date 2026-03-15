@@ -39,3 +39,6 @@ dataflow-system
 dataflow-loopai
 dataflow-agent
 hf-datasets
+
+# clip images for dev
+.clip_images

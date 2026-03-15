@@ -13,6 +13,7 @@ export default defineConfig(({ mode }) => {
       }
     },
     server: {
+      allowedHosts: ['gtrdesktop'],
       proxy: {
         '/api': {
           target: apiTarget,
