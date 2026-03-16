@@ -203,15 +203,9 @@ The `/api/hf/` provides fully compatible APIs with **Hugging Face Hub** and **Hu
 
 ## Viewer APIs - 数据集内容浏览
 
-**注意 / Note:** 所有 Viewer API 都有两个版本：
-- 直接路径：`/api/hf/{endpoint}`
-- Viewer 前缀：`/api/hf/viewer/{endpoint}`
-
-两者功能完全相同，Viewer 前缀版本用于嵌入式 DataFlow-WebUI 兼容性。
-
 ### 1. 检查数据集有效性 / Check Dataset Validity
 
-**端点 / Endpoint:** `GET /api/hf/is-valid` 或 `GET /api/hf/viewer/is-valid`
+**端点 / Endpoint:** `GET /api/hf/viewer/is-valid`
 **视图函数 / View:** `hf_is_valid`
 **认证 / Auth:** AllowAny
 
@@ -241,7 +235,7 @@ The `/api/hf/` provides fully compatible APIs with **Hugging Face Hub** and **Hu
 
 ### 2. 获取数据集分片 / Get Dataset Splits
 
-**端点 / Endpoint:** `GET /api/hf/splits` 或 `GET /api/hf/viewer/splits`
+**端点 / Endpoint:** `GET /api/hf/viewer/splits`
 **视图函数 / View:** `hf_get_splits`
 **认证 / Auth:** AllowAny
 
@@ -276,7 +270,7 @@ The `/api/hf/` provides fully compatible APIs with **Hugging Face Hub** and **Hu
 
 ### 3. 获取数据集信息 / Get Dataset Info
 
-**端点 / Endpoint:** `GET /api/hf/info` 或 `GET /api/hf/viewer/info`
+**端点 / Endpoint:** `GET /api/hf/viewer/info`
 **视图函数 / View:** `hf_dataset_info`
 **认证 / Auth:** AllowAny
 
@@ -312,8 +306,8 @@ The `/api/hf/` provides fully compatible APIs with **Hugging Face Hub** and **Hu
 ### 4. 获取数据行 / Get Dataset Rows
 
 **端点 / Endpoint:**
-- `GET /api/hf/rows` 或 `GET /api/hf/viewer/rows`
-- `GET /api/hf/first-rows` 或 `GET /api/hf/viewer/first-rows`
+- `GET /api/hf/viewer/rows`
+- `GET /api/hf/viewer/first-rows`
 
 **视图函数 / View:** `hf_get_rows`
 **认证 / Auth:** AllowAny
@@ -361,7 +355,7 @@ The `/api/hf/` provides fully compatible APIs with **Hugging Face Hub** and **Hu
 
 ### 5. Parquet 导出 / Parquet Export
 
-**端点 / Endpoint:** `GET /api/hf/parquet` 或 `GET /api/hf/viewer/parquet`
+**端点 / Endpoint:** `GET /api/hf/viewer/parquet`
 **视图函数 / View:** `hf_parquet_list`
 **认证 / Auth:** AllowAny
 
@@ -397,15 +391,12 @@ The `/api/hf/` provides fully compatible APIs with **Hugging Face Hub** and **Hu
 
 | 端点 / Endpoint | 方法 / Method | 视图函数 / View | 功能 / Purpose |
 |----------------|--------------|----------------|---------------|
-| `/api/hf/is-valid` | GET | `hf_is_valid` | 检查数据集有效性 |
-| `/api/hf/splits` | GET | `hf_get_splits` | 获取数据集分片 |
-| `/api/hf/rows` | GET | `hf_get_rows` | 获取数据行 |
-| `/api/hf/first-rows` | GET | `hf_get_rows` | 获取首批数据行 |
-| `/api/hf/info` | GET | `hf_dataset_info` | 获取数据集信息 |
-| `/api/hf/parquet` | GET | `hf_parquet_list` | Parquet 导出（未实现） |
-| `/api/hf/viewer/*` | GET | (同上) | Viewer 前缀版本 |
-
-**注意 / Note:** 所有 Viewer API 都有 `/viewer/` 前缀的副本，功能完全相同。
+| `/api/hf/viewer/is-valid` | GET | `hf_is_valid` | 检查数据集有效性 |
+| `/api/hf/viewer/splits` | GET | `hf_get_splits` | 获取数据集分片 |
+| `/api/hf/viewer/rows` | GET | `hf_get_rows` | 获取数据行 |
+| `/api/hf/viewer/first-rows` | GET | `hf_get_rows` | 获取首批数据行 |
+| `/api/hf/viewer/info` | GET | `hf_dataset_info` | 获取数据集信息 |
+| `/api/hf/viewer/parquet` | GET | `hf_parquet_list` | Parquet 导出（未实现） |
 
 ---
 
@@ -509,18 +500,15 @@ curl -X DELETE http://localhost:8000/api/hf/api/datasets/my-dataset
 
 ```bash
 # 检查有效性
-curl "http://localhost:8000/api/hf/is-valid?dataset=my-dataset"
+curl "http://localhost:8000/api/hf/viewer/is-valid?dataset=my-dataset"
 
 # 获取分片
-curl "http://localhost:8000/api/hf/splits?dataset=my-dataset"
+curl "http://localhost:8000/api/hf/viewer/splits?dataset=my-dataset"
 
 # 获取数据集信息
-curl "http://localhost:8000/api/hf/info?dataset=my-dataset"
+curl "http://localhost:8000/api/hf/viewer/info?dataset=my-dataset"
 
 # 获取数据行
-curl "http://localhost:8000/api/hf/rows?dataset=my-dataset&offset=0&length=10"
-
-# 使用 viewer 前缀
 curl "http://localhost:8000/api/hf/viewer/rows?dataset=my-dataset&offset=0&length=10"
 ```
 
