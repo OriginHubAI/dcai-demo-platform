@@ -31,7 +31,8 @@ COPY dataflow-webui/backend/requirements.txt /tmp/dataflow-requirements.txt
 RUN pip install --no-cache-dir -r /tmp/dataflow-requirements.txt
 
 # Install claude-code CLI
-RUN pip install --no-cache-dir claude-code
+# RUN pip install --no-cache-dir claude-code
+RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Copy and install frontend dependencies
 COPY package.json package-lock.json* /tmp/dcai-frontend/
