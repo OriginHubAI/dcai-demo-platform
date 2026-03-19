@@ -111,6 +111,58 @@ subject
 
 这样可以避免把“可读名字”误当成“稳定身份”。
 
+### 3.4 Dataset repo 标识与存储路径建议
+
+对于 Dataset 这类带 Git repo 语义的资源，建议明确区分：
+
+- 外部可读 repo 标识：`{owner_slug}/{dataset_slug}`
+- 内部稳定资源标识：`dataset.id`
+- 内部所有权关联：`owner_subject_id`
+
+也就是说：
+
+- 对外 API、页面 URL、Hub 兼容 `repo_id` 使用 `owner_slug/dataset_slug`
+- 数据库外键、授权 tuple、服务间内部引用使用 `dataset.id` 和 `owner_subject_id`
+- 本地 repo 存储路径不要直接依赖 slug，而应依赖稳定主键
+
+推荐模式：
+
+- canonical repo_id: `acme/my-dataset`
+- dataset table:
+  - `id`
+  - `owner_subject_id`
+  - `slug`
+- local git repo path:
+  - `datasets/{dataset_id}.git`
+  - 或 `datasets/{dataset_id}/`
+
+不建议直接把本地 repo path 设计成：
+
+- `datasets/{owner_slug}/{dataset_slug}.git`
+
+原因是：
+
+- slug 可读，但 rename 后会变化
+- 资源转移 owner 后，`owner_slug` 也会变化
+- 如果 repo 物理路径直接绑定 slug，rename / transfer 会引入额外的文件系统迁移和兼容问题
+
+更稳妥的做法是：
+
+- 路由层接收 `owner_slug/dataset_slug`
+- 先解析到 `owner_subject_id + dataset.id`
+- 再由 `dataset.id` 定位本地 repo
+
+这样可以同时满足：
+
+- 对外路径直观，兼容 HuggingFace 风格
+- 对内身份稳定，适合授权和跨服务引用
+- rename / transfer 时，只需更新 slug 映射，不必迁移底层 repo 存储
+
+如果后续需要支持 rename / transfer，建议再增加：
+
+- `canonical_repo_id` 作为缓存字段或派生字段
+- `dataset_slug_history` / redirect 表，用于旧路径跳转或兼容解析
+
 ### 3.2 Resource
 
 ```text
