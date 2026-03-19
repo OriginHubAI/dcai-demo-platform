@@ -86,6 +86,31 @@ subject
 - 后续可以自然扩展 service account、机器身份、机器人账号
 - 授权模型不再依赖大量 `if owner_type == ...`
 
+### 3.3 `id` / `slug` / `display_name` 的职责划分
+
+建议从一开始就明确三者的边界：
+
+- `id`
+  - 内部稳定主键
+  - 用于 token 的 `sub`
+  - 用于数据库外键和 relation tuple
+- `slug`
+  - 外部可读路径标识
+  - 用于 URL 中的 `owner_slug`
+  - 可修改，但必须保持全局唯一
+- `display_name`
+  - 纯展示用途
+  - 可重复
+  - 可频繁修改
+
+推荐原则：
+
+- 认证和授权系统依赖 `id`
+- 路由和页面展示依赖 `slug`
+- UI 文案依赖 `display_name`
+
+这样可以避免把“可读名字”误当成“稳定身份”。
+
 ### 3.2 Resource
 
 ```text
@@ -238,6 +263,8 @@ token 只应携带身份上下文和粗粒度 scope，不应携带完整资源 A
 ```json
 {
   "sub": "user_123",
+  "subject_type": "user",
+  "slug": "alice",
   "sid": "session_abc",
   "org_id": "org_456",
   "scp": ["packages:read", "datasets:write"],
@@ -255,6 +282,8 @@ token 只应携带身份上下文和粗粒度 scope，不应携带完整资源 A
 字段解释：
 
 - `sub`: 当前用户或主体 ID
+- `subject_type`: 主体类型
+- `slug`: 当前主体的可读标识，可选
 - `org_id`: 当前激活组织上下文
 - `scp`: 粗粒度能力范围
 - `aud`: token 目标服务
@@ -278,6 +307,42 @@ token 只应携带身份上下文和粗粒度 scope，不应携带完整资源 A
 - 无法支持列表页批量鉴权优化
 
 因此，细粒度资源权限应通过授权层查询得到，而不是通过 token claim 推断。
+
+### 6.2.1 `sub` 不应使用可修改用户名
+
+`sub` 应始终使用稳定且不可变的主体 ID，而不是 username 或 slug。
+
+不推荐：
+
+```json
+{
+  "sub": "alice"
+}
+```
+
+推荐：
+
+```json
+{
+  "sub": "user_123456",
+  "subject_type": "user",
+  "slug": "alice"
+}
+```
+
+原因如下：
+
+- username / slug 可能被修改
+- 用户改名后，历史 token 语义会变脏
+- 审计日志中的主体标识会不稳定
+- 下游缓存和权限关系会更难维护
+- 如果未来支持 slug 回收或重用，会带来身份混淆风险
+
+因此建议：
+
+- `sub` 只存稳定 ID
+- `slug` 作为可选辅助 claim
+- 真正的授权判断与资源关联都基于内部 ID，而不是可变 slug
 
 ### 6.3 FastAPI 只验证内部 token 的含义
 
@@ -524,6 +589,33 @@ sequenceDiagram
 - 只有明确需要减少重复鉴权时，才引入 `Resource-Bound Capability Token`
 - capability token 必须绑定资源和动作，不能只是 `dataset.update` 这种泛化权限
 
+### 7.4.1 URL 中允许使用 slug，但授权内部使用 ID
+
+平台对外 URL 可以继续采用可读的 slug 形式：
+
+- `/{owner_slug}/{package_slug}`
+- `/datasets/{owner_slug}/{dataset_slug}`
+
+但进入后端后，应尽快完成解析：
+
+- `owner_slug -> owner_subject_id`
+- `resource_slug -> resource_id`
+
+后续授权判断、数据库查询、relation tuple 计算都应基于稳定 ID，而不是继续基于 slug。
+
+推荐流程：
+
+1. 请求进入 Django / FastAPI
+2. 将 URL 中的 slug 解析成内部 ID
+3. 使用内部 ID 调用 `Check` / `CheckBulk`
+4. 在响应层再决定是否返回 slug
+
+这样可以兼顾：
+
+- URL 友好性
+- 身份稳定性
+- 授权计算的可维护性
+
 ### 7.5 推荐的责任分层
 
 - Django Gateway
@@ -767,6 +859,12 @@ POST /authz/resolve
 - 返回资源主键
 
 适合对外 URL 层，但内部服务之间不一定必须使用。
+
+因此 `Resolve` 的主要作用是：
+
+- 把可读 slug 解析成稳定 ID
+- 避免业务服务到处重复写 slug 解析逻辑
+- 为后续 `Check` 提供统一的内部主键输入
 
 ---
 
