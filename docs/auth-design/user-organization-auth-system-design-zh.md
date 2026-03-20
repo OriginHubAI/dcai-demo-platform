@@ -364,6 +364,151 @@ def validate_internal_token(authorization: str) -> dict:
     return payload
 ```
 
+### 3.4.2 登录方式与账号找回逻辑
+
+平台建议同时支持两类登录方式：
+
+- GitHub OAuth 登录
+- 邮箱 + 密码登录
+
+并补齐以下认证能力：
+
+- 邮箱注册
+- 邮箱验证
+- 忘记密码
+- 重置密码
+- GitHub 账号绑定 / 解绑定
+
+推荐原则：
+
+- 用户在平台内部只有一个稳定 `Subject`
+- GitHub、邮箱密码都只是登录凭证入口，不应生成多个用户主体
+- 一个用户可以同时绑定 GitHub 和邮箱密码
+- 忘记密码仅针对邮箱密码登录生效，不影响 GitHub OAuth 登录
+
+#### GitHub OAuth 登录流程
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant W as Web
+    participant G as Django Backend
+    participant GH as GitHub
+    participant DB as PostgreSQL
+
+    U->>W: Click login with GitHub
+    W->>G: GET /api/v1/auth/github/login
+    G-->>W: redirect to GitHub OAuth
+    W->>GH: authorize
+    GH-->>W: redirect with code
+    W->>G: GET /api/v1/auth/github/callback?code=...
+    G->>GH: exchange code for GitHub access token
+    G->>GH: fetch user profile + primary email
+    G->>DB: find or create user subject
+    G->>DB: bind github account
+    G-->>W: issue access token + refresh token
+```
+
+GitHub 登录规则：
+
+- 优先按 GitHub `provider_user_id` 查找已绑定账号
+- 若未绑定，则可按已验证邮箱尝试合并到已有用户
+- 若邮箱也不存在，则创建新的 user subject
+- 首次 GitHub 登录后，建议补齐平台唯一 slug
+- GitHub 解绑前，如用户未设置邮箱密码，应禁止解绑，避免账号失联
+
+#### 邮箱密码登录流程
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant W as Web
+    participant G as Django Backend
+    participant DB as PostgreSQL
+
+    U->>W: Email + password login
+    W->>G: POST /api/v1/auth/login
+    G->>DB: load user credential
+    G->>G: verify password hash
+    G-->>W: access token + refresh token
+```
+
+邮箱密码规则：
+
+- 密码只能保存哈希，禁止保存明文
+- 推荐直接使用 Django 内建密码哈希体系
+- 注册后邮箱建议进入已验证或待验证状态
+- 未验证邮箱可限制敏感操作，如修改安全设置、组织创建
+
+#### 忘记密码与重置密码流程
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant W as Web
+    participant G as Django Backend
+    participant M as Mail Service
+    participant DB as PostgreSQL
+
+    U->>W: Forgot password
+    W->>G: POST /api/v1/auth/password/forgot
+    G->>DB: find email login account
+    G->>G: generate reset token
+    G->>M: send reset email
+    M-->>U: reset link
+    U->>W: open reset link
+    W->>G: POST /api/v1/auth/password/reset
+    G->>G: validate reset token
+    G->>DB: update password hash
+    G-->>W: password reset success
+```
+
+密码找回规则：
+
+- 忘记密码接口始终返回通用成功响应，避免邮箱枚举
+- reset token 必须一次性使用、短时有效，建议 15 到 30 分钟
+- 重置密码后应撤销旧 refresh token 与其他活跃会话
+- 若用户仅绑定 GitHub、未设置密码，则忘记密码接口不发送重置邮件
+
+#### 邮箱验证流程
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant W as Web
+    participant G as Django Backend
+    participant M as Mail Service
+    participant DB as PostgreSQL
+
+    U->>G: register email account
+    G->>DB: create pending email credential
+    G->>M: send verify email
+    M-->>U: verify link
+    U->>G: verify email token
+    G->>DB: mark email as verified
+    G-->>U: verification success
+```
+
+#### 安全约束
+
+- GitHub OAuth `state` 必须校验，防止 CSRF
+- 邮件重置 token 必须签名并带过期时间
+- 密码重置成功后必须写审计日志
+- GitHub 登录、绑定、解绑、密码重置都应触发安全事件日志
+- 账号绑定与解绑属于高风险操作，建议要求近期登录态或二次确认
+
+#### Django 实现建议
+
+- OAuth 登录优先使用 Django 社区成熟方案，如 `social-auth-app-django` 或同类实现
+- 邮件密码优先使用 Django 内建 `AbstractBaseUser` / password hasher 能力
+- 重置密码 token 可基于 Django signer 或一次性 token 表实现
+- 邮件发送应走异步任务，避免阻塞主请求链路
+- 所有认证邮件时间字段统一使用 UTC
+
 ### 3.5 性能指标
 
 建议目标：
@@ -409,6 +554,12 @@ def validate_internal_token(authorization: str) -> dict:
 - `POST /api/v1/auth/refresh`
 - `POST /api/v1/auth/token-exchange`
 - `POST /api/v1/auth/logout`
+- `GET /api/v1/auth/github/login`
+- `GET /api/v1/auth/github/callback`
+- `POST /api/v1/auth/password/forgot`
+- `POST /api/v1/auth/password/reset`
+- `POST /api/v1/auth/email/verify`
+- `POST /api/v1/auth/email/resend-verification`
 
 身份与组织接口：
 
@@ -443,6 +594,12 @@ Package / Dataset 权限相关接口：
 | `POST /api/v1/auth/refresh` | 刷新 access token，延续登录会话 | Web、CLI | refresh token 必须合法且未撤销 |
 | `POST /api/v1/auth/token-exchange` | 将用户 token 换成面向下游服务的短时内部 token | Django Gateway | 仅可信网关/内部服务可调用 |
 | `POST /api/v1/auth/logout` | 注销当前会话，废弃 refresh token 或 session | Web、CLI | 需要当前登录态 |
+| `GET /api/v1/auth/github/login` | 发起 GitHub OAuth 登录跳转 | Web | 生成并保存 `state`，防止 CSRF |
+| `GET /api/v1/auth/github/callback` | 处理 GitHub OAuth 回调，完成账号查找/合并/绑定并签发 token | Web | 必须校验 `state` 与 GitHub code |
+| `POST /api/v1/auth/password/forgot` | 发起忘记密码流程，发送密码重置邮件 | Web | 对外统一响应，避免邮箱枚举 |
+| `POST /api/v1/auth/password/reset` | 使用 reset token 重置密码 | Web | token 必须一次性、短时有效 |
+| `POST /api/v1/auth/email/verify` | 使用邮箱验证 token 完成邮箱验证 | Web | token 必须有效且未过期 |
+| `POST /api/v1/auth/email/resend-verification` | 重新发送邮箱验证邮件 | Web | 仅对未验证邮箱生效 |
 | `GET /api/v1/me` | 返回当前用户资料、所属组织、默认上下文 | Web、CLI | 需要有效 access token |
 | `GET /api/v1/orgs/{org_slug}` | 查询组织详情、基础配置、当前用户在组织内角色 | Web、CLI | 组织公开信息可读，敏感字段需成员权限 |
 | `POST /api/v1/orgs` | 创建组织，并为创建者自动建立 `owner` membership | Web | 需要登录；`org_slug` 全局唯一 |
