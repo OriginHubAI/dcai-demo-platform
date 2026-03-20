@@ -41,6 +41,7 @@ dataflow-agent
 hf-dataset-viewer
 hf-datasets
 huggingface_hub
+csghub-server
 
 # clip images for dev
 .clip_images
