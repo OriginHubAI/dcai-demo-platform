@@ -26,6 +26,7 @@
 - URL 使用 slug，授权与存储内部使用稳定 ID
 - 细粒度资源权限不写入长期 token
 - 列表权限结果允许使用 Redis 缓存，但权限变更必须强制失效
+- 资源权限整体对齐 HuggingFace 风格，统一采用 `owner/admin/write/read`，并允许 Package 增加 `proprietary` 作为平台扩展可见性
 
 ---
 
@@ -43,7 +44,7 @@
 核心结论：
 
 - 用户、组织、未来的 service account 都进入统一 `subjects` 表
-- Packages、Datasets 共享一致的 owner / visibility / collaborator 模式
+- Packages、Datasets 共享统一 owner、角色与可见性模型
 - 组织资源权限继承自 `org_memberships`
 - 个人资源才允许 `*_collaborators`
 - Django Gateway 作为入口层做认证、粗鉴权和 token exchange
@@ -113,10 +114,40 @@ flowchart LR
 
 统一动作语义：
 
-- `package.view | edit | admin | delete | transfer`
+- `package.read | write | admin | delete | transfer`
 - `dataset.view | edit | admin | delete | transfer`
 
-### 3.3 安全设计
+### 3.3 可见性定义
+
+通用可见性定义如下：
+
+- `private`
+  - 仅资源 owner、组织继承成员、显式授权协作者可访问
+  - 其他人既不可读，也不可用
+- `public`
+  - 匿名用户或外部访问者可读
+  - 修改、管理、删除仍需 owner 或继承权限
+
+Package 平台扩展可见性：
+
+- `proprietary`
+  - 对外允许使用 Package 能力，但不开放源码、版本明细和完整配置读取
+  - 适用于商业化算法包、闭源处理包、受限共享资产
+  - 这是在 HuggingFace 风格基础上的平台定制扩展，不影响统一 owner / role 模型
+
+因此建议：
+
+- Dataset 使用 `private | public`
+- Package 使用 `private | public | proprietary`
+
+对齐 HuggingFace 风格后的简化结论：
+
+- Dataset 可见性为 `private/public`
+- Package 可见性为 `private/public/proprietary`
+- 权限角色只有 `owner/admin/write/read`
+- Package 的“可用”默认由 `read` 权限派生，但 `proprietary` 允许“可用不可读”
+
+### 3.4 安全设计
 
 认证与授权边界：
 
@@ -133,7 +164,207 @@ flowchart LR
 - 资源转移 owner 时必须触发缓存失效与审计记录
 - 协作者仅允许挂载在个人资源，组织资源禁止直配 collaborator
 
-### 3.4 性能指标
+### 3.4.1 Token 签发与验证逻辑
+
+推荐采用统一签发、分层验证模式：
+
+- Django Backend 作为统一认证入口和 Token 签发方
+- FastAPI 微服务只接受 Django 签发的内部 Token
+- FastAPI 负责验证 Token 合法性，但不把 Token 验证等同于资源级授权
+
+推荐拆分两类 Token：
+
+1. Access Token
+   - 面向 Web / CLI
+   - 由 Django 签发
+   - 用于用户登录态和访问 Gateway
+2. Internal Service Token
+   - 面向 FastAPI 微服务
+   - 由 Django 通过 token exchange 签发
+   - 用于服务间调用
+
+典型链路：
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant W as Web/CLI
+    participant G as Django Backend
+    participant Z as Authz
+    participant F as FastAPI Service
+
+    U->>W: Login
+    W->>G: auth/login
+    G-->>W: access token + refresh token
+
+    W->>G: business request + access token
+    G->>G: validate access token
+    G->>Z: optional coarse/resource check
+    Z-->>G: allow
+    G->>G: mint internal service token
+    G->>F: forward request + internal token
+    F->>F: verify internal token
+    F->>Z: resource-level check if needed
+    Z-->>F: allow/deny
+    F-->>G: business response
+    G-->>W: response
+```
+
+职责边界：
+
+- Django
+  - 负责登录、刷新、注销
+  - 负责签发 Access Token 与 Internal Service Token
+  - 负责 token exchange
+  - 负责把外部用户上下文收敛为内部可信调用上下文
+- FastAPI
+  - 只验证内部 Token，不直接信任前端 Access Token
+  - 验证通过后再按需要调用统一授权接口
+  - 不自行扩散一套独立登录与签发体系
+
+#### Access Token 建议 Claim
+
+```json
+{
+  "iss": "dcai-django-auth",
+  "sub": "usr_123",
+  "subject_type": "user",
+  "slug": "alice",
+  "active_org_id": "org_456",
+  "scope": ["packages:read", "datasets:read"],
+  "aud": "dcai-gateway",
+  "iat": 1760000000,
+  "exp": 1760003600,
+  "jti": "atk_001"
+}
+```
+
+字段约束：
+
+- `sub` 必须是稳定用户 ID
+- `slug` 可选，仅用于展示和辅助上下文
+- `scope` 只表达粗粒度能力，不表达具体资源 ACL
+- `aud` 必须绑定 Gateway，避免前端 Token 被下游服务误用
+
+#### Internal Service Token 建议 Claim
+
+```json
+{
+  "iss": "dcai-django-auth",
+  "sub": "usr_123",
+  "subject_type": "user",
+  "active_org_id": "org_456",
+  "scope": ["package:read", "package:write"],
+  "aud": "package-service",
+  "azp": "django-gateway",
+  "act": {
+    "sub": "django-gateway"
+  },
+  "iat": 1760000000,
+  "exp": 1760000300,
+  "jti": "itk_001"
+}
+```
+
+字段约束：
+
+- `aud` 必须绑定单个目标微服务
+- `azp` / `act` 用于表达调用链和代理方
+- TTL 应明显短于 Access Token，建议 1 到 5 分钟
+- 仍然不承载资源级 ACL，只承载可信身份上下文
+
+#### Django 签发逻辑
+
+登录签发：
+
+1. 用户通过账号体系登录 Django
+2. Django 校验凭证与用户状态
+3. Django 生成 Access Token 和 Refresh Token
+4. Access Token 返回给 Web/CLI
+
+内部换票签发：
+
+1. Django 收到前端业务请求
+2. Django 验证 Access Token
+3. Django 解析当前用户、active org、粗 scope
+4. Django 视情况执行一次入口鉴权
+5. Django 为目标 FastAPI 服务签发短时 Internal Service Token
+6. Django 携带 Internal Service Token 转发请求
+
+#### FastAPI 验证逻辑
+
+FastAPI 标准验证步骤：
+
+1. 从 `Authorization: Bearer <token>` 读取 Token
+2. 校验签名、过期时间、发行方 `iss`
+3. 校验 `aud` 是否匹配当前服务
+4. 校验 `azp` / `act` 是否来自受信任 Gateway
+5. 解析 `sub`、`subject_type`、`active_org_id`、`scope`
+6. 如涉及资源读写，再调用 `Check` 或 `CheckBulk`
+
+必须拒绝的情况：
+
+- Token 签名非法
+- Token 已过期
+- `aud` 不匹配当前 FastAPI 服务
+- `iss` 不是平台认证服务
+- 调用方不是受信任的 Django Gateway
+
+#### Django / FastAPI 实现约束
+
+- Token 签发私钥只保存在 Django 认证侧
+- FastAPI 只持有公钥或 JWKS 拉取能力
+- 推荐使用非对称签名算法，如 `RS256` 或 `EdDSA`
+- FastAPI 不应共享 refresh token 逻辑
+- 微服务不应自行签发面向前端的登录 Token
+
+#### 资源级授权边界
+
+必须强调：
+
+- Token 验证成功，只说明“这个调用身份可信”
+- 不代表该主体一定能访问某个具体 Package 或 Dataset
+- 资源级操作仍需调用统一授权接口
+
+例外情况：
+
+- 如果 Django 已签发极短时、资源绑定的 capability token
+- 且 Token 中明确绑定 `resource_id + actions + aud`
+- FastAPI 可以在短窗口内跳过重复 `Check`
+- 高风险操作仍建议强制回源鉴权
+
+#### FastAPI 验证伪代码
+
+```python
+from fastapi import Header, HTTPException
+import jwt
+
+
+def validate_internal_token(authorization: str) -> dict:
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="missing bearer token")
+
+    token = authorization.removeprefix("Bearer ").strip()
+
+    try:
+        payload = jwt.decode(
+            token,
+            PUBLIC_KEY,
+            algorithms=["RS256"],
+            issuer="dcai-django-auth",
+            audience="package-service",
+        )
+    except jwt.PyJWTError as exc:
+        raise HTTPException(status_code=401, detail="invalid token") from exc
+
+    if payload.get("azp") != "django-gateway":
+        raise HTTPException(status_code=403, detail="untrusted caller")
+
+    return payload
+```
+
+### 3.5 性能指标
 
 建议目标：
 
@@ -143,7 +374,7 @@ flowchart LR
 - 权限变更后的缓存失效传播时间 < 3s
 - 高风险操作默认绕过缓存或采用二次校验
 
-### 3.5 缓存设计
+### 3.6 缓存设计
 
 推荐缓存项：
 
@@ -204,6 +435,31 @@ Package / Dataset 权限相关接口：
 - `POST /api/v1/authz/expand`
 - `POST /api/v1/authz/tuples:write`
 
+### 4.1.1 API 功能说明
+
+| API | 功能 | 主要调用方 | 关键权限点 |
+| --- | --- | --- | --- |
+| `POST /api/v1/auth/login` | 用户登录，签发 access token / refresh token | Web、CLI | 校验账号身份，返回稳定 `sub` |
+| `POST /api/v1/auth/refresh` | 刷新 access token，延续登录会话 | Web、CLI | refresh token 必须合法且未撤销 |
+| `POST /api/v1/auth/token-exchange` | 将用户 token 换成面向下游服务的短时内部 token | Django Gateway | 仅可信网关/内部服务可调用 |
+| `POST /api/v1/auth/logout` | 注销当前会话，废弃 refresh token 或 session | Web、CLI | 需要当前登录态 |
+| `GET /api/v1/me` | 返回当前用户资料、所属组织、默认上下文 | Web、CLI | 需要有效 access token |
+| `GET /api/v1/orgs/{org_slug}` | 查询组织详情、基础配置、当前用户在组织内角色 | Web、CLI | 组织公开信息可读，敏感字段需成员权限 |
+| `POST /api/v1/orgs` | 创建组织，并为创建者自动建立 `owner` membership | Web | 需要登录；`org_slug` 全局唯一 |
+| `POST /api/v1/orgs/{org_slug}/members` | 邀请或添加组织成员，设置 `owner/admin/write/read` 角色 | Web、Admin | 调用者需 `org.admin` 以上权限 |
+| `PATCH /api/v1/orgs/{org_slug}/members/{user_id}` | 调整成员角色，例如 `write -> admin` | Web、Admin | 调用者需 `org.admin` 或 `org.owner` |
+| `DELETE /api/v1/orgs/{org_slug}/members/{user_id}` | 移除组织成员 | Web、Admin | 不允许移除最后一个 `owner` |
+| `GET /api/v1/packages/{owner_slug}/{package_slug}` | 读取 Package 详情、版本摘要、标签、解析产物摘要 | Web、CLI、DataFlow UI | `public` 允许匿名读；`private` 需 `package.read`；`proprietary` 仅返回可公开摘要 |
+| `PATCH /api/v1/packages/{owner_slug}/{package_slug}` | 更新 Package 元数据，如说明、可见性、默认版本 | Web、CLI | 需 `package.write` 或更高权限 |
+| `GET /api/v1/datasets/{owner_slug}/{dataset_slug}` | 读取 Dataset 元数据与基本信息 | Web、CLI | `public` 允许匿名读；`private` 需 `dataset.view` |
+| `PATCH /api/v1/datasets/{owner_slug}/{dataset_slug}` | 更新 Dataset 元数据、可见性、描述等 | Web、CLI | 需 `dataset.edit` 或更高权限 |
+| `POST /api/v1/packages/{owner_slug}/{package_slug}/collaborators` | 为个人拥有的 Package 添加或更新协作者 | Web、CLI | owner 必须是 user；组织资源禁止调用 |
+| `POST /api/v1/datasets/{owner_slug}/{dataset_slug}/collaborators` | 为个人拥有的 Dataset 添加或更新协作者 | Web、CLI | owner 必须是 user；组织资源禁止调用 |
+| `POST /api/v1/authz/check` | 对单个资源执行单动作鉴权 | Gateway、Resource Service | 支持 `skip_cache`，高风险操作可强制回源 |
+| `POST /api/v1/authz/check-bulk` | 对多个资源批量鉴权，支撑列表与搜索结果过滤 | Gateway、Resource Service | 禁止列表页逐条调用 `Check` |
+| `POST /api/v1/authz/expand` | 反向展开“谁拥有某资源某权限” | Admin、Audit、Debug Tools | 主要用于审计、排障、后台管理 |
+| `POST /api/v1/authz/tuples:write` | 写入底层授权关系，如成员变更、协作者变更、owner transfer | Gateway、Admin、Authz Backend | 写入成功后必须触发缓存失效 |
+
 ### 4.2 关键接口契约
 
 #### `POST /api/v1/authz/check`
@@ -242,7 +498,7 @@ Package / Dataset 权限相关接口：
     "type": "user",
     "id": "usr_123"
   },
-  "action": "package.view",
+  "action": "package.read",
   "resources": [
     {"type": "package", "id": "pkg_1"},
     {"type": "package", "id": "pkg_2"}
@@ -291,6 +547,9 @@ Package / Dataset 权限相关接口：
 | `RESOURCE_SLUG_CONFLICT` | 409 | owner 下资源 slug 冲突 |
 | `COLLABORATOR_NOT_ALLOWED_FOR_ORG_RESOURCE` | 400 | 组织资源不允许协作者 |
 | `RESOURCE_TRANSFER_FORBIDDEN` | 403 | 无 owner/admin 权限执行转移 |
+| `PACKAGE_READ_DENIED` | 403 | 当前主体无 Package READ 权限 |
+| `PACKAGE_EXECUTION_DENIED` | 403 | 当前主体无 Package 执行能力 |
+| `PACKAGE_PROPRIETARY_SOURCE_FORBIDDEN` | 403 | Proprietary Package 不允许读取源内容或版本明细 |
 
 ### 4.4 接口规范要求
 
@@ -346,7 +605,8 @@ CREATE TABLE packages (
     id VARCHAR(64) PRIMARY KEY,
     owner_subject_id VARCHAR(64) NOT NULL REFERENCES subjects(id),
     slug VARCHAR(128) NOT NULL,
-    visibility VARCHAR(16) NOT NULL CHECK (visibility IN ('private', 'internal', 'public')),
+    visibility VARCHAR(16) NOT NULL CHECK (visibility IN ('private', 'public', 'proprietary')),
+    latest_version VARCHAR(64) NOT NULL,
     created_by_subject_id VARCHAR(64) NOT NULL REFERENCES subjects(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -363,11 +623,42 @@ CREATE TABLE package_collaborators (
     UNIQUE (package_id, subject_id)
 );
 
+CREATE TABLE package_versions (
+    id BIGSERIAL PRIMARY KEY,
+    package_id VARCHAR(64) NOT NULL REFERENCES packages(id) ON DELETE CASCADE,
+    version VARCHAR(64) NOT NULL,
+    source_uri TEXT,
+    source_checksum VARCHAR(128),
+    manifest_json JSONB,
+    changelog TEXT,
+    created_by_subject_id VARCHAR(64) NOT NULL REFERENCES subjects(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (package_id, version)
+);
+
+CREATE TABLE package_tags (
+    id BIGSERIAL PRIMARY KEY,
+    package_id VARCHAR(64) NOT NULL REFERENCES packages(id) ON DELETE CASCADE,
+    tag_key VARCHAR(64) NOT NULL,
+    tag_value VARCHAR(128) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE package_parsed_artifacts (
+    id BIGSERIAL PRIMARY KEY,
+    package_version_id BIGINT NOT NULL REFERENCES package_versions(id) ON DELETE CASCADE,
+    artifact_type VARCHAR(32) NOT NULL CHECK (artifact_type IN ('operator', 'pipeline')),
+    artifact_name VARCHAR(255) NOT NULL,
+    artifact_version VARCHAR(64),
+    artifact_spec JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE datasets (
     id VARCHAR(64) PRIMARY KEY,
     owner_subject_id VARCHAR(64) NOT NULL REFERENCES subjects(id),
     slug VARCHAR(128) NOT NULL,
-    visibility VARCHAR(16) NOT NULL CHECK (visibility IN ('private', 'internal', 'public')),
+    visibility VARCHAR(16) NOT NULL CHECK (visibility IN ('private', 'public')),
     created_by_subject_id VARCHAR(64) NOT NULL REFERENCES subjects(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -397,6 +688,9 @@ CREATE INDEX idx_packages_owner_visibility ON packages(owner_subject_id, visibil
 CREATE INDEX idx_datasets_owner_visibility ON datasets(owner_subject_id, visibility);
 CREATE INDEX idx_pkg_collab_subject_role ON package_collaborators(subject_id, role);
 CREATE INDEX idx_dataset_collab_subject_role ON dataset_collaborators(subject_id, role);
+CREATE INDEX idx_package_versions_package_created ON package_versions(package_id, created_at DESC);
+CREATE INDEX idx_package_tags_package_key ON package_tags(package_id, tag_key);
+CREATE INDEX idx_package_parsed_artifacts_version_type ON package_parsed_artifacts(package_version_id, artifact_type);
 ```
 
 索引原则：
@@ -405,6 +699,8 @@ CREATE INDEX idx_dataset_collab_subject_role ON dataset_collaborators(subject_id
 - 资源解析路径依赖 `(owner_subject_id, slug)` 唯一约束
 - 列表可见性与 owner 组合过滤依赖 owner + visibility 索引
 - 可见资源集合计算依赖 collaborator 与 membership 的反向索引
+- Package 版本比较依赖 `package_versions(package_id, version)` 唯一约束与时间索引
+- Operators / Pipelines 查询依赖 `package_parsed_artifacts` 版本维度索引
 
 ### 5.4 统一关系模型演进
 
@@ -432,7 +728,7 @@ CREATE INDEX idx_dataset_collab_subject_role ON dataset_collaborators(subject_id
 - `read`
 - `write`
 
-资源权限映射：
+Dataset 权限映射：
 
 | 动作 | 个人 owner | 个人 collaborator(write) | 个人 collaborator(read) | org owner/admin | org write | org read |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -441,6 +737,24 @@ CREATE INDEX idx_dataset_collab_subject_role ON dataset_collaborators(subject_id
 | `admin` | yes | no | no | yes | no | no |
 | `delete` | yes | no | no | yes | no | no |
 | `transfer` | yes | no | no | yes | no | no |
+
+Package 权限映射：
+
+| 动作 | 个人 owner | 个人 collaborator(write) | 个人 collaborator(read) | org owner/admin | org write | org read | public user |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `read` | yes | yes | yes | yes | yes | yes | 仅 `public` |
+| `use` | yes | yes | yes | yes | yes | yes | `public` / `proprietary` |
+| `write` | yes | yes | no | yes | yes | no | no |
+| `admin` | yes | no | no | yes | no | no | no |
+| `delete` | yes | no | no | yes | no | no | no |
+| `transfer` | yes | no | no | yes | no | no | no |
+
+说明：
+
+- 对 `private/public` package，`use` 是 `package.read` 的业务派生能力
+- 对 `proprietary` package，允许 `use` 但不允许通用 `read`
+- `public package` 默认允许匿名 `read`，因此也允许匿名 `use`
+- `proprietary package` 默认允许匿名 `use`，但不允许匿名 `read`
 
 ### 6.2 核心业务规则
 
@@ -457,9 +771,23 @@ CREATE INDEX idx_dataset_collab_subject_role ON dataset_collaborators(subject_id
 
 可见性规则：
 
-- `private` 仅 owner / 继承权限 / collaborator 可见
-- `internal` 平台登录用户可见，编辑仍走资源权限
-- `public` 匿名可见，修改仍走资源权限
+- Dataset:
+  - `private` 仅 owner / 继承权限 / collaborator 可见
+  - `public` 匿名可读
+- Package:
+  - `private` 仅 owner / 继承权限 / collaborator 可读可用
+  - `public` 其他人可读可用
+  - `proprietary` 其他人可用不可读
+
+Package 专属规则：
+
+- `READ` 表示可读取 package 元数据、版本内容、标签、Operators / Pipelines 明细
+- `USE` 表示可在 DataFlow 任务中引用该 Package 能力
+- `WRITE` 表示可上传新版本、修改标签、更新说明、触发重新解析
+- `private/public` 下，`USE` 默认从 `READ` 派生
+- `proprietary` 下，`USE` 可单独对外开放，而 `READ` 不开放
+- 版本比较能力要求具备 `READ`
+- Package 上传或更新后必须提交给 DataFlow-System 解析，生成 Operators / Pipelines 清单
 
 ### 6.3 核心流程
 
@@ -509,6 +837,48 @@ sequenceDiagram
     S-->>U: 200 OK
 ```
 
+#### Package 上传与解析
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant G as Gateway
+    participant P as Package Service
+    participant DF as DataFlow-System
+    participant DB as PostgreSQL
+    participant C as Cache
+
+    U->>G: Upload package version
+    G->>P: Verify package.write
+    P->>DB: Persist package_versions
+    P->>DF: Submit package for parsing
+    DF-->>P: Operators + Pipelines metadata
+    P->>DB: Persist package_parsed_artifacts
+    P->>C: Invalidate package visibility/cache
+    P-->>U: version ready
+```
+
+#### Package 版本比较
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant G as Gateway
+    participant P as Package Service
+    participant Z as Authz
+    participant DB as PostgreSQL
+
+    U->>G: Compare package v1 vs v2
+    G->>Z: Check package.read
+    Z-->>G: allow
+    G->>P: load version A/B artifacts
+    P->>DB: query package_versions + parsed_artifacts
+    DB-->>P: operators/pipelines/manifests
+    P-->>U: diff result
+```
+
 #### 权限变更
 
 ```mermaid
@@ -547,6 +917,8 @@ stateDiagram-v2
 适用场景：
 
 - owner transfer
+- package version publish
+- package parse result refresh
 - collaborator 变更
 - visibility 变更
 - org role 变更
@@ -577,6 +949,9 @@ stateDiagram-v2
 - 个人资源 collaborator 生效
 - 组织资源禁止 collaborator
 - `visibility` 与继承权限的组合判断
+- Package `READ`、`USE` 与 `proprietary` 的差异判断
+- Package 新版本上传后解析产物落库
+- 同一 Package 两个版本比较逻辑
 
 集成测试：
 
@@ -585,6 +960,10 @@ stateDiagram-v2
 - owner transfer 后旧 owner 权限消失
 - 成员降级后缓存失效
 - `CheckBulk` 与列表结果一致
+- Package 上传后 DataFlow-System 返回 Operators / Pipelines
+- `public package` 可读且可用
+- `private package` 非授权用户不可读不可用
+- `proprietary package` 可用但不可读
 
 回归测试矩阵：
 
@@ -598,6 +977,13 @@ stateDiagram-v2
 | collaborator(read) 删除个人 package | 拒绝 |
 | 组织资源添加 collaborator | 拒绝 |
 | slug 改名后旧缓存命中 | 不允许，必须失效 |
+| 匿名用户读取 public package | 允许 |
+| 匿名用户使用 public package 能力 | 允许 |
+| 匿名用户读取 private package | 拒绝 |
+| 匿名用户读取 proprietary package | 拒绝 |
+| 匿名用户使用 proprietary package 能力 | 允许 |
+| package write 用户上传新版本后产物解析入库 | 成功 |
+| 同一 package 两个版本比较 | 返回结构化 diff |
 
 ### 7.3 Code Review 清单
 
@@ -608,6 +994,8 @@ stateDiagram-v2
 - 是否定义了权限变更后的缓存失效路径
 - 是否对最后一个 org owner 做了保护
 - 是否为高风险操作保留实时鉴权路径
+- 是否正确实现 Package `READ/USE` 与 `proprietary` 的组合关系
+- 是否覆盖 package version / tags / parsed artifacts 的一致性
 
 ---
 
@@ -617,6 +1005,7 @@ stateDiagram-v2
 
 - 落地 `subjects`、`org_memberships`、`packages`、`datasets`
 - 落地 collaborator 表
+- 落地 `package_versions`、`package_tags`、`package_parsed_artifacts`
 - 在 Django 内实现统一 authz module
 - Resource Service 接统一 `Check` / `CheckBulk`
 - Redis 缓存仅覆盖可见资源列表与单资源 check
