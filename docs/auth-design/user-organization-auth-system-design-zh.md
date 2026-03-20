@@ -577,130 +577,465 @@ erDiagram
     SUBJECTS ||--o{ DATASET_COLLABORATORS : subject_id
 ```
 
-### 5.2 DDL 建议
+### 5.2 Django ORM 模型设计
 
-```sql
-CREATE TABLE subjects (
-    id VARCHAR(64) PRIMARY KEY,
-    type VARCHAR(16) NOT NULL CHECK (type IN ('user', 'org')),
-    slug VARCHAR(128) NOT NULL,
-    display_name VARCHAR(255) NOT NULL,
-    status VARCHAR(16) NOT NULL DEFAULT 'active',
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (slug)
-);
+建议在 Django 中以统一抽象 + 显式 `Meta.constraints` / `Meta.indexes` 的方式实现，而不是先写裸 SQL。
 
-CREATE TABLE org_memberships (
-    id BIGSERIAL PRIMARY KEY,
-    org_subject_id VARCHAR(64) NOT NULL REFERENCES subjects(id),
-    user_subject_id VARCHAR(64) NOT NULL REFERENCES subjects(id),
-    role VARCHAR(16) NOT NULL CHECK (role IN ('owner', 'admin', 'write', 'read')),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (org_subject_id, user_subject_id)
-);
+建议的枚举类型：
 
-CREATE TABLE packages (
-    id VARCHAR(64) PRIMARY KEY,
-    owner_subject_id VARCHAR(64) NOT NULL REFERENCES subjects(id),
-    slug VARCHAR(128) NOT NULL,
-    visibility VARCHAR(16) NOT NULL CHECK (visibility IN ('private', 'public', 'proprietary')),
-    latest_version VARCHAR(64) NOT NULL,
-    created_by_subject_id VARCHAR(64) NOT NULL REFERENCES subjects(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (owner_subject_id, slug)
-);
+```python
+from django.db import models
 
-CREATE TABLE package_collaborators (
-    id BIGSERIAL PRIMARY KEY,
-    package_id VARCHAR(64) NOT NULL REFERENCES packages(id) ON DELETE CASCADE,
-    subject_id VARCHAR(64) NOT NULL REFERENCES subjects(id),
-    role VARCHAR(16) NOT NULL CHECK (role IN ('read', 'write')),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (package_id, subject_id)
-);
 
-CREATE TABLE package_versions (
-    id BIGSERIAL PRIMARY KEY,
-    package_id VARCHAR(64) NOT NULL REFERENCES packages(id) ON DELETE CASCADE,
-    version VARCHAR(64) NOT NULL,
-    source_uri TEXT,
-    source_checksum VARCHAR(128),
-    manifest_json JSONB,
-    changelog TEXT,
-    created_by_subject_id VARCHAR(64) NOT NULL REFERENCES subjects(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (package_id, version)
-);
+class SubjectType(models.TextChoices):
+    USER = "user", "User"
+    ORG = "org", "Organization"
 
-CREATE TABLE package_tags (
-    id BIGSERIAL PRIMARY KEY,
-    package_id VARCHAR(64) NOT NULL REFERENCES packages(id) ON DELETE CASCADE,
-    tag_key VARCHAR(64) NOT NULL,
-    tag_value VARCHAR(128) NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
 
-CREATE TABLE package_parsed_artifacts (
-    id BIGSERIAL PRIMARY KEY,
-    package_version_id BIGINT NOT NULL REFERENCES package_versions(id) ON DELETE CASCADE,
-    artifact_type VARCHAR(32) NOT NULL CHECK (artifact_type IN ('operator', 'pipeline')),
-    artifact_name VARCHAR(255) NOT NULL,
-    artifact_version VARCHAR(64),
-    artifact_spec JSONB NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+class SubjectStatus(models.TextChoices):
+    ACTIVE = "active", "Active"
+    DISABLED = "disabled", "Disabled"
 
-CREATE TABLE datasets (
-    id VARCHAR(64) PRIMARY KEY,
-    owner_subject_id VARCHAR(64) NOT NULL REFERENCES subjects(id),
-    slug VARCHAR(128) NOT NULL,
-    visibility VARCHAR(16) NOT NULL CHECK (visibility IN ('private', 'public')),
-    created_by_subject_id VARCHAR(64) NOT NULL REFERENCES subjects(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (owner_subject_id, slug)
-);
 
-CREATE TABLE dataset_collaborators (
-    id BIGSERIAL PRIMARY KEY,
-    dataset_id VARCHAR(64) NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
-    subject_id VARCHAR(64) NOT NULL REFERENCES subjects(id),
-    role VARCHAR(16) NOT NULL CHECK (role IN ('read', 'write')),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (dataset_id, subject_id)
-);
+class OrgRole(models.TextChoices):
+    OWNER = "owner", "Owner"
+    ADMIN = "admin", "Admin"
+    WRITE = "write", "Write"
+    READ = "read", "Read"
+
+
+class ResourceVisibility(models.TextChoices):
+    PRIVATE = "private", "Private"
+    PUBLIC = "public", "Public"
+
+
+class PackageVisibility(models.TextChoices):
+    PRIVATE = "private", "Private"
+    PUBLIC = "public", "Public"
+    PROPRIETARY = "proprietary", "Proprietary"
+
+
+class CollaboratorRole(models.TextChoices):
+    READ = "read", "Read"
+    WRITE = "write", "Write"
+
+
 ```
 
-### 5.3 索引策略
+建议的基础抽象：
 
-建议索引：
+```python
+class TimeStampedModel(models.Model):
+    """
+    Abstract base model.
+    Provides UTC-based audit timestamps shared by all core models.
+    """
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-```sql
-CREATE UNIQUE INDEX idx_subjects_slug ON subjects(slug);
-CREATE INDEX idx_org_memberships_user_role ON org_memberships(user_subject_id, role);
-CREATE INDEX idx_org_memberships_org_role ON org_memberships(org_subject_id, role);
-CREATE INDEX idx_packages_owner_visibility ON packages(owner_subject_id, visibility);
-CREATE INDEX idx_datasets_owner_visibility ON datasets(owner_subject_id, visibility);
-CREATE INDEX idx_pkg_collab_subject_role ON package_collaborators(subject_id, role);
-CREATE INDEX idx_dataset_collab_subject_role ON dataset_collaborators(subject_id, role);
-CREATE INDEX idx_package_versions_package_created ON package_versions(package_id, created_at DESC);
-CREATE INDEX idx_package_tags_package_key ON package_tags(package_id, tag_key);
-CREATE INDEX idx_package_parsed_artifacts_version_type ON package_parsed_artifacts(package_version_id, artifact_type);
+    class Meta:
+        abstract = True
+```
+
+说明：
+
+- `TimeStampedModel` 是 Django 的抽象基类，不会单独建表
+- 作用是为多个模型统一注入 `created_at` 和 `updated_at`
+- 这样可以避免在 `Subject`、`Package`、`Dataset`、`OrgMembership` 等模型里重复定义相同字段
+- 所有时间字段统一使用 UTC 保存
+- Django 配置上应启用：
+  - `USE_TZ = True`
+  - `TIME_ZONE = "UTC"`
+- API 返回时间建议使用 ISO 8601 UTC 格式，例如 `2026-03-20T12:34:56Z`
+
+核心模型建议：
+
+```python
+class Subject(TimeStampedModel):
+    id = models.CharField(max_length=64, primary_key=True)
+    type = models.CharField(max_length=16, choices=SubjectType.choices)
+    slug = models.SlugField(max_length=128, unique=True)
+    display_name = models.CharField(max_length=255)
+    status = models.CharField(
+        max_length=16,
+        choices=SubjectStatus.choices,
+        default=SubjectStatus.ACTIVE,
+    )
+
+    class Meta:
+        db_table = "subjects"
+
+
+class OrgMembership(TimeStampedModel):
+    org = models.ForeignKey(
+        Subject,
+        on_delete=models.CASCADE,
+        related_name="member_links",
+    )
+    user = models.ForeignKey(
+        Subject,
+        on_delete=models.CASCADE,
+        related_name="org_links",
+    )
+    role = models.CharField(max_length=16, choices=OrgRole.choices)
+
+    class Meta:
+        db_table = "org_memberships"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["org", "user"],
+                name="uniq_org_membership_org_user",
+            ),
+        ]
+
+
+class Package(TimeStampedModel):
+    id = models.CharField(max_length=64, primary_key=True)
+    owner = models.ForeignKey(
+        Subject,
+        on_delete=models.PROTECT,
+        related_name="owned_packages",
+    )
+    slug = models.SlugField(max_length=128)
+    visibility = models.CharField(
+        max_length=16,
+        choices=PackageVisibility.choices,
+        default=PackageVisibility.PRIVATE,
+    )
+    latest_version = models.CharField(max_length=64)
+    created_by = models.ForeignKey(
+        Subject,
+        on_delete=models.PROTECT,
+        related_name="created_packages",
+    )
+
+    class Meta:
+        db_table = "packages"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["owner", "slug"],
+                name="uniq_package_owner_slug",
+            ),
+        ]
+
+
+class PackageCollaborator(TimeStampedModel):
+    package = models.ForeignKey(
+        Package,
+        on_delete=models.CASCADE,
+        related_name="collaborators",
+    )
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.CASCADE,
+        related_name="package_collaborations",
+    )
+    role = models.CharField(max_length=16, choices=CollaboratorRole.choices)
+
+    class Meta:
+        db_table = "package_collaborators"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["package", "subject"],
+                name="uniq_package_collaborator",
+            ),
+        ]
+
+
+class PackageVersion(TimeStampedModel):
+    package = models.ForeignKey(
+        Package,
+        on_delete=models.CASCADE,
+        related_name="versions",
+    )
+    version = models.CharField(max_length=64)
+    source_uri = models.TextField(blank=True)
+    source_checksum = models.CharField(max_length=128, blank=True)
+    manifest_json = models.JSONField(default=dict, blank=True)
+    changelog = models.TextField(blank=True)
+    created_by = models.ForeignKey(
+        Subject,
+        on_delete=models.PROTECT,
+        related_name="created_package_versions",
+    )
+
+    class Meta:
+        db_table = "package_versions"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["package", "version"],
+                name="uniq_package_version",
+            ),
+        ]
+
+
+class PackageTag(models.Model):
+    package = models.ForeignKey(
+        Package,
+        on_delete=models.CASCADE,
+        related_name="tags",
+    )
+    tag_key = models.CharField(max_length=64)
+    tag_value = models.CharField(max_length=128)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "package_tags"
+
+
+class PackageOperator(models.Model):
+    package_version = models.ForeignKey(
+        PackageVersion,
+        on_delete=models.CASCADE,
+        related_name="operators",
+    )
+    name = models.CharField(max_length=255)
+    version = models.CharField(max_length=64, blank=True)
+    spec = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "package_operators"
+
+
+class PackagePipeline(models.Model):
+    package_version = models.ForeignKey(
+        PackageVersion,
+        on_delete=models.CASCADE,
+        related_name="pipelines",
+    )
+    name = models.CharField(max_length=255)
+    version = models.CharField(max_length=64, blank=True)
+    spec = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "package_pipelines"
+
+
+class Dataset(TimeStampedModel):
+    id = models.CharField(max_length=64, primary_key=True)
+    owner = models.ForeignKey(
+        Subject,
+        on_delete=models.PROTECT,
+        related_name="owned_datasets",
+    )
+    slug = models.SlugField(max_length=128)
+    visibility = models.CharField(
+        max_length=16,
+        choices=ResourceVisibility.choices,
+        default=ResourceVisibility.PRIVATE,
+    )
+    created_by = models.ForeignKey(
+        Subject,
+        on_delete=models.PROTECT,
+        related_name="created_datasets",
+    )
+
+    class Meta:
+        db_table = "datasets"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["owner", "slug"],
+                name="uniq_dataset_owner_slug",
+            ),
+        ]
+
+
+class DatasetCollaborator(TimeStampedModel):
+    dataset = models.ForeignKey(
+        Dataset,
+        on_delete=models.CASCADE,
+        related_name="collaborators",
+    )
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.CASCADE,
+        related_name="dataset_collaborations",
+    )
+    role = models.CharField(max_length=16, choices=CollaboratorRole.choices)
+
+    class Meta:
+        db_table = "dataset_collaborators"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["dataset", "subject"],
+                name="uniq_dataset_collaborator",
+            ),
+        ]
+```
+
+实现约束：
+
+- `Subject.slug` 必须全局唯一，承载 user / org 共享命名空间
+- `Package.owner`、`Dataset.owner` 统一指向 `Subject`
+- 组织资源不允许 collaborator，需要在 service 层做业务校验
+- `Package.latest_version` 是便于查询的冗余字段，真实版本明细在 `PackageVersion`
+- `PackageOperator`、`PackagePipeline` 分别存储 DataFlow-System 解析得到的 Operators 与 Pipelines
+- 所有 `created_at`、`updated_at` 与业务时间字段统一以 UTC 存储和传输
+
+### 5.3 Django 索引与约束设计
+
+建议将唯一约束、查询索引和排序索引全部写入 `Meta.constraints` 与 `Meta.indexes`，避免索引语义散落在迁移脚本之外。
+
+建议索引设计：
+
+```python
+class Subject(TimeStampedModel):
+    ...
+
+    class Meta:
+        db_table = "subjects"
+        indexes = [
+            models.Index(fields=["type", "status"], name="idx_subject_type_status"),
+        ]
+
+
+class OrgMembership(TimeStampedModel):
+    ...
+
+    class Meta:
+        db_table = "org_memberships"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["org", "user"],
+                name="uniq_org_membership_org_user",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["user", "role"], name="idx_org_membership_user_role"),
+            models.Index(fields=["org", "role"], name="idx_org_membership_org_role"),
+        ]
+
+
+class Package(TimeStampedModel):
+    ...
+
+    class Meta:
+        db_table = "packages"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["owner", "slug"],
+                name="uniq_package_owner_slug",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["owner", "visibility"], name="idx_package_owner_visibility"),
+            models.Index(fields=["owner", "updated_at"], name="idx_package_owner_updated"),
+        ]
+
+
+class PackageCollaborator(TimeStampedModel):
+    ...
+
+    class Meta:
+        db_table = "package_collaborators"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["package", "subject"],
+                name="uniq_package_collaborator",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["subject", "role"], name="idx_pkg_collab_subject_role"),
+        ]
+
+
+class PackageVersion(TimeStampedModel):
+    ...
+
+    class Meta:
+        db_table = "package_versions"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["package", "version"],
+                name="uniq_package_version",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["package", "-created_at"], name="idx_package_version_created"),
+        ]
+
+
+class PackageTag(models.Model):
+    ...
+
+    class Meta:
+        db_table = "package_tags"
+        indexes = [
+            models.Index(fields=["package", "tag_key"], name="idx_package_tag_key"),
+        ]
+
+
+class PackageOperator(models.Model):
+    ...
+
+    class Meta:
+        db_table = "package_operators"
+        indexes = [
+            models.Index(
+                fields=["package_version", "name"],
+                name="idx_pkg_operator_version_name",
+            ),
+        ]
+
+
+class PackagePipeline(models.Model):
+    ...
+
+    class Meta:
+        db_table = "package_pipelines"
+        indexes = [
+            models.Index(
+                fields=["package_version", "name"],
+                name="idx_pkg_pipeline_version_name",
+            ),
+        ]
+
+
+class Dataset(TimeStampedModel):
+    ...
+
+    class Meta:
+        db_table = "datasets"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["owner", "slug"],
+                name="uniq_dataset_owner_slug",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["owner", "visibility"], name="idx_dataset_owner_visibility"),
+            models.Index(fields=["owner", "updated_at"], name="idx_dataset_owner_updated"),
+        ]
+
+
+class DatasetCollaborator(TimeStampedModel):
+    ...
+
+    class Meta:
+        db_table = "dataset_collaborators"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["dataset", "subject"],
+                name="uniq_dataset_collaborator",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["subject", "role"], name="idx_dataset_collab_subject_role"),
+        ]
 ```
 
 索引原则：
 
-- 全局命名空间冲突检查依赖 `subjects.slug` 唯一索引
-- 资源解析路径依赖 `(owner_subject_id, slug)` 唯一约束
-- 列表可见性与 owner 组合过滤依赖 owner + visibility 索引
-- 可见资源集合计算依赖 collaborator 与 membership 的反向索引
-- Package 版本比较依赖 `package_versions(package_id, version)` 唯一约束与时间索引
-- Operators / Pipelines 查询依赖 `package_parsed_artifacts` 版本维度索引
+- 全局命名空间冲突检查依赖 `Subject.slug` 唯一约束
+- 资源路由解析依赖 `(owner, slug)` 唯一约束
+- 列表页过滤依赖 `(owner, visibility)` 组合索引
+- 协作者反查依赖 `(subject, role)` 索引
+- 组织继承权限反查依赖 `OrgMembership(user, role)` 与 `OrgMembership(org, role)` 索引
+- Package 版本比较与最近版本查询依赖 `PackageVersion(package, created_at)` 索引
+- Operators 查询依赖 `PackageOperator(package_version, name)` 索引
+- Pipelines 查询依赖 `PackagePipeline(package_version, name)` 索引
 
 ### 5.4 统一关系模型演进
 
@@ -854,7 +1189,7 @@ sequenceDiagram
     P->>DB: Persist package_versions
     P->>DF: Submit package for parsing
     DF-->>P: Operators + Pipelines metadata
-    P->>DB: Persist package_parsed_artifacts
+    P->>DB: Persist package_operators + package_pipelines
     P->>C: Invalidate package visibility/cache
     P-->>U: version ready
 ```
@@ -874,7 +1209,7 @@ sequenceDiagram
     G->>Z: Check package.read
     Z-->>G: allow
     G->>P: load version A/B artifacts
-    P->>DB: query package_versions + parsed_artifacts
+    P->>DB: query package_versions + operators + pipelines
     DB-->>P: operators/pipelines/manifests
     P-->>U: diff result
 ```
@@ -1005,7 +1340,7 @@ stateDiagram-v2
 
 - 落地 `subjects`、`org_memberships`、`packages`、`datasets`
 - 落地 collaborator 表
-- 落地 `package_versions`、`package_tags`、`package_parsed_artifacts`
+- 落地 `package_versions`、`package_tags`、`package_operators`、`package_pipelines`
 - 在 Django 内实现统一 authz module
 - Resource Service 接统一 `Check` / `CheckBulk`
 - Redis 缓存仅覆盖可见资源列表与单资源 check
