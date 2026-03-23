@@ -9,7 +9,6 @@ async def services_health(request):
     services = {
         'dataflow': getattr(settings, 'DATAFLOW_BACKEND_URL', 'http://localhost:8002'),
         'loopai': getattr(settings, 'LOOPAI_BACKEND_URL', 'http://localhost:8003'),
-        'dfagent': getattr(settings, 'DFAGENT_BACKEND_URL', 'http://localhost:7860'),
     }
 
     async def probe(name: str, base_url: str) -> tuple[str, dict]:

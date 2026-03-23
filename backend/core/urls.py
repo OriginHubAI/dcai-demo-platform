@@ -43,11 +43,10 @@ urlpatterns = [
     path('api/v1/', include('third_party.urls')),
     
     # API v2 endpoints
-    path('api/v2/', include('dataset.urls_v2')),
+    path('api/v2/', include('hub.urls')),
     path('api/v2/', include('task.urls_v2')),
     path('api/v2/dataflow/', include('dataflow.urls')),
     path('api/v2/loopai/', include('loopai_proxy.urls')),
-    path('api/v2/dfagent/', include('dfagent_proxy.urls')),
     path('api/v2/', include('knowledgebase.urls')),
     path('api/v2/', include('apps.urls')),
     

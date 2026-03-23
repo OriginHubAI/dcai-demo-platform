@@ -9,7 +9,7 @@
           <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 flex-shrink-0">
             {{ model.author.charAt(0).toUpperCase() }}
           </div>
-          <span class="text-sm font-semibold text-gray-900 truncate">{{ displayId }}</span>
+          <span class="text-sm font-semibold text-gray-900 truncate">{{ model.id }}</span>
         </div>
         <p class="text-xs text-gray-500 line-clamp-2 mt-1">{{ model.description }}</p>
       </div>
@@ -34,18 +34,12 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import TagBadge from '@/components/common/TagBadge.vue'
 import StatBadge from '@/components/common/StatBadge.vue'
 import { taskColorMap } from '@/data/filters.js'
 
-const props = defineProps({
+defineProps({
   model: { type: Object, required: true }
-})
-
-const displayId = computed(() => {
-  // Remove "Qwen/" prefix from display
-  return props.model.id.replace(/^Qwen\//, '')
 })
 
 function formatDate(dateStr) {

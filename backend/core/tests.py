@@ -36,5 +36,4 @@ class ServicesHealthTests(APITestCase):
         payload = response.json()['data']
         self.assertTrue(payload['ok'])
         self.assertIn('dataflow', payload['services'])
-        self.assertEqual(payload['services']['dfagent']['status_code'], 200)
-        self.assertTrue(payload['services']['dfagent']['url'].endswith('/'))
+        self.assertIn('loopai', payload['services'])

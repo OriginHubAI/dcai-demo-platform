@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'knowledgebase',
     'document',
     'dataset',
+    'hub',
     'dataflow',
     'task',
     'template',
@@ -59,7 +60,6 @@ INSTALLED_APPS = [
     'llm_chat',
     'train',
     'loopai_proxy',
-    'dfagent_proxy',
 ]
 
 MIDDLEWARE = [
@@ -193,7 +193,6 @@ CACHES = {
 # External Agent Services
 DATAFLOW_BACKEND_URL = os.environ.get('DATAFLOW_BACKEND_URL', 'http://localhost:8002')
 LOOPAI_BACKEND_URL = os.environ.get('LOOPAI_BACKEND_URL', 'http://localhost:8003')
-DFAGENT_BACKEND_URL = os.environ.get('DFAGENT_BACKEND_URL', 'http://localhost:7860')
 DATAFLOW_OPERATORS_ROOT = os.environ.get(
     'DATAFLOW_OPERATORS_ROOT',
     str(BASE_DIR.parent.parent / 'DataFlow' / 'dataflow' / 'operators'),
@@ -207,6 +206,10 @@ PACKAGE_EDITOR_PORT = int(os.environ.get('PACKAGE_EDITOR_PORT', '18004'))
 PACKAGE_EDITOR_SANDBOX_ROOT = os.environ.get(
     'PACKAGE_EDITOR_SANDBOX_ROOT',
     str(BASE_DIR.parent.parent / 'sandboxes' / 'package-editor'),
+)
+PACKAGE_EDITOR_BINARY = os.environ.get(
+    'PACKAGE_EDITOR_BINARY',
+    str(BASE_DIR.parent.parent / '.workspace' / 'node_modules' / '.bin' / 'opencode'),
 )
 PROXY_TIMEOUT = int(os.environ.get('PROXY_TIMEOUT', '120'))
 

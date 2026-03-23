@@ -20,14 +20,6 @@ class ChatRoutingTests(APITestCase):
         self.assertEqual(Conversation.objects.count(), 1)
         self.assertEqual(DFConversation.objects.count(), 1)
 
-    def test_dfagent_submodule_route_sets_tab(self):
-        response = self.client.post('/api/v1/chat', {'question': '@DFAgent:operator_qa help me inspect operators'}, format='json')
-
-        self.assertEqual(response.status_code, 200)
-        payload = response.json()['data']
-        self.assertEqual(payload['agent'], 'DFAgent')
-        self.assertEqual(payload['iframe_url'], '/apps/OpenDCAI/DataFlow-Agent?tab=operator_qa')
-
     def test_keyword_routing_is_case_insensitive(self):
         response = self.client.post('/api/v1/chat', {'question': 'Build DataFlow Pipeline for chemistry'}, format='json')
 

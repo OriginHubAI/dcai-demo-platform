@@ -8,6 +8,7 @@
     "apps": "Apps",
     "models": "Models",
     "knowledgeBase": "Knowledge Bases",
+    "notebook": "Notebook",
     "mcp": "MCP",
     "helpSupport": "Help & Support",
     "menu": "Menu",
@@ -197,6 +198,7 @@
   "knowledgeBase": {
     "title": "Knowledge Bases",
     "subtitle": "Manage your knowledge bases, chat with data and explore knowledge graphs",
+    "openNotebook": "Open Notebook",
     "count": "{count} knowledge bases",
     "searchPlaceholder": "Search knowledge bases...",
     "sort": {
@@ -246,5 +248,10 @@
       "pan": "Drag to pan",
       "click": "Click node for details"
     }
+  },
+  "notebook": {
+    "title": "Notebook",
+    "subtitle": "Open the Open-NotebookLM workspace for document ingestion, grounded QA, and notebook-style outputs.",
+    "backToKnowledgeBase": "Back to Knowledge Base"
   }
 }

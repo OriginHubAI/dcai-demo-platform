@@ -38,7 +38,7 @@ python-json-logger>=2.0,<3.0
 
 # HTTP
 requests>=2.31,<3.0
-httpx>=0.25,<1.0
+httpx[socks]>=0.25,<1.0
 
 # FastAPI
 fastapi>=0.104,<1.0

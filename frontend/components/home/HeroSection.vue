@@ -139,7 +139,7 @@ const messages = ref([
   {
     id: 'assistant-initial',
     role: 'assistant',
-    content: '你好，我是 DataMaster。现在首页可以直接进行真实模型对话。',
+    content: '你好，我是 DataMaster。你可以在这里直接提问，或者使用 @DataFlow / @LoopAI / @PackageEditor 路由到对应工作区。',
     streaming: false,
   },
 ])
@@ -147,14 +147,18 @@ const inputText = ref('')
 const submitting = ref(false)
 const statusMessage = ref('')
 const statusError = ref(false)
+const llmConfigured = ref(false)
 const availableModels = ref(['gpt-4o'])
 const selectedModel = ref('gpt-4o')
 const historyRef = ref(null)
 
-const endpointLabel = computed(() => import.meta.env.VITE_LLM_PROVIDER_LABEL || 'Configured via backend .env')
+const endpointLabel = computed(() => {
+  if (!llmConfigured.value) return 'Provider not configured'
+  return import.meta.env.VITE_LLM_PROVIDER_LABEL || 'Configured via backend .env'
+})
 
 const quickPrompts = [
-  '总结一下 DataFlow、LoopAI、DFAgent 这三个服务的区别。',
+  '总结一下 DataFlow、LoopAI 和 PackageEditor 这三个工作区的区别。',
   '给我一个构建数据处理 pipeline 的高层设计思路。',
   '解释一下为什么流式输出对首页聊天体验更重要。',
 ]
@@ -188,9 +192,16 @@ async function loadModels() {
     const payload = await chatApi.getModels()
     availableModels.value = payload.models?.length ? payload.models : ['gpt-4o']
     selectedModel.value = payload.default_model || availableModels.value[0]
-    statusError.value = false
-    statusMessage.value = `Provider ready. Default model: ${selectedModel.value}`
+    llmConfigured.value = Boolean(payload.configured)
+    if (llmConfigured.value) {
+      statusError.value = false
+      statusMessage.value = `Provider ready. Default model: ${selectedModel.value}`
+    } else {
+      statusError.value = true
+      statusMessage.value = payload.message || 'LLM provider is not configured. Plain chat is unavailable, but agent routing still works.'
+    }
   } catch (error) {
+    llmConfigured.value = false
     statusError.value = true
     statusMessage.value = `Unable to load models: ${error.message}`
   }

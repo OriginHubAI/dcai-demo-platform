@@ -8,6 +8,12 @@
       </div>
       <div class="flex items-center gap-3">
         <span class="text-sm text-gray-500">{{ $t('knowledgeBase.count', { count: totalItems }) }}</span>
+        <router-link
+          to="/notebook"
+          class="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
+        >
+          {{ $t('knowledgeBase.openNotebook') }}
+        </router-link>
         <button
           @click="showCreateModal = true"
           class="inline-flex items-center gap-2 px-4 py-2 bg-dc-primary text-white text-sm font-medium rounded-lg hover:bg-dc-primary-dark transition-colors"

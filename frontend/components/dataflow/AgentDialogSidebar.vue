@@ -89,7 +89,7 @@ const contextLabel = computed(() => {
 
 const helperText = computed(() => {
   if (!props.packageId) {
-    return 'Use @DataFlow, @LoopAI, @DFAgent, or @PackageEditor.'
+    return 'Use @DataFlow, @LoopAI, or @PackageEditor.'
   }
   return 'Package context is appended to the request. This side panel gives suggestions and routing hints; it does not edit code directly.'
 })

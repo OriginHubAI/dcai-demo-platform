@@ -40,15 +40,6 @@ AGENT_REGISTRY = {
         'stream_url': '/api/v2/loopai/starter/agent/message/stream',
         'hint': '正在启动 LoopAI 智能循环 Agent...',
     },
-    'DFAgent': {
-        'aliases': ['DFAgent', 'dfagent'],
-        'tool': 'open_dfagent',
-        'keywords': ['算子推荐', 'pipeline推荐', 'pipeline recommendation', 'prompt优化',
-                     '数据采集', 'operator qa', 'operator', 'web collection'],
-        'action': 'open_iframe',
-        'iframe_url': '/apps/OpenDCAI/DataFlow-Agent',
-        'hint': '正在打开 DataFlow-Agent 工作台...',
-    },
     'PackageEditor-Agent': {
         'aliases': ['PackageEditor', 'package-editor', 'pkg'],
         'tool': 'open_package_editor',
@@ -91,8 +82,6 @@ class AgentRouter:
     def _build(self, name: str, cfg: dict, message: str, submodule: str = '') -> RouteResult:
         tool_input = self._extract_input(cfg['tool'], message, submodule=submodule)
         iframe_url = cfg.get('iframe_url')
-        if submodule and name == 'DFAgent':
-            iframe_url = f"{iframe_url}?tab={self._normalize_submodule(submodule)}"
         if name == 'PackageEditor-Agent':
             iframe_url = f"/apps/OpenDCAI/PackageEditor-Agent?package={tool_input['package_id']}"
         return RouteResult(
@@ -119,11 +108,6 @@ class AgentRouter:
             return {'intent': intent, 'hint': message[:200]}
         if tool == 'run_loopai_agent':
             return {'task_description': message}
-        if tool == 'open_dfagent':
-            return {
-                'task_description': message,
-                'tab': self._normalize_submodule(submodule) if submodule else '',
-            }
         if tool == 'open_package_editor':
             package_id = self._guess_package_id(message)
             return {

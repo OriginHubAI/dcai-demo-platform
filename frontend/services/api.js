@@ -74,41 +74,89 @@ export const taskApi = {
 
 export const datasetApi = {
   async getDatasets() {
-    if (isMockMode()) {
-      const { datasets } = await import('@/data/datasets.js')
-      return datasets
-    }
-
     const url = getApiUrl('/datasets')
     const response = await requestJson(url)
     return response.data?.list || []
   },
 
   async getDatasetById(datasetId) {
-    if (isMockMode()) {
-      const { getDatasetById } = await import('@/data/datasets.js')
-      return getDatasetById(datasetId)
-    }
-
     const url = getApiUrl(`/datasets/${datasetId}`)
     const response = await requestJson(url)
     return response.data
   },
 
   async getDatasetRelationships(datasetId) {
-    if (isMockMode()) {
-      const { getDatasetById } = await import('@/data/datasets.js')
-      const dataset = getDatasetById(datasetId)
-      if (!dataset) return null
-      return {
-        parent: dataset.parentDataset ? { id: dataset.parentDataset } : null,
-        derived: dataset.derivedDatasets?.map((id) => ({ id })) || [],
-      }
+    const dataset = await this.getDatasetById(datasetId)
+    return {
+      parent: dataset?.parentDataset ? { id: dataset.parentDataset } : null,
+      derived: dataset?.derivedDatasets?.map((id) => ({ id })) || [],
     }
+  },
 
-    const url = getApiUrl(`/datasets/${datasetId}/relationships`)
+  async getDatasetPreview(datasetId, path = '', revision = '') {
+    const queryParams = new URLSearchParams()
+    if (path) queryParams.set('path', path)
+    if (revision) queryParams.set('revision', revision)
+    const suffix = queryParams.toString() ? `?${queryParams}` : ''
+    const url = getApiUrl(`/datasets/${datasetId}/preview${suffix}`)
     const response = await requestJson(url)
     return response.data
+  },
+
+  async getDatasetTree(datasetId, { revision = '', path = '' } = {}) {
+    const queryParams = new URLSearchParams()
+    if (revision) queryParams.set('revision', revision)
+    if (path) queryParams.set('path', path)
+    const suffix = queryParams.toString() ? `?${queryParams}` : ''
+    const url = getApiUrl(`/datasets/${datasetId}/tree${suffix}`)
+    const response = await requestJson(url)
+    return response.data
+  },
+
+  async getDatasetSplits(datasetId, { revision = '' } = {}) {
+    const queryParams = new URLSearchParams()
+    if (revision) queryParams.set('revision', revision)
+    const suffix = queryParams.toString() ? `?${queryParams}` : ''
+    const url = getApiUrl(`/datasets/${datasetId}/splits${suffix}`)
+    const response = await requestJson(url)
+    return response.data
+  },
+
+  async getDatasetRows(datasetId, { revision = '', split = '', path = '', offset = 0, length = 20 } = {}) {
+    const queryParams = new URLSearchParams()
+    if (revision) queryParams.set('revision', revision)
+    if (split) queryParams.set('split', split)
+    if (path) queryParams.set('path', path)
+    queryParams.set('offset', String(offset))
+    queryParams.set('length', String(length))
+    const url = getApiUrl(`/datasets/${datasetId}/rows?${queryParams}`)
+    const response = await requestJson(url)
+    return response.data
+  },
+
+  async getHFDatasetInfo(datasetId, { revision = '' } = {}) {
+    const queryParams = new URLSearchParams({ dataset: datasetId })
+    if (revision) queryParams.set('revision', revision)
+    const url = getApiUrl(`/hf/info?${queryParams}`)
+    return requestJson(url)
+  },
+
+  async getHFDatasetSplits(datasetId, { revision = '' } = {}) {
+    const queryParams = new URLSearchParams({ dataset: datasetId })
+    if (revision) queryParams.set('revision', revision)
+    const url = getApiUrl(`/hf/splits?${queryParams}`)
+    return requestJson(url)
+  },
+
+  async getHFDatasetRows(datasetId, { revision = '', split = '', path = '', offset = 0, length = 20 } = {}) {
+    const queryParams = new URLSearchParams({ dataset: datasetId })
+    if (revision) queryParams.set('revision', revision)
+    if (split) queryParams.set('split', split)
+    if (path) queryParams.set('path', path)
+    queryParams.set('offset', String(offset))
+    queryParams.set('length', String(length))
+    const url = getApiUrl(`/hf/rows?${queryParams}`)
+    return requestJson(url)
   },
 }
 
@@ -204,14 +252,15 @@ export const knowledgeBaseApi = {
 
 export const modelApi = {
   async getModels() {
-    if (isMockMode()) {
-      const { models } = await import('@/data/models.js')
-      return models
-    }
-
     const url = getApiUrl('/models')
     const response = await requestJson(url)
     return response.data?.list || []
+  },
+
+  async getModelById(modelId) {
+    const url = getApiUrl(`/models/${modelId}`)
+    const response = await requestJson(url)
+    return response.data
   },
 }
 

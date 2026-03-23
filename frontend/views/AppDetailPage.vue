@@ -71,8 +71,8 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { appApi } from '@/services/api.js'
-import DFAgentApp from '@/components/apps/DFAgentApp.vue'
 import LoopAIApp from '@/components/apps/LoopAIApp.vue'
+import OpenNotebookApp from '@/components/apps/OpenNotebookApp.vue'
 import PackageEditorApp from '@/components/apps/PackageEditorApp.vue'
 
 const route = useRoute()
@@ -106,7 +106,7 @@ const gradientStyle = computed(() => {
 const appComponent = computed(() => {
   if (!app.value?.integration?.kind) return null
   if (app.value.integration.kind === 'loopai') return LoopAIApp
-  if (app.value.integration.kind === 'dfagent') return DFAgentApp
+  if (app.value.integration.kind === 'open-notebook') return OpenNotebookApp
   if (app.value.integration.kind === 'package-editor') return PackageEditorApp
   return null
 })

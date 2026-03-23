@@ -309,6 +309,8 @@ class ChatModelsView(APIView):
             'data': {
                 'models': models,
                 'default_model': chat_provider.default_model,
+                'configured': chat_provider.configured,
+                'message': chat_provider.status_message(),
             },
         })
 

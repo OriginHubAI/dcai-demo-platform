@@ -46,6 +46,7 @@
       <TagBadge :label="dataset.domain" :color="domainColorMap[dataset.domain] || 'gray'" />
       <TagBadge :label="dataset.modality" color="teal" />
       <TagBadge :label="dataset.task" :color="taskColorMap[dataset.task] || 'gray'" />
+      <TagBadge v-if="dataset.hfCompatible" label="HF Compatible" color="green" size="2xs" />
       <span class="text-xs text-gray-400">{{ dataset.size }}</span>
     </div>
     <!-- Metadata Preview for Autonomous Driving -->
@@ -61,6 +62,7 @@
       <StatBadge icon="download" :value="dataset.downloads" />
       <StatBadge icon="like" :value="dataset.likes" />
       <span class="text-xs text-gray-400">{{ formatRows(dataset.rows) }} rows</span>
+      <span v-if="dataset.latestRevision" class="text-xs text-gray-400">rev {{ dataset.latestRevision }}</span>
     </div>
   </router-link>
 </template>

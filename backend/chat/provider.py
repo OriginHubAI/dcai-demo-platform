@@ -1,6 +1,7 @@
 import json
 from dataclasses import dataclass
 from typing import Iterable
+from urllib.parse import urlparse
 
 import httpx
 from django.conf import settings
@@ -8,6 +9,15 @@ from django.conf import settings
 
 class ChatProviderError(RuntimeError):
     pass
+
+
+PLACEHOLDER_API_KEYS = {
+    '',
+    'your-api-key',
+    'change-me',
+    'changeme',
+    'replace-me',
+}
 
 
 @dataclass
@@ -27,17 +37,28 @@ class OpenAICompatibleChatProvider:
 
     @property
     def configured(self) -> bool:
-        return bool(self.base_url and self.api_key)
+        return bool(self.base_url) and self.api_key.lower() not in PLACEHOLDER_API_KEYS
 
     def _require_config(self):
         if not self.configured:
-            raise ChatProviderError('LLM provider is not configured. Set LLM_PROVIDER_BASE_URL and LLM_PROVIDER_API_KEY.')
+            raise ChatProviderError(self.status_message())
+
+    def status_message(self) -> str:
+        if not self.base_url:
+            return 'LLM provider is not configured. Set LLM_PROVIDER_BASE_URL and LLM_PROVIDER_API_KEY.'
+        if self.api_key.lower() in PLACEHOLDER_API_KEYS:
+            return 'LLM provider is using placeholder credentials. Set a real LLM_PROVIDER_API_KEY to enable plain chat.'
+        return 'LLM provider is configured.'
 
     def _api_root(self) -> str:
         base = self.base_url.rstrip('/')
         if base.endswith('/v1'):
             return base
         return f'{base}/v1'
+
+    def _should_trust_env(self) -> bool:
+        host = (urlparse(self.base_url).hostname or '').lower()
+        return host not in {'localhost', '127.0.0.1', '::1'}
 
     def _headers(self) -> dict:
         return {
@@ -53,7 +74,7 @@ class OpenAICompatibleChatProvider:
             return [self.default_model]
 
         try:
-            with httpx.Client(timeout=15) as client:
+            with httpx.Client(timeout=15, trust_env=self._should_trust_env()) as client:
                 response = client.get(f'{self._api_root()}/models', headers=self._headers())
             response.raise_for_status()
         except Exception:
@@ -73,7 +94,7 @@ class OpenAICompatibleChatProvider:
             'temperature': temperature,
             'stream': False,
         }
-        with httpx.Client(timeout=self.timeout) as client:
+        with httpx.Client(timeout=self.timeout, trust_env=self._should_trust_env()) as client:
             response = client.post(
                 f'{self._api_root()}/chat/completions',
                 headers=self._headers(),
@@ -97,7 +118,7 @@ class OpenAICompatibleChatProvider:
             'stream': True,
         }
 
-        with httpx.Client(timeout=None) as client:
+        with httpx.Client(timeout=None, trust_env=self._should_trust_env()) as client:
             with client.stream(
                 'POST',
                 f'{self._api_root()}/chat/completions',
