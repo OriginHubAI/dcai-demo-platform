@@ -1,5 +1,8 @@
 <template>
-  <div class="bg-white border border-gray-200 rounded-lg hover:shadow-md hover:border-gray-300 transition-all overflow-hidden flex flex-col h-full">
+  <div
+    class="bg-white border border-gray-200 rounded-lg hover:shadow-md hover:border-gray-300 transition-all overflow-hidden flex flex-col h-full cursor-pointer"
+    @click="$emit('open', kb)"
+  >
     <!-- Card Content -->
     <div class="p-5 flex-grow">
       <!-- Header: Title + Indexing Status Badge -->
@@ -27,7 +30,7 @@
       <div v-if="sourceDataset" class="mb-2">
         <p class="text-sm text-gray-600">
           <span class="text-gray-400">{{ $t('knowledgeBase.sourceDataset') }}:</span>
-          <span class="ml-1 text-indigo-600 font-medium">{{ sourceDataset.name }}</span>
+          <span class="ml-1 text-indigo-600 font-medium">{{ sourceDatasetLabel }}</span>
         </p>
       </div>
 
@@ -56,7 +59,7 @@
     <!-- Card Actions -->
     <div class="border-t border-gray-200 flex divide-x divide-gray-200">
       <button
-        @click="$emit('chat', kb)"
+        @click.stop="$emit('chat', kb)"
         class="flex-1 flex items-center justify-center gap-1.5 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
         :disabled="kb.status !== 'ready'"
         :class="{ 'opacity-50 cursor-not-allowed': kb.status !== 'ready' }"
@@ -67,7 +70,7 @@
         {{ $t('knowledgeBase.conversation') }}
       </button>
       <button
-        @click="$emit('graph', kb)"
+        @click.stop="$emit('graph', kb)"
         class="flex-1 flex items-center justify-center gap-1.5 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
         :disabled="!kb.knowledgeGraph?.enabled"
         :class="{ 'opacity-50 cursor-not-allowed': !kb.knowledgeGraph?.enabled }"
@@ -78,7 +81,7 @@
         {{ $t('knowledgeBase.knowledgeGraph') }}
       </button>
       <button
-        @click="$emit('delete', kb)"
+        @click.stop="$emit('delete', kb)"
         class="flex-1 flex items-center justify-center gap-1.5 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,13 +96,12 @@
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getDatasetById } from '@/data/datasets.js'
 
 const props = defineProps({
   kb: { type: Object, required: true }
 })
 
-defineEmits(['chat', 'graph', 'delete'])
+defineEmits(['chat', 'graph', 'delete', 'open'])
 
 const { t } = useI18n()
 
@@ -114,10 +116,6 @@ const indexingStatusLabel = computed(() => {
     : t('knowledgeBase.indexingStatus.indexing')
 })
 
-const sourceDataset = computed(() => {
-  if (props.kb.datasetId) {
-    return getDatasetById(props.kb.datasetId)
-  }
-  return null
-})
+const sourceDataset = computed(() => props.kb.sourceDataset || props.kb.datasetId || '')
+const sourceDatasetLabel = computed(() => props.kb.sourceDatasetName || sourceDataset.value || '')
 </script>

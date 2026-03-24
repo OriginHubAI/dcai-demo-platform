@@ -2,7 +2,15 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-gray-900">{{ $t('models.title') }}</h1>
-      <span class="text-sm text-gray-500">{{ $t('models.count', { count: totalItems }) }}</span>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-gray-500">{{ $t('models.count', { count: totalItems }) }}</span>
+        <button
+          class="rounded-lg bg-dc-primary px-4 py-2 text-sm font-medium text-white hover:bg-dc-primary-dark"
+          @click="showCreateModal = true"
+        >
+          New Model Repo
+        </button>
+      </div>
     </div>
     <div class="lg:grid lg:grid-cols-4 lg:gap-6">
       <aside class="hidden lg:block lg:col-span-1">
@@ -48,12 +56,19 @@
         <PaginationBar v-model="currentPage" :total-pages="totalPages" />
       </div>
     </div>
+
+    <RepoCreateModal
+      :visible="showCreateModal"
+      repo-type="model"
+      @close="showCreateModal = false"
+      @created="handleCreated"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { modelApi } from '@/services/api.js'
 import { sortOptions } from '@/data/filters.js'
@@ -64,10 +79,13 @@ import SortDropdown from '@/components/common/SortDropdown.vue'
 import PaginationBar from '@/components/common/PaginationBar.vue'
 import ModelCard from '@/components/models/ModelCard.vue'
 import ModelFilters from '@/components/models/ModelFilters.vue'
+import RepoCreateModal from '@/components/hub/RepoCreateModal.vue'
 
 const { t } = useI18n()
 const route = useRoute()
+const router = useRouter()
 const showMobileFilters = ref(false)
+const showCreateModal = ref(false)
 const models = ref([])
 
 const { searchQuery, filters, sortBy, filtered, clearFilters, activeFilterCount } = useSearch(models, { defaultSort: 'default' })
@@ -79,4 +97,10 @@ onMounted(async () => {
     searchQuery.value = route.query.search
   }
 })
+
+async function handleCreated(repo) {
+  showCreateModal.value = false
+  models.value = await modelApi.getModels()
+  router.push({ name: 'model-detail', params: { id: repo.id } })
+}
 </script>

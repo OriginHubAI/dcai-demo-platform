@@ -365,7 +365,7 @@ async def mcp_knowledgebase_list(
     import httpx
     async with httpx.AsyncClient() as client:
         response = await client.get(
-            "http://localhost:8000/api/v2/knowledgebase",
+            "http://localhost:8000/api/v2/knowledge-bases",
             timeout=30.0
         )
         data = response.json()
@@ -394,7 +394,7 @@ async def mcp_knowledgebase_detail(kb_id: str):
     import httpx
     async with httpx.AsyncClient() as client:
         response = await client.get(
-            f"http://localhost:8000/api/v2/knowledgebase/{kb_id}",
+            f"http://localhost:8000/api/v2/knowledge-bases/{kb_id}",
             timeout=30.0
         )
         data = response.json()
@@ -409,11 +409,16 @@ async def mcp_knowledgebase_detail(kb_id: str):
                     "description": kb.get("description"),
                     "author": kb.get("author"),
                     "status": kb.get("status"),
-                    "type": kb.get("type"),
+                    "type": kb.get("type") or "knowledge-base",
                     "lastModified": kb.get("lastModified"),
                     "vectorStore": kb.get("vectorStore", {}),
-                    "documents": kb.get("documents", {}),
-                    "sources": kb.get("sources", [])
+                    "documents": {
+                        "total": kb.get("documentCount", 0),
+                        "files": kb.get("fileCount", 0),
+                    },
+                    "sources": kb.get("sourceFiles", []),
+                    "retrieval": kb.get("retrieval", {}),
+                    "knowledgeGraph": kb.get("knowledgeGraph", {}),
                 }
             }
         return {"success": False, "error": data.get("msg", "Knowledge base not found")}
@@ -463,7 +468,7 @@ async def mcp_knowledgebase_statistics():
     import httpx
     async with httpx.AsyncClient() as client:
         response = await client.get(
-            "http://localhost:8000/api/v2/knowledgebase",
+            "http://localhost:8000/api/v2/knowledge-bases",
             timeout=30.0
         )
         data = response.json()

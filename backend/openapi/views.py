@@ -27,9 +27,25 @@ class OpenAPIKeyViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         return OpenAPIKey.objects.filter(user=self.request.user)
-    
+
+    def list(self, request, *args, **kwargs):
+        serializer = OpenAPIKeySerializer(self.get_queryset(), many=True)
+        return Response({'code': 0, 'msg': 'success', 'data': serializer.data})
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save(user=request.user)
+        detail_serializer = OpenAPIKeyDetailSerializer(instance)
+        return Response({'code': 0, 'msg': 'success', 'data': detail_serializer.data}, status=status.HTTP_201_CREATED)
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response({'code': 0, 'msg': 'success', 'data': {}})
     
     @action(detail=True, methods=['post'])
     def regenerate(self, request, pk=None):

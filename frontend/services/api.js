@@ -79,8 +79,20 @@ export const datasetApi = {
     return response.data?.list || []
   },
 
-  async getDatasetById(datasetId) {
-    const url = getApiUrl(`/datasets/${datasetId}`)
+  async createDataset(payload) {
+    const url = getApiUrl('/datasets')
+    const response = await requestJson(url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    return response.data
+  },
+
+  async getDatasetById(datasetId, { revision = '' } = {}) {
+    const queryParams = new URLSearchParams()
+    if (revision) queryParams.set('revision', revision)
+    const suffix = queryParams.toString() ? `?${queryParams}` : ''
+    const url = getApiUrl(`/datasets/${datasetId}${suffix}`)
     const response = await requestJson(url)
     return response.data
   },
@@ -157,6 +169,15 @@ export const datasetApi = {
     queryParams.set('length', String(length))
     const url = getApiUrl(`/hf/rows?${queryParams}`)
     return requestJson(url)
+  },
+
+  async createDatasetRevision(datasetId, payload) {
+    const url = getApiUrl(`/datasets/${datasetId}/revisions`)
+    const response = await requestJson(url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    return response.data
   },
 }
 
@@ -238,15 +259,90 @@ export const dataflowApi = {
 }
 
 export const knowledgeBaseApi = {
-  async getKnowledgeBases() {
+  async getKnowledgeBases(params = {}) {
     if (isMockMode()) {
       const { knowledgeBases } = await import('@/data/knowledgeBase.js')
       return knowledgeBases
     }
 
-    const url = getApiUrl('/knowledgebase')
+    const queryParams = new URLSearchParams(params)
+    const suffix = queryParams.toString() ? `?${queryParams}` : ''
+    const url = getApiUrl(`/knowledge-bases${suffix}`)
     const response = await requestJson(url)
     return response.data?.list || []
+  },
+
+  async getKnowledgeBaseById(repoId, { revision = '' } = {}) {
+    if (isMockMode()) {
+      const { getKnowledgeBaseById } = await import('@/data/knowledgeBase.js')
+      return getKnowledgeBaseById(repoId)
+    }
+
+    const queryParams = new URLSearchParams()
+    if (revision) queryParams.set('revision', revision)
+    const suffix = queryParams.toString() ? `?${queryParams}` : ''
+    const url = getApiUrl(`/knowledge-bases/${repoId}${suffix}`)
+    const response = await requestJson(url)
+    return response.data
+  },
+
+  async getKnowledgeBuilds(repoId) {
+    const url = getApiUrl(`/knowledge-bases/${repoId}/builds`)
+    const response = await requestJson(url)
+    return response.data || []
+  },
+
+  async startKnowledgeBuild(repoId, payload = {}) {
+    const url = getApiUrl(`/knowledge-bases/${repoId}/builds`)
+    const response = await requestJson(url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    return response.data
+  },
+
+  async deleteKnowledgeBase(repoId) {
+    const url = getApiUrl(`/knowledge-bases/${repoId}`)
+    const response = await requestJson(url, { method: 'DELETE' })
+    return response.data
+  },
+
+  async createKnowledgeBase(payload) {
+    const url = getApiUrl('/knowledge-bases')
+    const response = await requestJson(url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    return response.data
+  },
+
+  async createKnowledgeRevision(repoId, payload) {
+    const url = getApiUrl(`/knowledge-bases/${repoId}/revisions`)
+    const response = await requestJson(url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    return response.data
+  },
+
+  async getKnowledgeTree(repoId, { revision = '', path = '' } = {}) {
+    const queryParams = new URLSearchParams()
+    if (revision) queryParams.set('revision', revision)
+    if (path) queryParams.set('path', path)
+    const suffix = queryParams.toString() ? `?${queryParams}` : ''
+    const url = getApiUrl(`/knowledge-bases/${repoId}/tree${suffix}`)
+    const response = await requestJson(url)
+    return response.data
+  },
+
+  async getKnowledgePreview(repoId, { revision = '', path = '' } = {}) {
+    const queryParams = new URLSearchParams()
+    if (revision) queryParams.set('revision', revision)
+    if (path) queryParams.set('path', path)
+    const suffix = queryParams.toString() ? `?${queryParams}` : ''
+    const url = getApiUrl(`/knowledge-bases/${repoId}/preview${suffix}`)
+    const response = await requestJson(url)
+    return response.data
   },
 }
 
@@ -257,10 +353,86 @@ export const modelApi = {
     return response.data?.list || []
   },
 
-  async getModelById(modelId) {
-    const url = getApiUrl(`/models/${modelId}`)
+  async createModel(payload) {
+    const url = getApiUrl('/models')
+    const response = await requestJson(url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    return response.data
+  },
+
+  async getModelById(modelId, { revision = '' } = {}) {
+    const queryParams = new URLSearchParams()
+    if (revision) queryParams.set('revision', revision)
+    const suffix = queryParams.toString() ? `?${queryParams}` : ''
+    const url = getApiUrl(`/models/${modelId}${suffix}`)
     const response = await requestJson(url)
     return response.data
+  },
+
+  async getModelTree(modelId, { revision = '', path = '' } = {}) {
+    const queryParams = new URLSearchParams()
+    if (revision) queryParams.set('revision', revision)
+    if (path) queryParams.set('path', path)
+    const suffix = queryParams.toString() ? `?${queryParams}` : ''
+    const url = getApiUrl(`/models/${modelId}/tree${suffix}`)
+    const response = await requestJson(url)
+    return response.data
+  },
+
+  async getModelPreview(modelId, { revision = '', path = '' } = {}) {
+    const queryParams = new URLSearchParams()
+    if (revision) queryParams.set('revision', revision)
+    if (path) queryParams.set('path', path)
+    const suffix = queryParams.toString() ? `?${queryParams}` : ''
+    const url = getApiUrl(`/models/${modelId}/preview${suffix}`)
+    const response = await requestJson(url)
+    return response.data
+  },
+
+  async createModelRevision(modelId, payload) {
+    const url = getApiUrl(`/models/${modelId}/revisions`)
+    const response = await requestJson(url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    return response.data
+  },
+}
+
+export const openapiApi = {
+  async getKeys() {
+    const url = `${config.apiBaseUrl}/api/v1/apikey/`
+    const response = await requestJson(url)
+    return response.data || response.results || []
+  },
+
+  async createKey(payload) {
+    const url = `${config.apiBaseUrl}/api/v1/apikey/`
+    const response = await requestJson(url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    return response.data || response
+  },
+
+  async regenerateKey(id) {
+    const url = `${config.apiBaseUrl}/api/v1/apikey/${id}/regenerate/`
+    const response = await requestJson(url, { method: 'POST' })
+    return response.data?.key || ''
+  },
+
+  async toggleKeyStatus(id) {
+    const url = `${config.apiBaseUrl}/api/v1/apikey/${id}/toggle_status/`
+    const response = await requestJson(url, { method: 'POST' })
+    return response.data || response
+  },
+
+  async deleteKey(id) {
+    const url = `${config.apiBaseUrl}/api/v1/apikey/${id}/`
+    const response = await requestJson(url, { method: 'DELETE' })
+    return response.data || response
   },
 }
 

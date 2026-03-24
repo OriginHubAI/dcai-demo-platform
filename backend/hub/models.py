@@ -144,3 +144,86 @@ class ModelFile(TimestampedModel):
 
     def __str__(self):
         return f'{self.version.repo.repo_id}:{self.path}'
+
+
+class KnowledgeRepo(TimestampedModel):
+    repo_id = models.CharField(max_length=255, unique=True)
+    namespace = models.CharField(max_length=120)
+    slug = models.CharField(max_length=120)
+    author = models.CharField(max_length=120)
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    summary = models.TextField(blank=True, default='')
+    visibility = models.CharField(max_length=32, default='public')
+    status = models.CharField(max_length=32, default='pending')
+    source_dataset = models.CharField(max_length=255, blank=True, default='')
+    source_files = models.JSONField(default=list, blank=True)
+    document_count = models.PositiveBigIntegerField(default=0)
+    file_count = models.PositiveIntegerField(default=0)
+    downloads = models.PositiveIntegerField(default=0)
+    likes = models.PositiveIntegerField(default=0)
+    tags = models.JSONField(default=list, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    card_sections = models.JSONField(default=list, blank=True)
+    vector_store = models.JSONField(default=dict, blank=True)
+    pipeline = models.JSONField(default=dict, blank=True)
+    knowledge_graph = models.JSONField(default=dict, blank=True)
+    retrieval = models.JSONField(default=dict, blank=True)
+    mcp = models.JSONField(default=dict, blank=True)
+    hf_compatible = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['repo_id']
+
+    def __str__(self):
+        return self.repo_id
+
+
+class KnowledgeVersion(TimestampedModel):
+    repo = models.ForeignKey(KnowledgeRepo, related_name='versions', on_delete=models.CASCADE)
+    revision = models.CharField(max_length=120)
+    commit_sha = models.CharField(max_length=64)
+    manifest = models.JSONField(default=dict, blank=True)
+    is_latest = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        unique_together = ('repo', 'revision')
+
+    def __str__(self):
+        return f'{self.repo.repo_id}@{self.revision}'
+
+
+class KnowledgeFile(TimestampedModel):
+    version = models.ForeignKey(KnowledgeVersion, related_name='files', on_delete=models.CASCADE)
+    path = models.CharField(max_length=512)
+    file_type = models.CharField(max_length=64)
+    size_bytes = models.PositiveBigIntegerField(default=0)
+    size_label = models.CharField(max_length=64, default='0B')
+    row_count = models.PositiveBigIntegerField(null=True, blank=True)
+    preview_rows = models.JSONField(default=list, blank=True)
+    preview_text = models.TextField(blank=True, default='')
+    sha256 = models.CharField(max_length=128, blank=True, default='')
+    sort_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['sort_order', 'path']
+        unique_together = ('version', 'path')
+
+    def __str__(self):
+        return f'{self.version.repo.repo_id}:{self.path}'
+
+
+class KnowledgeBuild(TimestampedModel):
+    repo = models.ForeignKey(KnowledgeRepo, related_name='builds', on_delete=models.CASCADE)
+    trigger = models.CharField(max_length=32, default='manual')
+    status = models.CharField(max_length=32, default='queued')
+    progress = models.PositiveIntegerField(default=0)
+    stages = models.JSONField(default=list, blank=True)
+    error_message = models.TextField(blank=True, default='')
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+
+    def __str__(self):
+        return f'{self.repo.repo_id}:{self.status}'

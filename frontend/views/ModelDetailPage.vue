@@ -26,6 +26,24 @@
             <TagBadge v-if="model.hfCompatible" label="HF Compatible" color="green" />
           </div>
 
+          <div class="flex items-center gap-3">
+            <label class="text-sm text-gray-600">Revision</label>
+            <select
+              v-model="selectedRevision"
+              class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
+            >
+              <option v-for="version in model.versions" :key="version.revision" :value="version.revision">
+                {{ version.revision }}{{ version.isLatest ? ' (latest)' : '' }}
+              </option>
+            </select>
+            <button
+              class="inline-flex items-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              @click="showPublishModal = true"
+            >
+              Publish Revision
+            </button>
+          </div>
+
           <div class="border border-gray-200 rounded-lg bg-white">
             <div class="border-b border-gray-200 px-4 py-3">
               <h2 class="font-semibold text-gray-900">Model Card</h2>
@@ -38,43 +56,15 @@
             </div>
           </div>
 
-          <div class="grid gap-6 lg:grid-cols-2">
-            <div class="border border-gray-200 rounded-lg bg-white">
-              <div class="border-b border-gray-200 px-4 py-3">
-                <h2 class="font-semibold text-gray-900">Files</h2>
-              </div>
-              <div class="divide-y divide-gray-100">
-                <button
-                  v-for="file in model.files"
-                  :key="file.path"
-                  class="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors"
-                  :class="selectedFile?.path === file.path ? 'bg-gray-50' : ''"
-                  @click="selectedFile = file"
-                >
-                  <div class="flex items-center justify-between gap-4">
-                    <div>
-                      <div class="text-sm font-medium text-gray-900 break-all">{{ file.path }}</div>
-                      <div class="text-xs text-gray-500 mt-1">{{ file.fileType }}</div>
-                    </div>
-                    <div class="text-xs text-gray-500 whitespace-nowrap">{{ file.size }}</div>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            <div class="border border-gray-200 rounded-lg bg-white">
-              <div class="border-b border-gray-200 px-4 py-3">
-                <h2 class="font-semibold text-gray-900">Preview</h2>
-              </div>
-              <div class="p-4">
-                <div v-if="selectedFile" class="space-y-3">
-                  <div class="text-xs text-gray-500">{{ selectedFile.path }}</div>
-                  <pre class="bg-gray-50 rounded-lg p-4 text-xs overflow-x-auto whitespace-pre-wrap">{{ selectedFile.previewText || 'Binary file preview not available.' }}</pre>
-                </div>
-                <p v-else class="text-sm text-gray-500">Select a file to inspect its preview.</p>
-              </div>
-            </div>
-          </div>
+          <HubFilesBrowser
+            repo-type="model"
+            :repo-id="model.id"
+            :versions="model.versions"
+            :revision="selectedRevision"
+            :default-revision="model.selectedRevision || model.latestRevision"
+            :show-revision-selector="false"
+            @update:revision="selectedRevision = $event"
+          />
 
           <div class="border border-gray-200 rounded-lg bg-white">
             <div class="border-b border-gray-200 px-4 py-3">
@@ -166,6 +156,14 @@
       <p class="text-lg text-gray-500">Model not found</p>
       <router-link to="/models" class="text-sm text-blue-600 hover:underline mt-2 inline-block">Back to Models</router-link>
     </div>
+
+    <RevisionPublishModal
+      :visible="showPublishModal && !!model"
+      repo-type="model"
+      :repo-id="model?.id || route.params.id"
+      @close="showPublishModal = false"
+      @published="handleRevisionPublished"
+    />
   </div>
 </template>
 
@@ -177,28 +175,49 @@ import { modelApi } from '@/services/api.js'
 import { taskColorMap } from '@/data/filters.js'
 import TagBadge from '@/components/common/TagBadge.vue'
 import StatBadge from '@/components/common/StatBadge.vue'
+import HubFilesBrowser from '@/components/hub/HubFilesBrowser.vue'
+import RevisionPublishModal from '@/components/hub/RevisionPublishModal.vue'
 
 const route = useRoute()
 const model = ref(null)
 const loading = ref(false)
-const selectedFile = ref(null)
+const selectedRevision = ref('')
+const showPublishModal = ref(false)
 
-async function loadModel() {
+async function loadModel(revision = selectedRevision.value) {
   loading.value = true
   try {
-    model.value = await modelApi.getModelById(route.params.id)
-    selectedFile.value = model.value?.preview || model.value?.files?.[0] || null
+    model.value = await modelApi.getModelById(route.params.id, { revision })
+    if (!selectedRevision.value) {
+      selectedRevision.value = model.value?.selectedRevision || model.value?.latestRevision || ''
+    }
   } catch (error) {
     console.error('Failed to load model:', error)
     model.value = null
-    selectedFile.value = null
   } finally {
     loading.value = false
   }
 }
 
 onMounted(loadModel)
-watch(() => route.params.id, loadModel)
+watch(() => route.params.id, () => {
+  selectedRevision.value = ''
+  loadModel('')
+})
+watch(selectedRevision, (next, prev) => {
+  if (!next || next === prev) return
+  loadModel(next)
+})
+
+function handleRevisionPublished(response) {
+  showPublishModal.value = false
+  const revision = response?.version?.revision || ''
+  if (revision) {
+    selectedRevision.value = revision
+    return
+  }
+  loadModel(selectedRevision.value)
+}
 
 function formatDateTime(value) {
   return new Date(value).toLocaleString()

@@ -23,8 +23,10 @@ export function resolveServiceUrl(rawUrl, defaultPort) {
 }
 
 export const config = {
-  dataMode: import.meta.env.VITE_DATA_MODE || 'mock',
-  apiBaseUrl: '',
+  dataMode: import.meta.env.VITE_DATA_MODE || (import.meta.env.VITE_API_BASE_URL ? 'api' : 'mock'),
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL
+    ? resolveServiceUrl(import.meta.env.VITE_API_BASE_URL, 8000)
+    : '',
   apiVersion: '/api/v2',
 }
 

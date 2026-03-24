@@ -42,6 +42,7 @@
             :key="kb.id"
             :kb="kb"
             class="h-full"
+            @open="handleOpen"
             @chat="handleChat"
             @graph="handleGraph"
             @delete="handleDelete"
@@ -58,40 +59,18 @@
         <PaginationBar v-model="currentPage" :total-pages="totalPages" />
     </div>
 
-    <!-- Create Knowledge Base Modal (placeholder) -->
-    <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showCreateModal = false">
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold text-gray-900">{{ $t('knowledgeBase.createTitle') }}</h2>
-          <button @click="showCreateModal = false" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-        <p class="text-sm text-gray-600 mb-4">{{ $t('knowledgeBase.createDescription') }}</p>
-        <div class="flex justify-end gap-3">
-          <button
-            @click="showCreateModal = false"
-            class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            {{ $t('common.cancel') }}
-          </button>
-          <button
-            @click="showCreateModal = false"
-            class="px-4 py-2 text-sm bg-dc-primary text-white rounded-lg hover:bg-dc-primary-dark transition-colors"
-          >
-            {{ $t('knowledgeBase.selectDataset') }}
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- Knowledge Graph Modal -->
     <KnowledgeGraphModal
       :visible="showGraphModal"
       :kb="selectedKb"
       @close="showGraphModal = false"
+    />
+
+    <RepoCreateModal
+      :visible="showCreateModal"
+      repo-type="knowledge"
+      @close="showCreateModal = false"
+      @created="handleCreated"
     />
   </div>
 </template>
@@ -99,23 +78,25 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { knowledgeBaseApi } from '@/services/api.js'
-import { kbStatusMap, kbTypeMap } from '@/data/knowledgeBase.js'
 import { usePagination } from '@/composables/usePagination.js'
 import SearchBar from '@/components/common/SearchBar.vue'
 import SortDropdown from '@/components/common/SortDropdown.vue'
 import PaginationBar from '@/components/common/PaginationBar.vue'
+import RepoCreateModal from '@/components/hub/RepoCreateModal.vue'
 import KnowledgeBaseCard from '@/components/knowledgeBase/KnowledgeBaseCard.vue'
 import KnowledgeGraphModal from '@/components/knowledgeBase/KnowledgeGraphModal.vue'
 
 const { t } = useI18n()
+const router = useRouter()
 const showCreateModal = ref(false)
 const showGraphModal = ref(false)
 const selectedKb = ref(null)
 const knowledgeBases = ref([])
 const loading = ref(false)
 
-onMounted(async () => {
+async function loadKnowledgeBases() {
   loading.value = true
   try {
     knowledgeBases.value = await knowledgeBaseApi.getKnowledgeBases()
@@ -124,7 +105,9 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(loadKnowledgeBases)
 
 // Search and sort
 const searchQuery = ref('')
@@ -169,9 +152,12 @@ const filtered = computed(() => {
 const { currentPage, totalPages, paginatedItems, totalItems } = usePagination(filtered, 8)
 
 // Event handlers
+function handleOpen(kb) {
+  router.push({ name: 'knowledge-base-detail', params: { id: kb.id } })
+}
+
 function handleChat(kb) {
-  console.log('Start chat with KB:', kb.id)
-  // Navigate to chat page or open chat modal
+  router.push({ name: 'notebook', query: { knowledge_base: kb.id } })
 }
 
 function handleGraph(kb) {
@@ -179,10 +165,20 @@ function handleGraph(kb) {
   showGraphModal.value = true
 }
 
-function handleDelete(kb) {
+async function handleDelete(kb) {
   if (confirm(t('knowledgeBase.confirmDelete', { name: kb.name }))) {
-    console.log('Delete KB:', kb.id)
-    // Call API to delete knowledge base
+    try {
+      await knowledgeBaseApi.deleteKnowledgeBase(kb.id)
+      await loadKnowledgeBases()
+    } catch (error) {
+      console.error('Failed to delete knowledge base:', error)
+    }
   }
+}
+
+async function handleCreated(repo) {
+  showCreateModal.value = false
+  await loadKnowledgeBases()
+  router.push({ name: 'knowledge-base-detail', params: { id: repo.id } })
 }
 </script>

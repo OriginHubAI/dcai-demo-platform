@@ -34,6 +34,24 @@
           <TagBadge v-if="dataset.hfCompatible" label="HF Compatible" color="green" />
         </div>
 
+        <div class="flex items-center gap-3">
+          <label class="text-sm text-gray-600">Revision</label>
+          <select
+            v-model="selectedRevision"
+            class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
+          >
+            <option v-for="version in dataset.versions" :key="version.revision" :value="version.revision">
+              {{ version.revision }}{{ version.isLatest ? ' (latest)' : '' }}
+            </option>
+          </select>
+          <button
+            class="inline-flex items-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            @click="showPublishModal = true"
+          >
+            Publish Revision
+          </button>
+        </div>
+
         <div class="border-b border-gray-200">
           <nav class="-mb-px flex flex-wrap gap-6">
             <button
@@ -158,6 +176,14 @@
       <p class="text-lg text-gray-500">Dataset not found</p>
       <router-link to="/datasets" class="mt-2 inline-block text-sm text-blue-600 hover:underline">Back to Datasets</router-link>
     </div>
+
+    <RevisionPublishModal
+      :visible="showPublishModal && !!dataset"
+      repo-type="dataset"
+      :repo-id="dataset?.id || route.params.id"
+      @close="showPublishModal = false"
+      @published="handleRevisionPublished"
+    />
   </div>
 </template>
 
@@ -171,11 +197,14 @@ import TagBadge from '@/components/common/TagBadge.vue'
 import StatBadge from '@/components/common/StatBadge.vue'
 import DatasetFilesBrowser from '@/components/datasets/DatasetFilesBrowser.vue'
 import DataStudioLite from '@/components/datasets/DataStudioLite.vue'
+import RevisionPublishModal from '@/components/hub/RevisionPublishModal.vue'
 
 const route = useRoute()
 const dataset = ref(null)
 const loading = ref(false)
 const activeTab = ref('card')
+const selectedRevision = ref('')
+const showPublishModal = ref(false)
 
 const tabs = [
   { id: 'card', label: 'Dataset Card' },
@@ -183,10 +212,13 @@ const tabs = [
   { id: 'datastudio', label: 'Data Studio Lite' },
 ]
 
-async function loadDataset() {
+async function loadDataset(revision = selectedRevision.value) {
   loading.value = true
   try {
-    dataset.value = await datasetApi.getDatasetById(route.params.id)
+    dataset.value = await datasetApi.getDatasetById(route.params.id, { revision })
+    if (!selectedRevision.value) {
+      selectedRevision.value = dataset.value?.defaultRevision || dataset.value?.latestRevision || ''
+    }
   } catch (error) {
     console.error('Failed to load dataset:', error)
     dataset.value = null
@@ -198,8 +230,24 @@ async function loadDataset() {
 onMounted(loadDataset)
 watch(() => route.params.id, () => {
   activeTab.value = 'card'
-  loadDataset()
+  selectedRevision.value = ''
+  loadDataset('')
 })
+watch(selectedRevision, (next, prev) => {
+  if (!next || next === prev) return
+  loadDataset(next)
+})
+
+function handleRevisionPublished(response) {
+  showPublishModal.value = false
+  activeTab.value = 'card'
+  const revision = response?.version?.revision || ''
+  if (revision) {
+    selectedRevision.value = revision
+    return
+  }
+  loadDataset(selectedRevision.value)
+}
 
 function formatRows(n) {
   const value = Number(n || 0)

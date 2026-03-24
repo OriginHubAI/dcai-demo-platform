@@ -325,28 +325,12 @@
 <script setup>
 import { ref, onMounted, onUnmounted, h } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { openapiApi } from '@/services/api.js'
 
 const { t } = useI18n()
 
 // State
-const tokens = ref([
-  {
-    id: 1,
-    name: 'dataset',
-    value: 'hf_dataset_token_xyz789abc',
-    lastRefreshed: '2024-01-30T08:00:00Z',
-    lastUsed: null,
-    permission: 'WRITE'
-  },
-  {
-    id: 2,
-    name: 'gpt',
-    value: 'hf_gpt_token_abc123def',
-    lastRefreshed: '2023-02-09T08:00:00Z',
-    lastUsed: null,
-    permission: 'READ'
-  }
-])
+const tokens = ref([])
 
 const showCreateModal = ref(false)
 const showNewTokenModal = ref(false)
@@ -431,42 +415,46 @@ function copyToken(token) {
   showToastMessage(t('accessTokens.copied'))
 }
 
-function refreshToken(token) {
-  // In a real app, this would call an API to refresh the token
-  token.lastRefreshed = new Date().toISOString()
-  showToastMessage(t('accessTokens.tokenCreated'))
-}
-
-function createToken() {
-  if (!newToken.value.name) return
-
-  // Generate a new token value
-  const randomSuffix = Math.random().toString(36).substring(2, 15)
-  const tokenValue = `hf_${newToken.value.name.toLowerCase().replace(/\s+/g, '_')}_${randomSuffix}`
-
-  const token = {
-    id: Date.now(),
-    name: newToken.value.name,
-    value: tokenValue,
-    lastRefreshed: new Date().toISOString(),
-    lastUsed: null,
-    permission: newToken.value.permission
+async function refreshToken(token) {
+  try {
+    const newKey = await openapiApi.regenerateKey(token.id)
+    token.value = newKey
+    token.lastRefreshed = new Date().toISOString()
+    newlyCreatedToken.value = newKey
+    showNewTokenModal.value = true
+    showToastMessage(t('accessTokens.tokenCreated'))
+  } catch (error) {
+    console.error('Failed to refresh token:', error)
   }
-
-  tokens.value.push(token)
-  newlyCreatedToken.value = tokenValue
-
-  // Reset form
-  newToken.value = { name: '', permission: 'READ' }
-  showCreateModal.value = false
-  showNewTokenModal.value = true
 }
 
-function deleteToken(token) {
+async function createToken() {
+  if (!newToken.value.name) return
+  try {
+    const created = await openapiApi.createKey({
+      name: newToken.value.name,
+      key_type: newToken.value.permission.toLowerCase(),
+    })
+    tokens.value.unshift(normalizeToken(created))
+    newlyCreatedToken.value = created.key
+    newToken.value = { name: '', permission: 'READ' }
+    showCreateModal.value = false
+    showNewTokenModal.value = true
+  } catch (error) {
+    console.error('Failed to create token:', error)
+  }
+}
+
+async function deleteToken(token) {
   if (confirm(t('accessTokens.confirmDelete'))) {
-    tokens.value = tokens.value.filter(t => t.id !== token.id)
-    activeActionMenu.value = null
-    showToastMessage(t('accessTokens.tokenDeleted'))
+    try {
+      await openapiApi.deleteKey(token.id)
+      tokens.value = tokens.value.filter(t => t.id !== token.id)
+      activeActionMenu.value = null
+      showToastMessage(t('accessTokens.tokenDeleted'))
+    } catch (error) {
+      console.error('Failed to delete token:', error)
+    }
   }
 }
 
@@ -485,7 +473,30 @@ function handleClickOutside(e) {
   }
 }
 
+function normalizeToken(item) {
+  return {
+    id: item.id,
+    name: item.name,
+    value: item.key,
+    lastRefreshed: item.updated_at || item.created_at || new Date().toISOString(),
+    lastUsed: item.last_used_at || null,
+    permission: (item.key_type || 'read').toUpperCase(),
+    status: item.status || 'active',
+  }
+}
+
+async function loadTokens() {
+  try {
+    const items = await openapiApi.getKeys()
+    tokens.value = items.map(normalizeToken)
+  } catch (error) {
+    console.error('Failed to load tokens:', error)
+    tokens.value = []
+  }
+}
+
 onMounted(() => {
+  loadTokens()
   document.addEventListener('click', handleClickOutside)
 })
 
