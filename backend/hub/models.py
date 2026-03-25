@@ -9,7 +9,26 @@ class TimestampedModel(models.Model):
         abstract = True
 
 
-class DatasetRepo(TimestampedModel):
+class RepoProviderMixin(models.Model):
+    sync_status = models.CharField(max_length=32, default='local')
+    provider_bindings = models.JSONField(default=dict, blank=True)
+    default_revision = models.CharField(max_length=120, default='main')
+
+    class Meta:
+        abstract = True
+
+
+class VersionProviderMixin(models.Model):
+    provider_revision = models.CharField(max_length=255, blank=True, default='')
+    provider_commit = models.CharField(max_length=255, blank=True, default='')
+    artifact_uri = models.CharField(max_length=1024, blank=True, default='')
+    provider_payload = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        abstract = True
+
+
+class DatasetRepo(TimestampedModel, RepoProviderMixin):
     repo_id = models.CharField(max_length=255, unique=True)
     namespace = models.CharField(max_length=120)
     slug = models.CharField(max_length=120)
@@ -43,7 +62,7 @@ class DatasetRepo(TimestampedModel):
         return self.repo_id
 
 
-class DatasetVersion(TimestampedModel):
+class DatasetVersion(TimestampedModel, VersionProviderMixin):
     repo = models.ForeignKey(DatasetRepo, related_name='versions', on_delete=models.CASCADE)
     revision = models.CharField(max_length=120)
     commit_sha = models.CharField(max_length=64)
@@ -81,7 +100,7 @@ class DatasetFile(TimestampedModel):
         return f'{self.version.repo.repo_id}:{self.path}'
 
 
-class ModelRepo(TimestampedModel):
+class ModelRepo(TimestampedModel, RepoProviderMixin):
     repo_id = models.CharField(max_length=255, unique=True)
     namespace = models.CharField(max_length=120)
     slug = models.CharField(max_length=120)
@@ -111,7 +130,7 @@ class ModelRepo(TimestampedModel):
         return self.repo_id
 
 
-class ModelVersion(TimestampedModel):
+class ModelVersion(TimestampedModel, VersionProviderMixin):
     repo = models.ForeignKey(ModelRepo, related_name='versions', on_delete=models.CASCADE)
     revision = models.CharField(max_length=120)
     commit_sha = models.CharField(max_length=64)
@@ -146,7 +165,7 @@ class ModelFile(TimestampedModel):
         return f'{self.version.repo.repo_id}:{self.path}'
 
 
-class KnowledgeRepo(TimestampedModel):
+class KnowledgeRepo(TimestampedModel, RepoProviderMixin):
     repo_id = models.CharField(max_length=255, unique=True)
     namespace = models.CharField(max_length=120)
     slug = models.CharField(max_length=120)
@@ -179,7 +198,7 @@ class KnowledgeRepo(TimestampedModel):
         return self.repo_id
 
 
-class KnowledgeVersion(TimestampedModel):
+class KnowledgeVersion(TimestampedModel, VersionProviderMixin):
     repo = models.ForeignKey(KnowledgeRepo, related_name='versions', on_delete=models.CASCADE)
     revision = models.CharField(max_length=120)
     commit_sha = models.CharField(max_length=64)
@@ -221,6 +240,9 @@ class KnowledgeBuild(TimestampedModel):
     progress = models.PositiveIntegerField(default=0)
     stages = models.JSONField(default=list, blank=True)
     error_message = models.TextField(blank=True, default='')
+    provider_job_id = models.CharField(max_length=255, blank=True, default='')
+    provider_status = models.CharField(max_length=64, blank=True, default='')
+    provider_payload = models.JSONField(default=dict, blank=True)
 
     class Meta:
         ordering = ['-created_at', '-id']

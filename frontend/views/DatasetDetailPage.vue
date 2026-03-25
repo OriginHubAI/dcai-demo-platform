@@ -50,6 +50,15 @@
           >
             Publish Revision
           </button>
+          <button
+            v-if="canSyncFromGit"
+            class="inline-flex items-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="syncing"
+            @click="syncFromGit"
+          >
+            {{ syncing ? 'Syncing...' : 'Sync from Git' }}
+          </button>
+          <span v-if="syncError" class="text-xs text-red-600">{{ syncError }}</span>
         </div>
 
         <div class="border-b border-gray-200">
@@ -114,6 +123,10 @@
                 <div class="mb-2 text-sm font-medium text-gray-900">Git Clone</div>
                 <pre class="overflow-x-auto whitespace-pre-wrap rounded-lg bg-gray-50 p-4 text-xs">{{ dataset.usage?.gitClone }}</pre>
               </div>
+              <div>
+                <div class="mb-2 text-sm font-medium text-gray-900">Git Push</div>
+                <pre class="overflow-x-auto whitespace-pre-wrap rounded-lg bg-gray-50 p-4 text-xs">{{ dataset.usage?.gitPush }}</pre>
+              </div>
             </div>
           </div>
         </div>
@@ -155,6 +168,12 @@
               </div>
             </div>
           </div>
+          <ProviderSyncPanel
+            class="mt-4"
+            :sync-status="dataset.syncStatus"
+            :provider-bindings="dataset.providerBindings"
+            :selected-version="dataset.selectedVersion"
+          />
         </aside>
       </div>
 
@@ -162,14 +181,14 @@
         v-else-if="activeTab === 'files'"
         :repo-id="dataset.id"
         :versions="dataset.versions"
-        :default-revision="dataset.defaultRevision || dataset.latestRevision"
+        :default-revision="selectedRevision || dataset.defaultRevision || dataset.latestRevision"
       />
 
       <DataStudioLite
         v-else
         :repo-id="dataset.id"
         :versions="dataset.versions"
-        :default-revision="dataset.defaultRevision || dataset.latestRevision"
+        :default-revision="selectedRevision || dataset.defaultRevision || dataset.latestRevision"
       />
     </div>
     <div v-else class="py-20 text-center">
@@ -188,7 +207,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { datasetApi } from '@/services/api.js'
@@ -197,6 +216,7 @@ import TagBadge from '@/components/common/TagBadge.vue'
 import StatBadge from '@/components/common/StatBadge.vue'
 import DatasetFilesBrowser from '@/components/datasets/DatasetFilesBrowser.vue'
 import DataStudioLite from '@/components/datasets/DataStudioLite.vue'
+import ProviderSyncPanel from '@/components/hub/ProviderSyncPanel.vue'
 import RevisionPublishModal from '@/components/hub/RevisionPublishModal.vue'
 
 const route = useRoute()
@@ -205,6 +225,8 @@ const loading = ref(false)
 const activeTab = ref('card')
 const selectedRevision = ref('')
 const showPublishModal = ref(false)
+const syncing = ref(false)
+const syncError = ref('')
 
 const tabs = [
   { id: 'card', label: 'Dataset Card' },
@@ -212,12 +234,17 @@ const tabs = [
   { id: 'datastudio', label: 'Data Studio Lite' },
 ]
 
+const canSyncFromGit = computed(() => {
+  const bindings = dataset.value?.providerBindings || {}
+  return Boolean(bindings.gitea || bindings.localgit)
+})
+
 async function loadDataset(revision = selectedRevision.value) {
   loading.value = true
   try {
     dataset.value = await datasetApi.getDatasetById(route.params.id, { revision })
     if (!selectedRevision.value) {
-      selectedRevision.value = dataset.value?.defaultRevision || dataset.value?.latestRevision || ''
+      selectedRevision.value = dataset.value?.selectedRevision || dataset.value?.defaultRevision || dataset.value?.latestRevision || ''
     }
   } catch (error) {
     console.error('Failed to load dataset:', error)
@@ -231,6 +258,7 @@ onMounted(loadDataset)
 watch(() => route.params.id, () => {
   activeTab.value = 'card'
   selectedRevision.value = ''
+  syncError.value = ''
   loadDataset('')
 })
 watch(selectedRevision, (next, prev) => {
@@ -247,6 +275,29 @@ function handleRevisionPublished(response) {
     return
   }
   loadDataset(selectedRevision.value)
+}
+
+async function syncFromGit() {
+  if (!dataset.value) return
+  syncing.value = true
+  syncError.value = ''
+  try {
+    const response = await datasetApi.syncDataset(
+      dataset.value.id,
+      selectedRevision.value || dataset.value.defaultRevision || dataset.value.latestRevision || '',
+    )
+    const revision = response?.version?.revision || selectedRevision.value || dataset.value.defaultRevision || ''
+    if (revision && revision !== selectedRevision.value) {
+      selectedRevision.value = revision
+    } else {
+      await loadDataset(revision)
+    }
+  } catch (error) {
+    console.error('Failed to sync dataset from git:', error)
+    syncError.value = error.message || 'Failed to sync from Git'
+  } finally {
+    syncing.value = false
+  }
 }
 
 function formatRows(n) {

@@ -11,10 +11,10 @@
           </div>
           <span class="text-sm font-semibold text-gray-900 truncate">{{ dataset.id }}</span>
           <!-- Dataset Type Badge -->
-          <TagBadge 
+          <TagBadge
             v-if="dataset.datasetType"
-            :label="dataset.datasetType === 'original' ? 'Original' : 'Derived'" 
-            :color="datasetTypeColorMap[dataset.datasetType] || 'gray'" 
+            :label="formatDatasetType(dataset.datasetType)"
+            :color="datasetTypeColorMap[normalizeDatasetType(dataset.datasetType)] || 'gray'"
             size="xs"
           />
           <!-- Readonly Badge -->
@@ -80,5 +80,16 @@ function formatRows(n) {
   if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M'
   if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k'
   return n.toString()
+}
+
+function normalizeDatasetType(value) {
+  return String(value || '').trim().toLowerCase()
+}
+
+function formatDatasetType(value) {
+  const normalized = normalizeDatasetType(value)
+  if (normalized === 'original') return 'Original'
+  if (normalized === 'derived') return 'Derived'
+  return String(value)
 }
 </script>

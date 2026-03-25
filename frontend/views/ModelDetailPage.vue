@@ -36,13 +36,22 @@
                 {{ version.revision }}{{ version.isLatest ? ' (latest)' : '' }}
               </option>
             </select>
-            <button
-              class="inline-flex items-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              @click="showPublishModal = true"
-            >
-              Publish Revision
-            </button>
-          </div>
+          <button
+            class="inline-flex items-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            @click="showPublishModal = true"
+          >
+            Publish Revision
+          </button>
+          <button
+            v-if="canSyncFromGit"
+            class="inline-flex items-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="syncing"
+            @click="syncFromGit"
+          >
+            {{ syncing ? 'Syncing...' : 'Sync from Git' }}
+          </button>
+          <span v-if="syncError" class="text-xs text-red-600">{{ syncError }}</span>
+        </div>
 
           <div class="border border-gray-200 rounded-lg bg-white">
             <div class="border-b border-gray-200 px-4 py-3">
@@ -61,7 +70,7 @@
             :repo-id="model.id"
             :versions="model.versions"
             :revision="selectedRevision"
-            :default-revision="model.selectedRevision || model.latestRevision"
+            :default-revision="selectedRevision || model.selectedRevision || model.defaultRevision || model.latestRevision"
             :show-revision-selector="false"
             @update:revision="selectedRevision = $event"
           />
@@ -96,6 +105,10 @@
               <div>
                 <div class="text-sm font-medium text-gray-900 mb-2">Git Clone</div>
                 <pre class="bg-gray-50 rounded-lg p-4 text-xs overflow-x-auto whitespace-pre-wrap">{{ model.usage?.gitClone }}</pre>
+              </div>
+              <div>
+                <div class="text-sm font-medium text-gray-900 mb-2">Git Push</div>
+                <pre class="bg-gray-50 rounded-lg p-4 text-xs overflow-x-auto whitespace-pre-wrap">{{ model.usage?.gitPush }}</pre>
               </div>
             </div>
           </div>
@@ -149,6 +162,12 @@
               </div>
             </div>
           </div>
+          <ProviderSyncPanel
+            class="mt-4"
+            :sync-status="model.syncStatus"
+            :provider-bindings="model.providerBindings"
+            :selected-version="model.selectedVersion"
+          />
         </aside>
       </div>
     </div>
@@ -168,7 +187,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { modelApi } from '@/services/api.js'
@@ -176,6 +195,7 @@ import { taskColorMap } from '@/data/filters.js'
 import TagBadge from '@/components/common/TagBadge.vue'
 import StatBadge from '@/components/common/StatBadge.vue'
 import HubFilesBrowser from '@/components/hub/HubFilesBrowser.vue'
+import ProviderSyncPanel from '@/components/hub/ProviderSyncPanel.vue'
 import RevisionPublishModal from '@/components/hub/RevisionPublishModal.vue'
 
 const route = useRoute()
@@ -183,13 +203,20 @@ const model = ref(null)
 const loading = ref(false)
 const selectedRevision = ref('')
 const showPublishModal = ref(false)
+const syncing = ref(false)
+const syncError = ref('')
+
+const canSyncFromGit = computed(() => {
+  const bindings = model.value?.providerBindings || {}
+  return Boolean(bindings.gitea || bindings.localgit)
+})
 
 async function loadModel(revision = selectedRevision.value) {
   loading.value = true
   try {
     model.value = await modelApi.getModelById(route.params.id, { revision })
     if (!selectedRevision.value) {
-      selectedRevision.value = model.value?.selectedRevision || model.value?.latestRevision || ''
+      selectedRevision.value = model.value?.selectedRevision || model.value?.defaultRevision || model.value?.latestRevision || ''
     }
   } catch (error) {
     console.error('Failed to load model:', error)
@@ -202,6 +229,7 @@ async function loadModel(revision = selectedRevision.value) {
 onMounted(loadModel)
 watch(() => route.params.id, () => {
   selectedRevision.value = ''
+  syncError.value = ''
   loadModel('')
 })
 watch(selectedRevision, (next, prev) => {
@@ -217,6 +245,29 @@ function handleRevisionPublished(response) {
     return
   }
   loadModel(selectedRevision.value)
+}
+
+async function syncFromGit() {
+  if (!model.value) return
+  syncing.value = true
+  syncError.value = ''
+  try {
+    const response = await modelApi.syncModel(
+      model.value.id,
+      selectedRevision.value || model.value.defaultRevision || model.value.latestRevision || '',
+    )
+    const revision = response?.version?.revision || selectedRevision.value || model.value.defaultRevision || ''
+    if (revision && revision !== selectedRevision.value) {
+      selectedRevision.value = revision
+    } else {
+      await loadModel(revision)
+    }
+  } catch (error) {
+    console.error('Failed to sync model from git:', error)
+    syncError.value = error.message || 'Failed to sync from Git'
+  } finally {
+    syncing.value = false
+  }
 }
 
 function formatDateTime(value) {

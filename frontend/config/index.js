@@ -28,6 +28,7 @@ export const config = {
     ? resolveServiceUrl(import.meta.env.VITE_API_BASE_URL, 8000)
     : '',
   apiVersion: '/api/v2',
+  defaultAccessToken: import.meta.env.VITE_DEFAULT_ACCESS_TOKEN || '',
 }
 
 export function isMockMode() {

@@ -130,7 +130,16 @@ cp .env.example .env
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `VITE_DATA_MODE` | Data source mode: `mock` or `api` | `mock` |
-| `VITE_API_BASE_URL` | Backend API base URL | `http://localhost:8000` |
+| `VITE_API_BASE_URL` | Backend API base URL | `http://localhost:18000` |
+| `DATAFLOW_REPO_ROOT` | Local checkout path of the DataFlow repo | none |
+| `PACKAGE_EDITOR_SANDBOX_ROOT` | Writable sandbox root for package editor copies | none |
+
+Optional hub provider variables are also available in `.env.example`:
+
+- `GITEA_BASE_URL`, `GITEA_TOKEN`, `GITEA_ORG`
+- `LAKEFS_ENDPOINT`, `LAKEFS_ACCESS_KEY`, `LAKEFS_SECRET_KEY`, `LAKEFS_STORAGE_NAMESPACE_PREFIX`
+- `MLFLOW_TRACKING_URI`, `MLFLOW_REGISTRY_URI`, `MLFLOW_TRACKING_TOKEN`, `MLFLOW_TRACKING_USERNAME`, `MLFLOW_TRACKING_PASSWORD`
+- `RAGFLOW_BASE_URL`, `RAGFLOW_API_KEY`
 
 ### Frontend Development
 
@@ -168,7 +177,7 @@ pip install -r requirements.txt
 python manage.py migrate
 
 # Start development server
-python manage.py runserver 0.0.0.0:8000
+python manage.py runserver 0.0.0.0:18000
 ```
 
 #### Using API Mode
@@ -178,7 +187,7 @@ To use the real backend API instead of mock data:
 1. Update your `.env` file:
    ```env
    VITE_DATA_MODE=api
-   VITE_API_BASE_URL=http://localhost:8000
+   VITE_API_BASE_URL=http://localhost:18000
    ```
 
 2. Start both frontend and backend servers
@@ -189,9 +198,9 @@ To use the real backend API instead of mock data:
 
 When the backend is running, API documentation is available at:
 
-- **Swagger UI**: http://localhost:8000/api/docs/
-- **ReDoc**: http://localhost:8000/api/redoc/
-- **OpenAPI Schema**: http://localhost:8000/api/schema/
+- **Swagger UI**: http://localhost:18000/api/docs/
+- **ReDoc**: http://localhost:18000/api/redoc/
+- **OpenAPI Schema**: http://localhost:18000/api/schema/
 
 ### API Endpoints
 

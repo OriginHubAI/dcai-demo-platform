@@ -1,6 +1,6 @@
 <template>
   <div v-if="visible" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" @click.self="$emit('close')">
-    <div class="w-full max-w-3xl rounded-2xl bg-white shadow-2xl">
+    <div class="flex max-h-[calc(100vh-2rem)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
       <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
         <div>
           <h2 class="text-lg font-semibold text-gray-900">Publish Revision</h2>
@@ -9,7 +9,7 @@
         <button class="text-gray-400 hover:text-gray-600" @click="$emit('close')">✕</button>
       </div>
 
-      <div class="grid gap-4 p-6 md:grid-cols-2">
+      <div class="grid flex-1 gap-4 overflow-y-auto p-6 md:grid-cols-2">
         <label class="space-y-1 text-sm">
           <span class="text-gray-600">Revision</span>
           <input v-model="form.revision" class="w-full rounded-lg border border-gray-300 px-3 py-2" />
@@ -27,6 +27,23 @@
           <label class="space-y-1 text-sm">
             <span class="text-gray-600">Params</span>
             <input v-model="form.params" class="w-full rounded-lg border border-gray-300 px-3 py-2" />
+          </label>
+          <label class="space-y-1 text-sm md:col-span-2">
+            <span class="text-gray-600">Artifact URI</span>
+            <input
+              v-model="form.artifactUri"
+              placeholder="s3://bucket/path or mlflow artifact URI"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </label>
+          <label class="space-y-1 text-sm">
+            <span class="text-gray-600">Registry Stage</span>
+            <select v-model="form.stage" class="w-full rounded-lg border border-gray-300 px-3 py-2">
+              <option value="">none</option>
+              <option value="Staging">Staging</option>
+              <option value="Production">Production</option>
+              <option value="Archived">Archived</option>
+            </select>
           </label>
         </template>
 
@@ -47,7 +64,7 @@
         <label class="space-y-2 text-sm md:col-span-2">
           <span class="text-gray-600">Files</span>
           <input type="file" multiple class="block w-full rounded-lg border border-gray-300 px-3 py-2" @change="handleFiles" />
-          <span class="text-xs text-gray-500">Small files only for now. Text files get preview support automatically.</span>
+          <span class="text-xs text-gray-500">{{ fileHint }}</span>
         </label>
 
         <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 md:col-span-2">
@@ -64,11 +81,11 @@
 
       <div v-if="errorMessage" class="px-6 pb-2 text-sm text-red-600">{{ errorMessage }}</div>
 
-      <div class="flex items-center justify-end gap-3 border-t border-gray-200 px-6 py-4">
+      <div class="shrink-0 flex items-center justify-end gap-3 border-t border-gray-200 px-6 py-4">
         <button class="rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-100" @click="$emit('close')">Cancel</button>
         <button
           class="rounded-lg bg-dc-primary px-4 py-2 text-sm font-medium text-white hover:bg-dc-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
-          :disabled="submitting || !form.revision || !selectedFiles.length"
+          :disabled="submitting || !canPublish"
           @click="publish"
         >
           {{ submitting ? 'Publishing...' : 'Publish Revision' }}
@@ -79,7 +96,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 
 import { datasetApi, knowledgeBaseApi, modelApi } from '@/services/api.js'
 
@@ -100,8 +117,25 @@ const form = reactive({
   markLatest: true,
   framework: 'transformers',
   params: '',
+  artifactUri: '',
+  stage: '',
   rowCount: '',
   sourceDataset: '',
+})
+
+const canPublish = computed(() => {
+  if (!form.revision) return false
+  if (props.repoType === 'model') {
+    return Boolean(selectedFiles.value.length || form.artifactUri.trim())
+  }
+  return Boolean(selectedFiles.value.length)
+})
+
+const fileHint = computed(() => {
+  if (props.repoType === 'model') {
+    return 'Upload small files, or publish directly with an existing artifact URI.'
+  }
+  return 'Small files only for now. Text files get preview support automatically.'
 })
 
 watch(
@@ -112,6 +146,8 @@ watch(
       form.markLatest = true
       form.framework = 'transformers'
       form.params = ''
+      form.artifactUri = ''
+      form.stage = ''
       form.rowCount = ''
       form.sourceDataset = ''
       selectedFiles.value = []
@@ -141,6 +177,8 @@ async function publish() {
     if (props.repoType === 'model') {
       payload.framework = form.framework
       payload.params = form.params
+      payload.artifactUri = form.artifactUri
+      payload.stage = form.stage
     }
     if (props.repoType === 'knowledge' && form.sourceDataset) {
       payload.manifest = { sourceDataset: form.sourceDataset }

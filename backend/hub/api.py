@@ -1,5 +1,6 @@
 import csv
 import hashlib
+import hmac
 import io
 import json
 import mimetypes
@@ -28,6 +29,8 @@ from .models import (
     ModelRepo,
     ModelVersion,
 )
+from .providers import HubProviderSyncError, get_hub_provider_manager
+from .sync import revision_from_ref, sync_repo_revision
 
 
 AUTH_CLASSES = [HubOpenAPIKeyAuthentication, JWTAuthentication]
@@ -112,6 +115,63 @@ def _write_file_to_storage(repo_type, repo_id, revision, path, raw_bytes):
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(raw_bytes)
     return target
+
+
+def _hub_provider_manager():
+    return get_hub_provider_manager()
+
+
+def _repo_provider_payload(repo):
+    return repo.provider_bindings or {}
+
+
+def _apply_repo_provider_updates(repo, result):
+    updated_fields = []
+    for field in ('provider_bindings', 'sync_status', 'default_revision'):
+        if field in result:
+            setattr(repo, field, result[field])
+            updated_fields.append(field)
+    if updated_fields:
+        repo.save(update_fields=updated_fields + ['updated_at'])
+
+
+def _apply_version_provider_updates(version, result):
+    updated_fields = []
+    dict_fields = {'provider_payload'}
+    for field in ('provider_payload', 'provider_revision', 'provider_commit', 'artifact_uri'):
+        if field in result:
+            value = result[field]
+            setattr(version, field, value if field in dict_fields else (value or ''))
+            updated_fields.append(field)
+    if updated_fields:
+        version.save(update_fields=updated_fields + ['updated_at'])
+
+
+def _apply_build_provider_updates(build, result):
+    updated_fields = []
+    dict_fields = {'provider_payload'}
+    for field in ('provider_job_id', 'provider_status', 'provider_payload'):
+        if field in result:
+            value = result[field]
+            setattr(build, field, value if field in dict_fields else (value or ''))
+            updated_fields.append(field)
+    if updated_fields:
+        build.save(update_fields=updated_fields + ['updated_at'])
+
+
+def _git_clone_usage(default_url, repo):
+    bindings = _repo_provider_payload(repo)
+    for provider_key in ('gitea', 'localgit'):
+        provider = bindings.get(provider_key) or {}
+        clone_url = provider.get('cloneUrl') or provider.get('sshUrl') or provider.get('localPath')
+        if clone_url:
+            return f'git clone {clone_url}'
+    return default_url
+
+
+def _git_push_usage(repo):
+    branch = getattr(repo, 'default_revision', '') or 'main'
+    return f'git add .\ngit commit -m "Update {repo.slug}"\ngit push origin {branch}'
 
 
 def _infer_row_count_from_content(file_type, raw_bytes, preview_rows):
@@ -201,6 +261,9 @@ def _dataset_summary(repo):
         'metadata': repo.metadata,
         'visibility': repo.visibility,
         'hfCompatible': repo.hf_compatible,
+        'syncStatus': repo.sync_status,
+        'providerBindings': _repo_provider_payload(repo),
+        'defaultRevision': repo.default_revision or (latest.revision if latest else ''),
         'latestRevision': latest.revision if latest else '',
         'fileCount': latest.files.count() if latest else 0,
     }
@@ -232,6 +295,9 @@ def _knowledge_summary(repo):
         'retrieval': repo.retrieval,
         'mcp': repo.mcp,
         'hfCompatible': repo.hf_compatible,
+        'syncStatus': repo.sync_status,
+        'providerBindings': _repo_provider_payload(repo),
+        'defaultRevision': repo.default_revision or (latest.revision if latest else ''),
         'latestRevision': latest.revision if latest else '',
     }
 
@@ -259,6 +325,9 @@ def _model_summary(repo):
         'dataset': repo.dataset,
         'visibility': repo.visibility,
         'hfCompatible': repo.hf_compatible,
+        'syncStatus': repo.sync_status,
+        'providerBindings': _repo_provider_payload(repo),
+        'defaultRevision': repo.default_revision or latest_revision,
         'latestRevision': latest_revision,
     }
 
@@ -267,6 +336,10 @@ def _dataset_version_payload(version):
     return {
         'revision': version.revision,
         'commitSha': version.commit_sha,
+        'providerRevision': version.provider_revision,
+        'providerCommit': version.provider_commit,
+        'artifactUri': version.artifact_uri,
+        'providerPayload': version.provider_payload,
         'rows': version.row_count,
         'size': version.size_label,
         'createdAt': version.created_at.isoformat(),
@@ -279,6 +352,10 @@ def _knowledge_version_payload(version):
     return {
         'revision': version.revision,
         'commitSha': version.commit_sha,
+        'providerRevision': version.provider_revision,
+        'providerCommit': version.provider_commit,
+        'artifactUri': version.artifact_uri,
+        'providerPayload': version.provider_payload,
         'createdAt': version.created_at.isoformat(),
         'manifest': version.manifest,
         'isLatest': version.is_latest,
@@ -289,6 +366,10 @@ def _model_version_payload(version):
     return {
         'revision': version.revision,
         'commitSha': version.commit_sha,
+        'providerRevision': version.provider_revision,
+        'providerCommit': version.provider_commit,
+        'artifactUri': version.artifact_uri,
+        'providerPayload': version.provider_payload,
         'framework': version.framework,
         'params': version.params_label,
         'quantization': version.quantization,
@@ -305,6 +386,9 @@ def _build_payload(build):
         'progress': build.progress,
         'stages': build.stages,
         'errorMessage': build.error_message,
+        'providerJobId': build.provider_job_id,
+        'providerStatus': build.provider_status,
+        'providerPayload': build.provider_payload,
         'createdAt': build.created_at.isoformat(),
         'updatedAt': build.updated_at.isoformat(),
     }
@@ -628,6 +712,105 @@ def _ensure_write_access(request, repo=None):
     return None
 
 
+def _pull_repo_revision(repo_type, repo, revision=''):
+    manager = _hub_provider_manager()
+    if repo_type == 'datasets':
+        return manager.pull_dataset_revision(repo, revision)
+    if repo_type == 'models':
+        return manager.pull_model_revision(repo, revision)
+    if repo_type == 'knowledge-bases':
+        return manager.pull_knowledge_revision(repo, revision)
+    raise HubProviderSyncError(f'Unsupported repo type: {repo_type}')
+
+
+def _version_payload_for_repo_type(repo_type, version):
+    if repo_type == 'datasets':
+        return _dataset_version_payload(version)
+    if repo_type == 'models':
+        return _model_version_payload(version)
+    if repo_type == 'knowledge-bases':
+        return _knowledge_version_payload(version)
+    raise HubProviderSyncError(f'Unsupported repo type: {repo_type}')
+
+
+def _sync_response_payload(repo_type, repo, sync_result):
+    return {
+        'repoId': repo.repo_id,
+        'provider': sync_result['provider'],
+        'version': _version_payload_for_repo_type(repo_type, sync_result['version']),
+        'files': [_file_payload(item) for item in sync_result['files']],
+        'syncStatus': repo.sync_status,
+        'providerBindings': _repo_provider_payload(repo),
+    }
+
+
+def _sync_repo_from_provider(repo_type, repo, revision=''):
+    pulled = _pull_repo_revision(repo_type, repo, revision)
+    revision_name = (pulled.get('revision') or revision or getattr(repo, 'default_revision', '') or 'main').strip() or 'main'
+    commit_sha = (pulled.get('commitSha') or uuid.uuid4().hex[:12]).strip()
+    synced = sync_repo_revision(
+        repo_type,
+        repo,
+        revision_name,
+        commit_sha,
+        pulled.get('files') or [],
+        provider_name=(pulled.get('provider') or 'localgit').strip() or 'localgit',
+        artifact_uri=(pulled.get('artifactUri') or '').strip(),
+        provider_binding=pulled.get('providerBinding') or {},
+        provider_payload=pulled.get('providerPayload') or {},
+    )
+    repo_updates = {}
+    if 'repo_provider_bindings' in pulled:
+        repo_updates['provider_bindings'] = pulled.get('repo_provider_bindings') or {}
+    if 'repo_sync_status' in pulled:
+        repo_updates['sync_status'] = pulled.get('repo_sync_status') or ''
+    if repo_updates:
+        _apply_repo_provider_updates(repo, repo_updates)
+    return {
+        'provider': (pulled.get('provider') or '').strip(),
+        'version': synced['version'],
+        'files': synced['files'],
+    }
+
+
+def _verify_gitea_webhook(request):
+    expected_authorization = (getattr(settings, 'GITEA_WEBHOOK_AUTHORIZATION_HEADER', '') or '').strip()
+    if expected_authorization:
+        provided_authorization = (request.headers.get('Authorization') or '').strip()
+        if provided_authorization != expected_authorization:
+            return 'Invalid webhook authorization'
+
+    secret = (getattr(settings, 'GITEA_WEBHOOK_SECRET', '') or '').strip()
+    if not secret:
+        return ''
+
+    provided_signature = (request.headers.get('X-Gitea-Signature') or '').strip()
+    if not provided_signature:
+        return 'Missing X-Gitea-Signature'
+
+    expected_signature = hmac.new(secret.encode('utf-8'), request.body or b'', hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(expected_signature, provided_signature):
+        return 'Invalid X-Gitea-Signature'
+    return ''
+
+
+def _find_gitea_bound_repo(full_name):
+    full_name = (full_name or '').strip()
+    if not full_name:
+        return (None, None)
+
+    repo = DatasetRepo.objects.filter(provider_bindings__gitea__fullName=full_name).first()
+    if repo:
+        return ('datasets', repo)
+    repo = ModelRepo.objects.filter(provider_bindings__gitea__fullName=full_name).first()
+    if repo:
+        return ('models', repo)
+    repo = KnowledgeRepo.objects.filter(provider_bindings__gitea__fullName=full_name).first()
+    if repo:
+        return ('knowledge-bases', repo)
+    return (None, None)
+
+
 @api_view(['GET', 'POST'])
 @authentication_classes(AUTH_CLASSES)
 @permission_classes([AllowAny])
@@ -664,7 +847,9 @@ def dataset_list_v2(request):
             parent_repo_id=(request.data.get('parentDataset') or request.data.get('parent_repo_id') or '').strip(),
             derived_repo_ids=request.data.get('derivedDatasets') or [],
             hf_compatible=bool(request.data.get('hfCompatible', True)),
+            default_revision=(request.data.get('defaultRevision') or 'main').strip() or 'main',
         )
+        _apply_repo_provider_updates(repo, _hub_provider_manager().bind_dataset_repo(repo))
         return Response({'code': 0, 'msg': 'success', 'data': _dataset_summary(repo)}, status=201)
 
     search = (request.query_params.get('search') or request.query_params.get('q') or '').strip()
@@ -766,9 +951,12 @@ def dataset_detail_v2(request, repo_id):
             'preview': _file_payload(preview_file) if preview_file else None,
             'usage': {
                 'hfDatasets': f'from datasets import load_dataset\n\ndataset = load_dataset("{repo.repo_id}")',
-                'gitClone': f'git clone https://your-hub.example/datasets/{repo.repo_id}',
+                'gitClone': _git_clone_usage(f'git clone https://your-hub.example/datasets/{repo.repo_id}', repo),
+                'gitPush': _git_push_usage(repo),
             },
-            'defaultRevision': selected_version.revision if selected_version else '',
+            'defaultRevision': repo.default_revision or (selected_version.revision if selected_version else ''),
+            'selectedRevision': selected_version.revision if selected_version else '',
+            'selectedVersion': _dataset_version_payload(selected_version) if selected_version else None,
             'splitSummary': _dataset_split_items(selected_version) if selected_version else [],
             'features': _dataset_features(selected_version) if selected_version else {},
         }
@@ -810,17 +998,48 @@ def dataset_revisions_v2(request, repo_id):
         size_label=request.data.get('size') or '0B',
         is_latest=mark_latest,
     )
-    files, total_size, total_rows = _save_revision_files('datasets', repo.repo_id, revision_name, DatasetFile, version, request.data.get('files') or [])
+    request_files = request.data.get('files') or []
+    files, total_size, total_rows = _save_revision_files('datasets', repo.repo_id, revision_name, DatasetFile, version, request_files)
     if total_rows:
         version.row_count = int(request.data.get('rowCount') or total_rows)
     if total_size:
         version.size_label = request.data.get('size') or _size_label(total_size)
     version.save(update_fields=['row_count', 'size_label'])
+    provider_result = _hub_provider_manager().sync_dataset_version(repo, version, request_files)
+    _apply_version_provider_updates(version, provider_result)
+    _apply_repo_provider_updates(
+        repo,
+        {
+            'provider_bindings': provider_result.get('repo_provider_bindings'),
+            'sync_status': provider_result.get('repo_sync_status'),
+        },
+    )
     if mark_latest:
         repo.row_count = version.row_count
         repo.size_label = version.size_label
-        repo.save(update_fields=['row_count', 'size_label', 'updated_at'])
+        repo.default_revision = version.revision
+        repo.save(update_fields=['row_count', 'size_label', 'default_revision', 'updated_at'])
     return Response({'code': 0, 'msg': 'success', 'data': {'version': _dataset_version_payload(version), 'files': [_file_payload(item) for item in files]}}, status=201)
+
+
+@api_view(['POST'])
+@authentication_classes(AUTH_CLASSES)
+@permission_classes([AllowAny])
+def dataset_sync_v2(request, repo_id):
+    repo = _get_dataset_repo(repo_id)
+    if not repo:
+        return _repo_not_found('Dataset not found')
+
+    denied = _ensure_write_access(request, repo)
+    if denied:
+        return denied
+
+    revision = (request.data.get('revision') or '').strip()
+    try:
+        synced = _sync_repo_from_provider('datasets', repo, revision)
+    except HubProviderSyncError as exc:
+        return _bad_request(str(exc))
+    return Response({'code': 0, 'msg': 'success', 'data': _sync_response_payload('datasets', repo, synced)})
 
 
 @api_view(['GET'])
@@ -948,7 +1167,9 @@ def model_list_v2(request):
             metrics=request.data.get('metrics') or [],
             card_sections=request.data.get('cardSections') or request.data.get('card_sections') or [],
             hf_compatible=bool(request.data.get('hfCompatible', True)),
+            default_revision=(request.data.get('defaultRevision') or 'main').strip() or 'main',
         )
+        _apply_repo_provider_updates(repo, _hub_provider_manager().bind_model_repo(repo))
         return Response({'code': 0, 'msg': 'success', 'data': _model_summary(repo)}, status=201)
 
     search = (request.query_params.get('search') or request.query_params.get('q') or '').strip()
@@ -1045,9 +1266,11 @@ def model_detail_v2(request, repo_id):
                     f'pipe = pipeline("{repo.pipeline_tag}", model="{repo.repo_id}")\n'
                     'print(pipe("Hello world"))'
                 ),
-                'gitClone': f'git clone https://your-hub.example/models/{repo.repo_id}',
+                'gitClone': _git_clone_usage(f'git clone https://your-hub.example/models/{repo.repo_id}', repo),
+                'gitPush': _git_push_usage(repo),
             },
             'selectedRevision': selected_version.revision if selected_version else '',
+            'selectedVersion': _model_version_payload(selected_version) if selected_version else None,
         }
     )
     return Response({'code': 0, 'msg': 'success', 'data': payload})
@@ -1087,8 +1310,41 @@ def model_revisions_v2(request, repo_id):
         quantization=(request.data.get('quantization') or '').strip(),
         is_latest=mark_latest,
     )
-    files, _, _ = _save_revision_files('models', repo.repo_id, revision_name, ModelFile, version, request.data.get('files') or [])
+    request_files = request.data.get('files') or []
+    files, _, _ = _save_revision_files('models', repo.repo_id, revision_name, ModelFile, version, request_files)
+    provider_result = _hub_provider_manager().sync_model_version(repo, version, request_files, request.data)
+    _apply_version_provider_updates(version, provider_result)
+    _apply_repo_provider_updates(
+        repo,
+        {
+            'provider_bindings': provider_result.get('repo_provider_bindings'),
+            'sync_status': provider_result.get('repo_sync_status'),
+        },
+    )
+    if mark_latest:
+        repo.default_revision = version.revision
+        repo.save(update_fields=['default_revision', 'updated_at'])
     return Response({'code': 0, 'msg': 'success', 'data': {'version': _model_version_payload(version), 'files': [_file_payload(item) for item in files]}}, status=201)
+
+
+@api_view(['POST'])
+@authentication_classes(AUTH_CLASSES)
+@permission_classes([AllowAny])
+def model_sync_v2(request, repo_id):
+    repo = _get_model_repo(repo_id)
+    if not repo:
+        return _repo_not_found('Model not found')
+
+    denied = _ensure_write_access(request, repo)
+    if denied:
+        return denied
+
+    revision = (request.data.get('revision') or '').strip()
+    try:
+        synced = _sync_repo_from_provider('models', repo, revision)
+    except HubProviderSyncError as exc:
+        return _bad_request(str(exc))
+    return Response({'code': 0, 'msg': 'success', 'data': _sync_response_payload('models', repo, synced)})
 
 
 @api_view(['GET'])
@@ -1179,7 +1435,9 @@ def knowledge_list_v2(request):
             retrieval=request.data.get('retrieval') or {},
             mcp=request.data.get('mcp') or {},
             hf_compatible=bool(request.data.get('hfCompatible', True)),
+            default_revision=(request.data.get('defaultRevision') or 'main').strip() or 'main',
         )
+        _apply_repo_provider_updates(repo, _hub_provider_manager().bind_knowledge_repo(repo))
         return Response({'code': 0, 'msg': 'success', 'data': _knowledge_summary(repo)}, status=201)
 
     search = (request.query_params.get('search') or request.query_params.get('q') or '').strip()
@@ -1279,10 +1537,13 @@ def knowledge_detail_v2(request, repo_id):
             'builds': [_build_payload(build) for build in builds],
             'usage': {
                 'hfDatasets': f'from datasets import load_dataset\n\nkb = load_dataset("{repo.repo_id}")',
-                'gitClone': f'git clone https://your-hub.example/knowledge-bases/{repo.repo_id}',
+                'gitClone': _git_clone_usage(f'git clone https://your-hub.example/knowledge-bases/{repo.repo_id}', repo),
+                'gitPush': _git_push_usage(repo),
                 'notebook': f'Open /notebook?knowledge_base={repo.repo_id}',
             },
-            'defaultRevision': selected_version.revision if selected_version else '',
+            'defaultRevision': repo.default_revision or (selected_version.revision if selected_version else ''),
+            'selectedRevision': selected_version.revision if selected_version else '',
+            'selectedVersion': _knowledge_version_payload(selected_version) if selected_version else None,
             'features': _dataset_features(selected_version) if selected_version else {},
         }
     )
@@ -1320,12 +1581,44 @@ def knowledge_revisions_v2(request, repo_id):
         manifest=request.data.get('manifest') or {},
         is_latest=mark_latest,
     )
-    files, total_size, total_rows = _save_revision_files('knowledge-bases', repo.repo_id, revision_name, KnowledgeFile, version, request.data.get('files') or [])
+    request_files = request.data.get('files') or []
+    files, total_size, total_rows = _save_revision_files('knowledge-bases', repo.repo_id, revision_name, KnowledgeFile, version, request_files)
+    provider_result = _hub_provider_manager().sync_knowledge_version(repo, version, request_files)
+    _apply_version_provider_updates(version, provider_result)
+    _apply_repo_provider_updates(
+        repo,
+        {
+            'provider_bindings': provider_result.get('repo_provider_bindings'),
+            'sync_status': provider_result.get('repo_sync_status'),
+        },
+    )
     repo.file_count = len(files)
     if total_rows:
         repo.document_count = total_rows
-    repo.save(update_fields=['file_count', 'document_count', 'updated_at'])
+    if mark_latest:
+        repo.default_revision = version.revision
+    repo.save(update_fields=['file_count', 'document_count', 'default_revision', 'updated_at'])
     return Response({'code': 0, 'msg': 'success', 'data': {'version': _knowledge_version_payload(version), 'files': [_file_payload(item) for item in files], 'size': _size_label(total_size)}}, status=201)
+
+
+@api_view(['POST'])
+@authentication_classes(AUTH_CLASSES)
+@permission_classes([AllowAny])
+def knowledge_sync_v2(request, repo_id):
+    repo = _get_knowledge_repo(repo_id)
+    if not repo:
+        return _repo_not_found('Knowledge repo not found')
+
+    denied = _ensure_write_access(request, repo)
+    if denied:
+        return denied
+
+    revision = (request.data.get('revision') or '').strip()
+    try:
+        synced = _sync_repo_from_provider('knowledge-bases', repo, revision)
+    except HubProviderSyncError as exc:
+        return _bad_request(str(exc))
+    return Response({'code': 0, 'msg': 'success', 'data': _sync_response_payload('knowledge-bases', repo, synced)})
 
 
 @api_view(['GET'])
@@ -1415,15 +1708,76 @@ def knowledge_builds_v2(request, repo_id):
         stages=stages,
         error_message=(request.data.get('errorMessage') or '').strip(),
     )
+    selected_version = _get_knowledge_version(repo, request.data.get('revision', ''))
+    provider_result = _hub_provider_manager().trigger_knowledge_build(repo, build, selected_version, request.data)
+    _apply_build_provider_updates(build, provider_result)
+    _apply_repo_provider_updates(
+        repo,
+        {
+            'provider_bindings': provider_result.get('repo_provider_bindings'),
+            'sync_status': provider_result.get('repo_sync_status'),
+        },
+    )
     repo.status = 'processing' if build.status in {'queued', 'running'} else build.status
     repo.pipeline = {
         'stages': stages,
         'progress': build.progress,
         'lastRun': build.created_at.isoformat(),
         'error': build.error_message,
+        'providerStatus': build.provider_status,
+        'providerJobId': build.provider_job_id,
     }
     repo.save(update_fields=['status', 'pipeline', 'updated_at'])
     return Response({'code': 0, 'msg': 'success', 'data': _build_payload(build)}, status=201)
+
+
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def gitea_webhook_v2(request):
+    verification_error = _verify_gitea_webhook(request)
+    if verification_error:
+        return _forbidden(verification_error)
+
+    event = (request.headers.get('X-Gitea-Event') or '').strip().lower()
+    if event and event != 'push':
+        return Response({'code': 0, 'msg': 'ignored', 'data': {'event': event}})
+
+    try:
+        payload = json.loads((request.body or b'{}').decode('utf-8'))
+    except (TypeError, ValueError, json.JSONDecodeError):
+        payload = {}
+
+    repository = payload.get('repository') or {}
+    full_name = (
+        repository.get('full_name')
+        or repository.get('fullName')
+        or f"{(repository.get('owner') or {}).get('username', '')}/{repository.get('name', '')}"
+    ).strip('/')
+    repo_type, repo = _find_gitea_bound_repo(full_name)
+    if not repo:
+        return Response({'code': 0, 'msg': 'ignored', 'data': {'repository': full_name}})
+
+    revision = revision_from_ref(payload.get('ref') or '') or (payload.get('branch') or '').strip()
+    if not revision:
+        return Response({'code': 0, 'msg': 'ignored', 'data': {'repository': full_name}})
+
+    try:
+        synced = _sync_repo_from_provider(repo_type, repo, revision)
+    except HubProviderSyncError as exc:
+        return _bad_request(str(exc))
+
+    return Response(
+        {
+            'code': 0,
+            'msg': 'success',
+            'data': {
+                'repository': full_name,
+                'revision': synced['version'].revision,
+                'provider': synced['provider'],
+            },
+        }
+    )
 
 
 @api_view(['GET', 'HEAD'])

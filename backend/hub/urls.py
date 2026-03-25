@@ -4,8 +4,10 @@ from . import api
 
 
 urlpatterns = [
+    path('integrations/gitea/webhook', api.gitea_webhook_v2, name='hub-gitea-webhook-v2'),
     path('datasets', api.dataset_list_v2, name='hub-dataset-list-v2'),
     path('datasets/<path:repo_id>/revisions', api.dataset_revisions_v2, name='hub-dataset-revisions-v2'),
+    path('datasets/<path:repo_id>/sync', api.dataset_sync_v2, name='hub-dataset-sync-v2'),
     path('datasets/<path:repo_id>/tree', api.dataset_tree_v2, name='hub-dataset-tree-v2'),
     path('datasets/<path:repo_id>/splits', api.dataset_splits_v2, name='hub-dataset-splits-v2'),
     path('datasets/<path:repo_id>/rows', api.dataset_rows_v2, name='hub-dataset-rows-v2'),
@@ -14,12 +16,14 @@ urlpatterns = [
     path('datasets/<path:repo_id>', api.dataset_detail_v2, name='hub-dataset-detail-v2'),
     path('models', api.model_list_v2, name='hub-model-list-v2'),
     path('models/<path:repo_id>/revisions', api.model_revisions_v2, name='hub-model-revisions-v2'),
+    path('models/<path:repo_id>/sync', api.model_sync_v2, name='hub-model-sync-v2'),
     path('models/<path:repo_id>/tree', api.model_tree_v2, name='hub-model-tree-v2'),
     path('models/<path:repo_id>/preview', api.model_preview_v2, name='hub-model-preview-v2'),
     path('models/<path:repo_id>/resolve/<str:revision>/<path:file_path>', api.model_resolve_v2, name='hub-model-resolve-v2'),
     path('models/<path:repo_id>', api.model_detail_v2, name='hub-model-detail-v2'),
     path('knowledge-bases', api.knowledge_list_v2, name='hub-knowledge-list-v2'),
     path('knowledge-bases/<path:repo_id>/revisions', api.knowledge_revisions_v2, name='hub-knowledge-revisions-v2'),
+    path('knowledge-bases/<path:repo_id>/sync', api.knowledge_sync_v2, name='hub-knowledge-sync-v2'),
     path('knowledge-bases/<path:repo_id>/tree', api.knowledge_tree_v2, name='hub-knowledge-tree-v2'),
     path('knowledge-bases/<path:repo_id>/rows', api.knowledge_rows_v2, name='hub-knowledge-rows-v2'),
     path('knowledge-bases/<path:repo_id>/preview', api.knowledge_preview_v2, name='hub-knowledge-preview-v2'),

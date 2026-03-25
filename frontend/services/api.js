@@ -4,8 +4,30 @@ function getStoredToken() {
   return localStorage.getItem('access_token') || localStorage.getItem('token') || ''
 }
 
-function buildHeaders(headers = {}, includeJson = true) {
-  const token = getStoredToken()
+function isHubApiUrl(url) {
+  try {
+    const resolved = new URL(url, window.location.origin)
+    return /^\/api\/v2\/(datasets|models|knowledge-bases|hf)(\/|$)/.test(resolved.pathname)
+  } catch {
+    return false
+  }
+}
+
+function resolveAuthToken(url) {
+  const storedToken = getStoredToken()
+  const defaultToken = config.defaultAccessToken || ''
+  const token = storedToken || (isHubApiUrl(url) ? defaultToken : '')
+
+  // `sk-*` tokens are Hub-scoped API keys and should not be sent to non-Hub endpoints.
+  if (token.startsWith('sk-') && !isHubApiUrl(url)) {
+    return ''
+  }
+
+  return token
+}
+
+function buildHeaders(url, headers = {}, includeJson = true) {
+  const token = resolveAuthToken(url)
   return {
     ...(includeJson ? { 'Content-Type': 'application/json' } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -17,7 +39,7 @@ async function requestJson(url, options = {}) {
   const includeJson = options.body === undefined || !(options.body instanceof FormData)
   const response = await fetch(url, {
     ...options,
-    headers: buildHeaders(options.headers, includeJson),
+    headers: buildHeaders(url, options.headers, includeJson),
   })
 
   let payload = {}
@@ -176,6 +198,15 @@ export const datasetApi = {
     const response = await requestJson(url, {
       method: 'POST',
       body: JSON.stringify(payload),
+    })
+    return response.data
+  },
+
+  async syncDataset(datasetId, revision = '') {
+    const url = getApiUrl(`/datasets/${datasetId}/sync`)
+    const response = await requestJson(url, {
+      method: 'POST',
+      body: JSON.stringify({ revision }),
     })
     return response.data
   },
@@ -344,6 +375,15 @@ export const knowledgeBaseApi = {
     const response = await requestJson(url)
     return response.data
   },
+
+  async syncKnowledgeBase(repoId, revision = '') {
+    const url = getApiUrl(`/knowledge-bases/${repoId}/sync`)
+    const response = await requestJson(url, {
+      method: 'POST',
+      body: JSON.stringify({ revision }),
+    })
+    return response.data
+  },
 }
 
 export const modelApi = {
@@ -396,6 +436,15 @@ export const modelApi = {
     const response = await requestJson(url, {
       method: 'POST',
       body: JSON.stringify(payload),
+    })
+    return response.data
+  },
+
+  async syncModel(modelId, revision = '') {
+    const url = getApiUrl(`/models/${modelId}/sync`)
+    const response = await requestJson(url, {
+      method: 'POST',
+      body: JSON.stringify({ revision }),
     })
     return response.data
   },
@@ -481,7 +530,7 @@ export const chatApi = {
     const url = `${config.apiBaseUrl}/api/v1/chat/stream`
     return fetch(url, {
       method: 'POST',
-      headers: buildHeaders(),
+      headers: buildHeaders(url),
       body: JSON.stringify(payload),
     })
   },

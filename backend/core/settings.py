@@ -211,6 +211,11 @@ PACKAGE_EDITOR_BINARY = os.environ.get(
     'PACKAGE_EDITOR_BINARY',
     str(BASE_DIR.parent.parent / '.workspace' / 'node_modules' / '.bin' / 'opencode'),
 )
+LOCAL_GIT_REMOTE_ENABLED = os.environ.get('LOCAL_GIT_REMOTE_ENABLED', '0') == '1'
+LOCAL_GIT_REMOTE_ROOT = os.environ.get(
+    'LOCAL_GIT_REMOTE_ROOT',
+    str(PROJECT_ROOT.parent / '.workspace' / 'git-remotes'),
+)
 PROXY_TIMEOUT = int(os.environ.get('PROXY_TIMEOUT', '120'))
 
 LLM_PROVIDER_BASE_URL = os.environ.get('LLM_PROVIDER_BASE_URL', '')
@@ -222,6 +227,32 @@ LLM_AVAILABLE_MODELS = [
     if model.strip()
 ]
 LLM_REQUEST_TIMEOUT = int(os.environ.get('LLM_REQUEST_TIMEOUT', '120'))
+
+GITEA_BASE_URL = os.environ.get('GITEA_BASE_URL', '')
+GITEA_TOKEN = os.environ.get('GITEA_TOKEN', '')
+GITEA_ORG = os.environ.get('GITEA_ORG', '')
+GITEA_TIMEOUT = int(os.environ.get('GITEA_TIMEOUT', '30'))
+DCAI_WEBHOOK_BASE_URL = os.environ.get('DCAI_WEBHOOK_BASE_URL', '')
+GITEA_WEBHOOK_BASE_URL = os.environ.get('GITEA_WEBHOOK_BASE_URL', DCAI_WEBHOOK_BASE_URL)
+GITEA_WEBHOOK_SECRET = os.environ.get('GITEA_WEBHOOK_SECRET', '')
+GITEA_WEBHOOK_AUTHORIZATION_HEADER = os.environ.get('GITEA_WEBHOOK_AUTHORIZATION_HEADER', '')
+
+LAKEFS_ENDPOINT = os.environ.get('LAKEFS_ENDPOINT', '')
+LAKEFS_ACCESS_KEY = os.environ.get('LAKEFS_ACCESS_KEY', '')
+LAKEFS_SECRET_KEY = os.environ.get('LAKEFS_SECRET_KEY', '')
+LAKEFS_STORAGE_NAMESPACE_PREFIX = os.environ.get('LAKEFS_STORAGE_NAMESPACE_PREFIX', '')
+LAKEFS_TIMEOUT = int(os.environ.get('LAKEFS_TIMEOUT', '30'))
+
+MLFLOW_TRACKING_URI = os.environ.get('MLFLOW_TRACKING_URI', '')
+MLFLOW_REGISTRY_URI = os.environ.get('MLFLOW_REGISTRY_URI', '')
+MLFLOW_TRACKING_TOKEN = os.environ.get('MLFLOW_TRACKING_TOKEN', '')
+MLFLOW_TRACKING_USERNAME = os.environ.get('MLFLOW_TRACKING_USERNAME', '')
+MLFLOW_TRACKING_PASSWORD = os.environ.get('MLFLOW_TRACKING_PASSWORD', '')
+MLFLOW_TIMEOUT = int(os.environ.get('MLFLOW_TIMEOUT', '30'))
+
+RAGFLOW_BASE_URL = os.environ.get('RAGFLOW_BASE_URL', '')
+RAGFLOW_API_KEY = os.environ.get('RAGFLOW_API_KEY', '')
+RAGFLOW_TIMEOUT = int(os.environ.get('RAGFLOW_TIMEOUT', '60'))
 
 # Logging
 LOGGING = {

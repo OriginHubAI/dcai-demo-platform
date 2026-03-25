@@ -1,8 +1,18 @@
+import hashlib
+import hmac
+import subprocess
+import tempfile
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+from django.core.management import call_command
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from openapi.models import OpenAPIKey
 from user.models import User
 
+from . import providers
 from .models import (
     DatasetFile,
     DatasetRepo,
@@ -317,6 +327,242 @@ class HubApiTests(TestCase):
         self.assertEqual(detail_payload['sourceDataset'], 'OpenDCAI/demo-dataset')
         self.assertEqual(detail_payload['builds'][0]['status'], 'completed')
 
+    def test_sync_local_git_repo_command_upserts_dataset_revision(self):
+        repo = DatasetRepo.objects.create(
+            repo_id='OpenDCAI/git-backed-dataset',
+            namespace='OpenDCAI',
+            slug='git-backed-dataset',
+            author='OpenDCAI',
+            name='Git Backed Dataset',
+            task='text-classification',
+            domain='nlp',
+            modality='text',
+            language='en',
+            license='apache-2.0',
+            description='Dataset synced from bare git repo',
+            summary='',
+            default_revision='main',
+        )
+
+        with tempfile.TemporaryDirectory(prefix='hub-sync-media-') as media_dir, tempfile.TemporaryDirectory(
+            prefix='hub-sync-git-'
+        ) as work_dir:
+            bare_dir = Path(work_dir) / 'remote.git'
+            checkout_dir = Path(work_dir) / 'checkout'
+            self._git('init', '--bare', '--initial-branch', 'main', str(bare_dir))
+            self._git('clone', str(bare_dir), str(checkout_dir))
+
+            self._write_text(checkout_dir / 'README.md', '# Git Backed Dataset\n')
+            self._write_text(
+                checkout_dir / 'train.jsonl',
+                '{"text":"alpha","label":1}\n{"text":"beta","label":0}\n',
+            )
+            self._git_commit_and_push(checkout_dir, 'Initial dataset push')
+
+            with override_settings(MEDIA_ROOT=media_dir):
+                call_command(
+                    'sync_local_git_repo',
+                    repo_type='datasets',
+                    repo_id=repo.repo_id,
+                    git_dir=str(bare_dir),
+                    refname='refs/heads/main',
+                )
+
+                version = repo.versions.get(revision='main')
+                repo.refresh_from_db()
+                self.assertEqual(version.row_count, 2)
+                self.assertTrue(version.is_latest)
+                self.assertEqual(version.files.count(), 2)
+                train_file = version.files.get(path='train.jsonl')
+                self.assertEqual(train_file.row_count, 2)
+                self.assertEqual(train_file.preview_rows[0]['text'], 'alpha')
+                self.assertEqual(repo.provider_bindings['localgit']['cloneUrl'], str(bare_dir))
+
+                self._write_text(
+                    checkout_dir / 'train.jsonl',
+                    '{"text":"alpha","label":1}\n{"text":"beta","label":0}\n{"text":"gamma","label":1}\n',
+                )
+                self._git_commit_and_push(checkout_dir, 'Update dataset rows')
+                call_command(
+                    'sync_local_git_repo',
+                    repo_type='datasets',
+                    repo_id=repo.repo_id,
+                    git_dir=str(bare_dir),
+                    refname='refs/heads/main',
+                )
+
+                repo.refresh_from_db()
+                version.refresh_from_db()
+                self.assertEqual(repo.versions.count(), 1)
+                self.assertEqual(version.row_count, 3)
+                self.assertEqual(repo.row_count, 3)
+                self.assertEqual(version.files.get(path='train.jsonl').row_count, 3)
+
+    @patch('hub.api.get_hub_provider_manager')
+    def test_dataset_manual_sync_endpoint_persists_provider_files(self, mock_get_provider_manager):
+        repo = DatasetRepo.objects.get(repo_id='hub-owner/private-dataset')
+        manager = Mock()
+        manager.pull_dataset_revision.return_value = {
+            'provider': 'gitea',
+            'revision': 'main',
+            'commitSha': 'sync-main-001',
+            'artifactUri': 'https://git.example.com/hub-owner/private-dataset/src/branch/main',
+            'files': [
+                {'path': 'README.md', 'raw_bytes': b'# Private Dataset\n'},
+                {
+                    'path': 'train.jsonl',
+                    'raw_bytes': b'{"text":"alpha","label":1}\n{"text":"beta","label":0}\n',
+                },
+            ],
+            'providerBinding': {
+                'state': 'ready',
+                'provider': 'gitea',
+                'fullName': repo.repo_id,
+                'cloneUrl': 'https://git.example.com/hub-owner/private-dataset.git',
+            },
+            'providerPayload': {
+                'branch': 'main',
+                'commitSha': 'sync-main-001',
+                'treeUrl': 'https://git.example.com/hub-owner/private-dataset/src/branch/main',
+                'fileCount': 2,
+                'source': 'gitea-sync',
+            },
+            'repo_provider_bindings': {
+                'gitea': {
+                    'state': 'ready',
+                    'provider': 'gitea',
+                    'fullName': repo.repo_id,
+                    'cloneUrl': 'https://git.example.com/hub-owner/private-dataset.git',
+                }
+            },
+            'repo_sync_status': 'synced',
+        }
+        mock_get_provider_manager.return_value = manager
+
+        with tempfile.TemporaryDirectory(prefix='hub-manual-sync-media-') as media_dir, override_settings(MEDIA_ROOT=media_dir):
+            response = self.client.post(
+                f'/api/v2/datasets/{repo.repo_id}/sync',
+                data=json_dumps({'revision': 'main'}),
+                content_type='application/json',
+                HTTP_AUTHORIZATION='Bearer sk-test-write-key',
+            )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()['data']
+        self.assertEqual(payload['provider'], 'gitea')
+        self.assertEqual(payload['version']['revision'], 'main')
+        self.assertEqual(payload['version']['providerCommit'], 'sync-main-001')
+        self.assertEqual(payload['files'][1]['path'], 'train.jsonl')
+
+        repo.refresh_from_db()
+        version = DatasetVersion.objects.get(repo=repo, revision='main')
+        self.assertEqual(repo.sync_status, 'synced')
+        self.assertEqual(repo.provider_bindings['gitea']['cloneUrl'], 'https://git.example.com/hub-owner/private-dataset.git')
+        self.assertEqual(version.provider_commit, 'sync-main-001')
+        self.assertEqual(version.artifact_uri, 'https://git.example.com/hub-owner/private-dataset/src/branch/main')
+        self.assertEqual(version.files.count(), 2)
+        self.assertEqual(version.files.get(path='train.jsonl').row_count, 2)
+        manager.pull_dataset_revision.assert_called_once_with(repo, 'main')
+
+    @patch('hub.api.get_hub_provider_manager')
+    def test_gitea_push_webhook_syncs_dataset(self, mock_get_provider_manager):
+        repo = DatasetRepo.objects.get(repo_id='hub-owner/private-dataset')
+        repo.provider_bindings = {
+            'gitea': {
+                'state': 'ready',
+                'provider': 'gitea',
+                'fullName': repo.repo_id,
+                'owner': 'hub-owner',
+                'name': 'private-dataset',
+                'cloneUrl': 'https://git.example.com/hub-owner/private-dataset.git',
+            }
+        }
+        repo.sync_status = 'synced'
+        repo.save(update_fields=['provider_bindings', 'sync_status', 'updated_at'])
+
+        manager = Mock()
+        manager.pull_dataset_revision.return_value = {
+            'provider': 'gitea',
+            'revision': 'main',
+            'commitSha': 'webhook-main-001',
+            'artifactUri': 'https://git.example.com/hub-owner/private-dataset/src/branch/main',
+            'files': [
+                {
+                    'path': 'train.jsonl',
+                    'raw_bytes': b'{"text":"webhook","label":1}\n',
+                }
+            ],
+            'providerBinding': repo.provider_bindings['gitea'],
+            'providerPayload': {
+                'branch': 'main',
+                'commitSha': 'webhook-main-001',
+                'treeUrl': 'https://git.example.com/hub-owner/private-dataset/src/branch/main',
+                'fileCount': 1,
+                'source': 'gitea-sync',
+            },
+            'repo_provider_bindings': repo.provider_bindings,
+            'repo_sync_status': 'synced',
+        }
+        mock_get_provider_manager.return_value = manager
+
+        body = json_dumps(
+            {
+                'ref': 'refs/heads/main',
+                'repository': {'full_name': repo.repo_id},
+            }
+        )
+        signature = hmac.new(b'super-secret', body.encode('utf-8'), hashlib.sha256).hexdigest()
+
+        with tempfile.TemporaryDirectory(prefix='hub-webhook-sync-media-') as media_dir, override_settings(
+            MEDIA_ROOT=media_dir,
+            GITEA_WEBHOOK_SECRET='super-secret',
+        ):
+            response = self.client.post(
+                '/api/v2/integrations/gitea/webhook',
+                data=body,
+                content_type='application/json',
+                HTTP_X_GITEA_EVENT='push',
+                HTTP_X_GITEA_SIGNATURE=signature,
+            )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()['data']
+        self.assertEqual(payload['repository'], repo.repo_id)
+        self.assertEqual(payload['revision'], 'main')
+        self.assertEqual(payload['provider'], 'gitea')
+
+        repo.refresh_from_db()
+        version = DatasetVersion.objects.get(repo=repo, revision='main')
+        self.assertEqual(version.provider_commit, 'webhook-main-001')
+        self.assertEqual(version.files.count(), 1)
+        self.assertEqual(version.files.get(path='train.jsonl').preview_rows[0]['text'], 'webhook')
+        manager.pull_dataset_revision.assert_called_once_with(repo, 'main')
+
+    def _write_text(self, path, content):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding='utf-8')
+
+    def _git_commit_and_push(self, checkout_dir, message):
+        self._git('-C', str(checkout_dir), 'add', '.')
+        self._git(
+            '-C',
+            str(checkout_dir),
+            '-c',
+            'user.name=Hub Tests',
+            '-c',
+            'user.email=hub-tests@example.com',
+            'commit',
+            '-m',
+            message,
+        )
+        self._git('-C', str(checkout_dir), 'push', 'origin', 'main')
+
+    def _git(self, *args):
+        result = subprocess.run(['git', *args], capture_output=True, text=True, check=False)
+        if result.returncode != 0:
+            raise AssertionError(result.stderr or result.stdout or f'git {" ".join(args)} failed')
+        return result
+
     def test_knowledge_tree_and_preview_endpoints(self):
         tree_response = self.client.get('/api/v2/knowledge-bases/OpenDCAI/demo-knowledge-base/tree')
         self.assertEqual(tree_response.status_code, 200)
@@ -419,6 +665,283 @@ class HubApiTests(TestCase):
         detail_response = self.client.get('/api/v2/knowledge-bases/OpenDCAI/demo-knowledge-base')
         self.assertEqual(detail_response.status_code, 200)
         self.assertEqual(detail_response.json()['data']['documentCount'], 3)
+
+    @patch('hub.api.get_hub_provider_manager')
+    def test_dataset_create_persists_provider_bindings(self, mock_get_provider_manager):
+        manager = Mock()
+        manager.bind_dataset_repo.return_value = {
+            'provider_bindings': {
+                'gitea': {
+                    'state': 'ready',
+                    'provider': 'gitea',
+                    'cloneUrl': 'https://git.example.com/OpenDCAI/new-dataset.git',
+                },
+                'lakefs': {
+                    'state': 'ready',
+                    'provider': 'lakefs',
+                    'repository': 'OpenDCAI--new-dataset',
+                },
+            },
+            'sync_status': 'synced',
+            'default_revision': 'main',
+        }
+        mock_get_provider_manager.return_value = manager
+
+        response = self.client.post(
+            '/api/v2/datasets',
+            data=json_dumps(
+                {
+                    'namespace': 'OpenDCAI',
+                    'slug': 'new-dataset',
+                    'name': 'New Dataset',
+                    'description': 'Dataset with provider bindings',
+                    'defaultRevision': 'main',
+                }
+            ),
+            content_type='application/json',
+            HTTP_AUTHORIZATION='Bearer sk-test-write-key',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        payload = response.json()['data']
+        self.assertEqual(payload['syncStatus'], 'synced')
+        self.assertEqual(payload['providerBindings']['gitea']['cloneUrl'], 'https://git.example.com/OpenDCAI/new-dataset.git')
+        repo = DatasetRepo.objects.get(repo_id='OpenDCAI/new-dataset')
+        self.assertEqual(repo.sync_status, 'synced')
+        self.assertEqual(repo.provider_bindings['lakefs']['repository'], 'OpenDCAI--new-dataset')
+        self.assertEqual(repo.default_revision, 'main')
+
+    @patch('hub.api.get_hub_provider_manager')
+    def test_dataset_revision_persists_provider_fields(self, mock_get_provider_manager):
+        manager = Mock()
+        manager.sync_dataset_version.return_value = {
+            'provider_payload': {
+                'gitea': {'treeUrl': 'https://git.example.com/hub-owner/private-dataset/src/branch/v-provider'},
+                'lakefs': {'commitId': 'lakefs-commit-001', 'branch': 'v-provider'},
+            },
+            'provider_revision': 'v-provider',
+            'provider_commit': 'lakefs-commit-001',
+            'artifact_uri': 'https://git.example.com/hub-owner/private-dataset/src/branch/v-provider',
+            'repo_provider_bindings': {
+                'gitea': {'state': 'ready', 'provider': 'gitea'},
+                'lakefs': {'state': 'ready', 'provider': 'lakefs'},
+            },
+            'repo_sync_status': 'synced',
+        }
+        mock_get_provider_manager.return_value = manager
+
+        response = self.client.post(
+            '/api/v2/datasets/hub-owner/private-dataset/revisions',
+            data=json_dumps(
+                {
+                    'revision': 'v-provider',
+                    'files': [
+                        {
+                            'path': 'train.jsonl',
+                            'fileType': 'jsonl',
+                            'content': '{"prompt":"a","response":"b"}\n',
+                            'encoding': 'utf-8',
+                            'previewRows': [{'prompt': 'a', 'response': 'b'}],
+                        }
+                    ],
+                }
+            ),
+            content_type='application/json',
+            HTTP_AUTHORIZATION='Bearer sk-test-write-key',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        payload = response.json()['data']['version']
+        self.assertEqual(payload['providerRevision'], 'v-provider')
+        self.assertEqual(payload['providerCommit'], 'lakefs-commit-001')
+        self.assertEqual(payload['artifactUri'], 'https://git.example.com/hub-owner/private-dataset/src/branch/v-provider')
+
+        version = DatasetVersion.objects.get(repo__repo_id='hub-owner/private-dataset', revision='v-provider')
+        repo = DatasetRepo.objects.get(repo_id='hub-owner/private-dataset')
+        self.assertEqual(version.provider_revision, 'v-provider')
+        self.assertEqual(version.provider_commit, 'lakefs-commit-001')
+        self.assertEqual(version.provider_payload['lakefs']['branch'], 'v-provider')
+        self.assertEqual(repo.sync_status, 'synced')
+
+    @patch('hub.api.get_hub_provider_manager')
+    def test_model_revision_persists_provider_fields(self, mock_get_provider_manager):
+        owned_model = ModelRepo.objects.create(
+            repo_id='hub-owner/private-model',
+            namespace='hub-owner',
+            slug='private-model',
+            author='hub-owner',
+            name='Private Model',
+            pipeline_tag='text-generation',
+            library='transformers',
+            language='en',
+            license='apache-2.0',
+            description='Owned model for revision publishing',
+            summary='Owned model summary',
+            visibility='private',
+            tags=['private'],
+        )
+        manager = Mock()
+        manager.sync_model_version.return_value = {
+            'provider_payload': {
+                'mlflow': {'version': '5', 'currentStage': 'Staging'},
+                'gitea': {'treeUrl': 'https://git.example.com/hub-owner/private-model/src/branch/v2'},
+            },
+            'provider_revision': '5',
+            'provider_commit': 'provider-model-001',
+            'artifact_uri': 's3://mlflow-artifacts/private-model/v2',
+            'repo_provider_bindings': {
+                'gitea': {'state': 'ready', 'provider': 'gitea'},
+                'mlflow': {'state': 'ready', 'provider': 'mlflow', 'modelName': 'hub-owner/private-model'},
+            },
+            'repo_sync_status': 'synced',
+        }
+        mock_get_provider_manager.return_value = manager
+
+        response = self.client.post(
+            f'/api/v2/models/{owned_model.repo_id}/revisions',
+            data=json_dumps(
+                {
+                    'revision': 'v2',
+                    'framework': 'transformers',
+                    'params': '7B',
+                    'artifactUri': 's3://mlflow-artifacts/private-model/v2',
+                    'stage': 'Staging',
+                    'files': [
+                        {
+                            'path': 'README.md',
+                            'fileType': 'md',
+                            'content': '# Demo Model v2',
+                            'encoding': 'utf-8',
+                        }
+                    ],
+                }
+            ),
+            content_type='application/json',
+            HTTP_AUTHORIZATION='Bearer sk-test-write-key',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        payload = response.json()['data']['version']
+        self.assertEqual(payload['providerRevision'], '5')
+        self.assertEqual(payload['providerCommit'], 'provider-model-001')
+        self.assertEqual(payload['artifactUri'], 's3://mlflow-artifacts/private-model/v2')
+        self.assertEqual(payload['providerPayload']['mlflow']['currentStage'], 'Staging')
+
+        version = ModelVersion.objects.get(repo__repo_id='hub-owner/private-model', revision='v2')
+        repo = ModelRepo.objects.get(repo_id='hub-owner/private-model')
+        self.assertEqual(version.artifact_uri, 's3://mlflow-artifacts/private-model/v2')
+        self.assertEqual(version.provider_revision, '5')
+        self.assertEqual(repo.provider_bindings['mlflow']['modelName'], 'hub-owner/private-model')
+        self.assertEqual(repo.sync_status, 'synced')
+
+    @patch('hub.api.get_hub_provider_manager')
+    def test_knowledge_build_persists_provider_fields(self, mock_get_provider_manager):
+        manager = Mock()
+        manager.trigger_knowledge_build.return_value = {
+            'provider_job_id': 'ragflow-dataset-001:99',
+            'provider_status': 'submitted',
+            'provider_payload': {
+                'ragflow': {
+                    'datasetId': 'ragflow-dataset-001',
+                    'documents': [{'id': 'doc-1', 'name': 'README.md'}],
+                    'response': {'task_id': 'parse-123'},
+                }
+            },
+            'repo_provider_bindings': {
+                'ragflow': {'state': 'ready', 'provider': 'ragflow', 'datasetId': 'ragflow-dataset-001'},
+            },
+            'repo_sync_status': 'synced',
+        }
+        mock_get_provider_manager.return_value = manager
+
+        response = self.client.post(
+            '/api/v2/knowledge-bases/OpenDCAI/demo-knowledge-base/builds',
+            data=json_dumps({'trigger': 'manual', 'revision': 'main'}),
+            content_type='application/json',
+            HTTP_AUTHORIZATION='Bearer sk-test-write-key',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        payload = response.json()['data']
+        self.assertEqual(payload['providerStatus'], 'submitted')
+        self.assertEqual(payload['providerJobId'], 'ragflow-dataset-001:99')
+        self.assertEqual(payload['providerPayload']['ragflow']['datasetId'], 'ragflow-dataset-001')
+
+        build = KnowledgeBuild.objects.get(id=payload['id'])
+        repo = KnowledgeRepo.objects.get(repo_id='OpenDCAI/demo-knowledge-base')
+        self.assertEqual(build.provider_status, 'submitted')
+        self.assertEqual(build.provider_job_id, 'ragflow-dataset-001:99')
+        self.assertEqual(build.provider_payload['ragflow']['response']['task_id'], 'parse-123')
+        self.assertEqual(repo.pipeline['providerStatus'], 'submitted')
+        self.assertEqual(repo.provider_bindings['ragflow']['datasetId'], 'ragflow-dataset-001')
+
+
+class GiteaHubClientTests(TestCase):
+    @override_settings(
+        GITEA_BASE_URL='https://git.example.com',
+        GITEA_TOKEN='gitea-token',
+        GITEA_WEBHOOK_BASE_URL='https://dcai.example.com',
+        GITEA_WEBHOOK_SECRET='webhook-secret',
+    )
+    def test_ensure_push_webhook_creates_wildcard_branch_filter(self):
+        client = providers.GiteaHubClient()
+        requests = []
+
+        def fake_request(method, path, **kwargs):
+            requests.append((method, path, kwargs.get('json')))
+            if method == 'GET':
+                return []
+            if method == 'POST':
+                return {'id': 9}
+            raise AssertionError(f'unexpected request: {method} {path}')
+
+        client._request = Mock(side_effect=fake_request)
+
+        payload = client.ensure_push_webhook({'owner': 'dcai', 'name': 'demo-repo'}, 'datasets', 'dcai/demo-repo')
+
+        self.assertEqual(payload['webhookId'], 9)
+        self.assertEqual(requests[1][0], 'POST')
+        self.assertEqual(requests[1][2]['branch_filter'], '*')
+        self.assertEqual(requests[1][2]['events'], ['push'])
+
+    @override_settings(
+        GITEA_BASE_URL='https://git.example.com',
+        GITEA_TOKEN='gitea-token',
+        GITEA_WEBHOOK_BASE_URL='https://dcai.example.com',
+        GITEA_WEBHOOK_SECRET='webhook-secret',
+    )
+    def test_ensure_push_webhook_updates_legacy_branch_filter(self):
+        client = providers.GiteaHubClient()
+        requests = []
+
+        def fake_request(method, path, **kwargs):
+            requests.append((method, path, kwargs.get('json')))
+            if method == 'GET':
+                return [
+                    {
+                        'id': 5,
+                        'config': {
+                            'url': 'https://dcai.example.com/api/v2/integrations/gitea/webhook',
+                            'content_type': 'json',
+                        },
+                        'events': ['push'],
+                        'branch_filter': 'refs/heads/*',
+                        'active': True,
+                        'authorization_header': '',
+                    }
+                ]
+            if method == 'PATCH':
+                return {'id': 5}
+            raise AssertionError(f'unexpected request: {method} {path}')
+
+        client._request = Mock(side_effect=fake_request)
+
+        payload = client.ensure_push_webhook({'owner': 'dcai', 'name': 'demo-repo'}, 'datasets', 'dcai/demo-repo')
+
+        self.assertEqual(payload['webhookId'], 5)
+        self.assertEqual(requests[1][0], 'PATCH')
+        self.assertEqual(requests[1][1], '/api/v1/repos/dcai/demo-repo/hooks/5')
+        self.assertEqual(requests[1][2]['branch_filter'], '*')
 
 
 def json_dumps(payload):

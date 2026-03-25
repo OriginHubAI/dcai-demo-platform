@@ -71,6 +71,14 @@
                 Publish Revision
               </button>
               <button
+                v-if="canSyncFromGit"
+                @click="syncFromGit"
+                class="inline-flex items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="syncing"
+              >
+                {{ syncing ? 'Syncing...' : 'Sync from Git' }}
+              </button>
+              <button
                 @click="triggerBuild"
                 class="inline-flex items-center justify-center rounded-lg bg-dc-primary px-3 py-2 text-sm font-medium text-white hover:bg-dc-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
                 :disabled="buildStarting"
@@ -91,6 +99,7 @@
                 Open Notebook
               </router-link>
             </div>
+            <div v-if="syncError" class="text-xs text-red-600">{{ syncError }}</div>
           </div>
         </div>
 
@@ -153,11 +162,26 @@
                 <div class="mb-2 text-sm font-medium text-gray-900">Notebook</div>
                 <pre class="overflow-x-auto whitespace-pre-wrap rounded-lg bg-gray-50 p-4 text-xs">{{ knowledgeBase.usage?.notebook }}</pre>
               </div>
+              <div>
+                <div class="mb-2 text-sm font-medium text-gray-900">Git Clone</div>
+                <pre class="overflow-x-auto whitespace-pre-wrap rounded-lg bg-gray-50 p-4 text-xs">{{ knowledgeBase.usage?.gitClone }}</pre>
+              </div>
+              <div>
+                <div class="mb-2 text-sm font-medium text-gray-900">Git Push</div>
+                <pre class="overflow-x-auto whitespace-pre-wrap rounded-lg bg-gray-50 p-4 text-xs">{{ knowledgeBase.usage?.gitPush }}</pre>
+              </div>
             </div>
           </div>
         </div>
 
         <aside class="space-y-4">
+          <ProviderSyncPanel
+            :sync-status="knowledgeBase.syncStatus"
+            :provider-bindings="knowledgeBase.providerBindings"
+            :selected-version="knowledgeBase.selectedVersion"
+            :selected-build="knowledgeBase.builds?.[0] || null"
+          />
+
           <div class="rounded-lg border border-gray-200 bg-white p-4">
             <h3 class="mb-3 text-sm font-semibold text-gray-700">Vector Store</h3>
             <div class="space-y-2 text-sm">
@@ -247,7 +271,7 @@
         :repo-id="knowledgeBase.id"
         :versions="knowledgeBase.versions || []"
         :revision="selectedRevision"
-        :default-revision="knowledgeBase.defaultRevision || knowledgeBase.latestRevision"
+        :default-revision="selectedRevision || knowledgeBase.defaultRevision || knowledgeBase.latestRevision"
         :show-revision-selector="false"
         @update:revision="selectedRevision = $event"
       />
@@ -274,6 +298,10 @@
                     >
                       {{ stage.name }}: {{ stage.status }}
                     </span>
+                  </div>
+                  <div v-if="build.providerStatus || build.providerJobId" class="flex flex-wrap gap-2 text-xs text-gray-500">
+                    <span v-if="build.providerStatus">provider: {{ build.providerStatus }}</span>
+                    <span v-if="build.providerJobId" class="break-all">job: {{ build.providerJobId }}</span>
                   </div>
                   <p v-if="build.errorMessage" class="text-xs text-red-600">{{ build.errorMessage }}</p>
                 </div>
@@ -315,6 +343,7 @@ import { useRoute } from 'vue-router'
 
 import { knowledgeBaseApi } from '@/services/api.js'
 import HubFilesBrowser from '@/components/hub/HubFilesBrowser.vue'
+import ProviderSyncPanel from '@/components/hub/ProviderSyncPanel.vue'
 import RevisionPublishModal from '@/components/hub/RevisionPublishModal.vue'
 import KnowledgeGraphModal from '@/components/knowledgeBase/KnowledgeGraphModal.vue'
 
@@ -322,6 +351,8 @@ const route = useRoute()
 const knowledgeBase = ref(null)
 const loading = ref(false)
 const buildStarting = ref(false)
+const syncing = ref(false)
+const syncError = ref('')
 const showGraphModal = ref(false)
 const showPublishModal = ref(false)
 const selectedRevision = ref('')
@@ -342,12 +373,17 @@ const statusClass = computed(() => {
   return 'bg-gray-100 text-gray-700'
 })
 
+const canSyncFromGit = computed(() => {
+  const bindings = knowledgeBase.value?.providerBindings || {}
+  return Boolean(bindings.gitea || bindings.localgit)
+})
+
 async function loadKnowledgeBase(revision = selectedRevision.value) {
   loading.value = true
   try {
     knowledgeBase.value = await knowledgeBaseApi.getKnowledgeBaseById(route.params.id, { revision })
     if (!selectedRevision.value) {
-      selectedRevision.value = knowledgeBase.value?.defaultRevision || knowledgeBase.value?.latestRevision || ''
+      selectedRevision.value = knowledgeBase.value?.selectedRevision || knowledgeBase.value?.defaultRevision || knowledgeBase.value?.latestRevision || ''
     }
   } catch (error) {
     console.error('Failed to load knowledge base:', error)
@@ -374,6 +410,7 @@ async function triggerBuild() {
 watch(() => route.params.id, () => {
   selectedRevision.value = ''
   activeTab.value = 'card'
+  syncError.value = ''
   loadKnowledgeBase('')
 })
 
@@ -393,6 +430,29 @@ function handleRevisionPublished(response) {
     return
   }
   loadKnowledgeBase(selectedRevision.value)
+}
+
+async function syncFromGit() {
+  if (!knowledgeBase.value) return
+  syncing.value = true
+  syncError.value = ''
+  try {
+    const response = await knowledgeBaseApi.syncKnowledgeBase(
+      knowledgeBase.value.id,
+      selectedRevision.value || knowledgeBase.value.defaultRevision || knowledgeBase.value.latestRevision || '',
+    )
+    const revision = response?.version?.revision || selectedRevision.value || knowledgeBase.value.defaultRevision || ''
+    if (revision && revision !== selectedRevision.value) {
+      selectedRevision.value = revision
+    } else {
+      await loadKnowledgeBase(revision)
+    }
+  } catch (error) {
+    console.error('Failed to sync knowledge base from git:', error)
+    syncError.value = error.message || 'Failed to sync from Git'
+  } finally {
+    syncing.value = false
+  }
 }
 
 function stageBadgeClass(status) {

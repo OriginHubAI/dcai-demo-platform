@@ -1,12 +1,12 @@
 <template>
   <div v-if="visible" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" @click.self="$emit('close')">
-    <div class="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
+    <div class="flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
       <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
         <h2 class="text-lg font-semibold text-gray-900">Create {{ title }}</h2>
         <button class="text-gray-400 hover:text-gray-600" @click="$emit('close')">✕</button>
       </div>
 
-      <div class="grid gap-4 p-6 md:grid-cols-2">
+      <div class="grid flex-1 gap-4 overflow-y-auto p-6 md:grid-cols-2">
         <label class="space-y-1 text-sm">
           <span class="text-gray-600">Namespace</span>
           <input v-model="form.namespace" class="w-full rounded-lg border border-gray-300 px-3 py-2" />
@@ -37,6 +37,10 @@
         <label class="space-y-1 text-sm">
           <span class="text-gray-600">Tags</span>
           <input v-model="form.tagsInput" placeholder="comma,separated,tags" class="w-full rounded-lg border border-gray-300 px-3 py-2" />
+        </label>
+        <label class="space-y-1 text-sm">
+          <span class="text-gray-600">Default Revision</span>
+          <input v-model="form.defaultRevision" class="w-full rounded-lg border border-gray-300 px-3 py-2" />
         </label>
 
         <template v-if="repoType === 'dataset'">
@@ -112,7 +116,7 @@
 
       <div v-if="errorMessage" class="px-6 pb-2 text-sm text-red-600">{{ errorMessage }}</div>
 
-      <div class="flex items-center justify-end gap-3 border-t border-gray-200 px-6 py-4">
+      <div class="shrink-0 flex items-center justify-end gap-3 border-t border-gray-200 px-6 py-4">
         <button class="rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-100" @click="$emit('close')">Cancel</button>
         <button
           class="rounded-lg bg-dc-primary px-4 py-2 text-sm font-medium text-white hover:bg-dc-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
@@ -169,6 +173,7 @@ function getInitialForm() {
     summary: '',
     visibility: 'public',
     tagsInput: '',
+    defaultRevision: 'main',
     task: 'text-generation',
     domain: 'general',
     modality: 'text',
@@ -209,6 +214,7 @@ async function submit() {
         language: form.language,
         license: form.license,
         datasetType: form.datasetType,
+        defaultRevision: form.defaultRevision,
       })
     } else if (props.repoType === 'model') {
       created = await modelApi.createModel({
@@ -225,6 +231,7 @@ async function submit() {
         license: form.license,
         baseModel: form.baseModel,
         dataset: form.dataset,
+        defaultRevision: form.defaultRevision,
       })
     } else {
       created = await knowledgeBaseApi.createKnowledgeBase({
@@ -237,6 +244,7 @@ async function submit() {
         tags,
         sourceDataset: form.sourceDataset,
         status: form.status,
+        defaultRevision: form.defaultRevision,
       })
     }
     emit('created', created)
